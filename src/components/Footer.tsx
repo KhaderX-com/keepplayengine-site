@@ -22,21 +22,18 @@ export default function Footer() {
     const footerLinks = {
         company: [
             { label: "About Us", href: "/about" },
-            { label: "Careers", href: "/careers" },
-            { label: "Press", href: "/press" },
             { label: "Partners", href: "/partners" },
+            { label: "Business Partnership", href: "/business-partnership" },
         ],
         product: [
             { label: "Ecosystem", href: "/ecosystem" },
-            { label: "Giveback", href: "/giveback" },
             { label: "Technology", href: "/technology" },
             { label: "Security", href: "/security" },
         ],
         resources: [
-            { label: "Documentation", href: "/docs" },
             { label: "Blog", href: "/blog" },
             { label: "Support", href: "/support" },
-            { label: "API", href: "/api" },
+            { label: "Contact Us", href: "/contact" },
         ],
         legal: [
             { label: "Privacy Policy", href: "/privacy-policy" },

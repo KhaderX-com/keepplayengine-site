@@ -9,9 +9,8 @@ export default function Navbar() {
 
     const navLinks = [
         { href: "#ecosystem", label: "Ecosystem" },
-        { href: "#giveback", label: "Giveback" },
-        { href: "#careers", label: "Careers" },
         { href: "#blog", label: "Blog" },
+        { href: "#contact", label: "Contact Us" },
     ];
 
     return (
