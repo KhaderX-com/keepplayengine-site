@@ -40,7 +40,7 @@ export default function Footer() {
         ],
         legal: [
             { label: "Privacy Policy", href: "/privacy-policy" },
-            { label: "Terms of Service", href: "/terms-and-conditions" },
+            { label: "Terms & Conditions", href: "/terms-and-conditions" },
             { label: "Cookie Policy", href: "/cookies" },
             { label: "Compliance", href: "/compliance" },
         ],
@@ -66,7 +66,7 @@ export default function Footer() {
                                 alt="KeepPlay Engine Logo"
                                 width={40}
                                 height={40}
-                                className="h-8 sm:h-10 w-auto"
+                                className="h-8 sm:h-10 w-auto brightness-0 invert"
                             />
                             <span className="text-lg sm:text-xl font-bold text-white">KeepPlay Engine</span>
                         </Link>
