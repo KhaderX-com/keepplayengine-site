@@ -54,14 +54,14 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 flex items-center justify-center px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
         <div className="text-center">
           <div className="flex justify-center mb-6">
-            <div className="bg-blue-900/50 p-4 rounded-full">
+            <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
               <svg
-                className="w-12 h-12 text-blue-400"
+                className="w-8 h-8 text-white"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -75,14 +75,14 @@ export default function AdminLoginPage() {
               </svg>
             </div>
           </div>
-          <h2 className="text-3xl font-bold text-white">Admin Access</h2>
-          <p className="mt-2 text-sm text-gray-400">
+          <h2 className="text-3xl font-bold text-gray-900">Admin Access</h2>
+          <p className="mt-2 text-sm text-gray-600">
             KeepPlay Engine Administrative Panel
           </p>
           <div className="mt-4 flex items-center justify-center space-x-2">
-            <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-900/50 text-red-400 border border-red-500/50">
+            <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-red-50 text-red-700 border border-red-200">
               <svg
-                className="w-3 h-3 mr-1"
+                className="w-3 h-3 mr-1.5"
                 fill="currentColor"
                 viewBox="0 0 20 20"
               >
@@ -94,21 +94,21 @@ export default function AdminLoginPage() {
               </svg>
               Restricted Area
             </span>
-            <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-900/50 text-green-400 border border-green-500/50">
-              <span className="w-2 h-2 bg-green-400 rounded-full mr-1.5 animate-pulse"></span>
+            <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-green-50 text-green-700 border border-green-200">
+              <span className="w-2 h-2 bg-green-600 rounded-full mr-1.5 animate-pulse"></span>
               Secure Connection
             </span>
           </div>
         </div>
 
         {/* Login Form */}
-        <div className="bg-gray-800 border border-gray-700 rounded-lg shadow-2xl p-8">
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
           <form className="space-y-6" onSubmit={handleSubmit}>
             {error && (
-              <div className="bg-red-900/30 border border-red-500/50 rounded-md p-4">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                 <div className="flex">
                   <svg
-                    className="w-5 h-5 text-red-400 mr-3 flex-shrink-0"
+                    className="w-5 h-5 text-red-600 mr-3 flex-shrink-0"
                     fill="currentColor"
                     viewBox="0 0 20 20"
                   >
@@ -118,7 +118,7 @@ export default function AdminLoginPage() {
                       clipRule="evenodd"
                     />
                   </svg>
-                  <p className="text-sm text-red-400">{error}</p>
+                  <p className="text-sm text-red-700">{error}</p>
                 </div>
               </div>
             )}
@@ -126,7 +126,7 @@ export default function AdminLoginPage() {
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-gray-300 mb-2"
+                className="block text-sm font-medium text-gray-700 mb-2"
               >
                 Email Address
               </label>
@@ -138,7 +138,7 @@ export default function AdminLoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="appearance-none block w-full px-3 py-3 border border-gray-600 rounded-md bg-gray-900 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
                 placeholder="admin@keepplayengine.com"
                 disabled={loading}
               />
@@ -147,7 +147,7 @@ export default function AdminLoginPage() {
             <div>
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-gray-300 mb-2"
+                className="block text-sm font-medium text-gray-700 mb-2"
               >
                 Password
               </label>
@@ -159,7 +159,7 @@ export default function AdminLoginPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="appearance-none block w-full px-3 py-3 border border-gray-600 rounded-md bg-gray-900 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
                 placeholder="••••••••"
                 disabled={loading}
               />
@@ -168,7 +168,7 @@ export default function AdminLoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               {loading ? (
                 <>
@@ -216,11 +216,11 @@ export default function AdminLoginPage() {
           </form>
 
           {/* Security Info */}
-          <div className="mt-6 pt-6 border-t border-gray-700">
-            <div className="text-xs text-gray-400 space-y-2">
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <div className="text-xs text-gray-600 space-y-2.5">
               <p className="flex items-center">
                 <svg
-                  className="w-4 h-4 text-green-400 mr-2"
+                  className="w-4 h-4 text-green-600 mr-2 flex-shrink-0"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
@@ -234,7 +234,7 @@ export default function AdminLoginPage() {
               </p>
               <p className="flex items-center">
                 <svg
-                  className="w-4 h-4 text-green-400 mr-2"
+                  className="w-4 h-4 text-green-600 mr-2 flex-shrink-0"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
@@ -248,7 +248,7 @@ export default function AdminLoginPage() {
               </p>
               <p className="flex items-center">
                 <svg
-                  className="w-4 h-4 text-green-400 mr-2"
+                  className="w-4 h-4 text-green-600 mr-2 flex-shrink-0"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
@@ -265,10 +265,10 @@ export default function AdminLoginPage() {
         </div>
 
         {/* Footer Warning */}
-        <div className="text-center text-xs text-gray-500">
+        <div className="text-center text-xs text-gray-600">
           <p className="flex items-center justify-center">
             <svg
-              className="w-4 h-4 text-yellow-500 mr-2"
+              className="w-4 h-4 text-yellow-600 mr-2"
               fill="currentColor"
               viewBox="0 0 20 20"
             >

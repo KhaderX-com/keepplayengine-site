@@ -18,7 +18,20 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
     title: "Admin Panel - KeepPlay Engine",
     description: "Secure administrative interface for KeepPlay Engine",
-    robots: "noindex, nofollow", // Prevent search engine indexing
+    robots: "noindex, nofollow",
+    manifest: "/manifest.json",
+    themeColor: "#2563eb",
+    viewport: {
+        width: "device-width",
+        initialScale: 1,
+        maximumScale: 1,
+        userScalable: false,
+    },
+    appleWebApp: {
+        capable: true,
+        statusBarStyle: "default",
+        title: "KPE Admin",
+    },
 };
 
 export default async function AdminLayout({
@@ -30,6 +43,10 @@ export default async function AdminLayout({
 
     return (
         <html lang="en">
+            <head>
+                <link rel="icon" href="/icon-192.png" />
+                <link rel="apple-touch-icon" href="/icon-192.png" />
+            </head>
             <body
                 className={`${geistSans.variable} ${geistMono.variable} antialiased`}
             >
