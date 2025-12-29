@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuthenticationResponse } from "@/lib/webauthn";
 import { supabaseAdmin } from "@/lib/supabase";
-import { signIn } from "next-auth/react";
 
 /**
  * POST /api/webauthn/authenticate/verify
@@ -44,8 +43,7 @@ export async function POST(request: NextRequest) {
 
         // Verify the credential
         const result = await verifyAuthenticationResponse(
-            processedCredential,
-            challenge
+            processedCredential
         );
 
         if (!result.success) {
@@ -111,8 +109,9 @@ export async function POST(request: NextRequest) {
         response.cookies.delete("webauthn_auth_email");
 
         return response;
-    } catch (error: any) {
-        console.error("Error verifying authentication:", error);
+    } catch (error) {
+        const err = error as Error;
+        console.error("Error verifying authentication:", err);
 
         // Log failed attempt
         const email = request.cookies.get("webauthn_auth_email")?.value;
@@ -128,14 +127,14 @@ export async function POST(request: NextRequest) {
                 user_agent: userAgent,
                 success: false,
                 attempt_type: "biometric",
-                failure_reason: error.message || "Biometric verification failed",
+                failure_reason: err.message || "Biometric verification failed",
                 device_info: {},
                 geo_location: {},
             });
         }
 
         return NextResponse.json(
-            { error: "Failed to verify authentication", details: error.message },
+            { error: "Failed to verify authentication", details: err.message },
             { status: 500 }
         );
     }

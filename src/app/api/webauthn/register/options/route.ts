@@ -1,21 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import {
     generateRegistrationOptions,
-    generateAuthenticationOptions,
-    verifyRegistrationResponse,
-    verifyAuthenticationResponse,
-    getUserBiometricDevices,
-    removeBiometricDevice,
-    hasBiometricCredentials,
 } from "@/lib/webauthn";
 
 /**
  * POST /api/webauthn/register/options
  * Generate registration options for enrolling a biometric credential
  */
-export async function POST(request: NextRequest) {
+export async function POST() {
     try {
         const session = await getServerSession(authOptions);
 
@@ -27,8 +21,6 @@ export async function POST(request: NextRequest) {
         if (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN") {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
-
-        const { deviceName } = await request.json();
 
         const { options, challenge } = await generateRegistrationOptions(
             session.user.id,
@@ -64,10 +56,11 @@ export async function POST(request: NextRequest) {
         });
 
         return response;
-    } catch (error: any) {
-        console.error("Error generating registration options:", error);
+    } catch (error) {
+        const err = error as Error;
+        console.error("Error generating registration options:", err);
         return NextResponse.json(
-            { error: "Failed to generate registration options", details: error.message },
+            { error: "Failed to generate registration options", details: err.message },
             { status: 500 }
         );
     }

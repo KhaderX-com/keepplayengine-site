@@ -8,7 +8,7 @@ export default function ComingSoon() {
                     </h1>
                     <div className="w-16 sm:w-24 h-1 bg-[#00E5FF] mx-auto"></div>
                     <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-600 max-w-xl mx-auto leading-relaxed">
-                        We're working hard to bring you something amazing. Stay tuned!
+                        We&apos;re working hard to bring you something amazing. Stay tuned!
                     </p>
                 </div>
             </div>

@@ -5,6 +5,12 @@
 
 import { supabaseAdmin } from "@/lib/supabase";
 
+// Type definitions
+interface StoredCredential {
+    credential_id: string;
+    transports?: string[];
+}
+
 // WebAuthn configuration
 export const WEBAUTHN_CONFIG = {
     rpName: "KeepPlay Engine Admin",
@@ -28,7 +34,7 @@ export async function generateRegistrationOptions(userId: string, userName: stri
         .select('credential_id')
         .eq('user_id', userId);
 
-    const excludeCredentials = (existingCreds || []).map((cred: any) => ({
+    const excludeCredentials = (existingCreds || []).map((cred: StoredCredential) => ({
         id: base64ToBuffer(cred.credential_id),
         type: "public-key" as const,
     }));
@@ -39,7 +45,7 @@ export async function generateRegistrationOptions(userId: string, userName: stri
         window.crypto.getRandomValues(challenge);
     } else {
         // Server-side fallback
-        const crypto = require("crypto");
+        const crypto = await import("crypto");
         crypto.randomFillSync(challenge);
     }
 
@@ -79,7 +85,7 @@ export async function generateAuthenticationOptions(userId?: string) {
     if (typeof window !== "undefined" && window.crypto) {
         window.crypto.getRandomValues(challenge);
     } else {
-        const crypto = require("crypto");
+        const crypto = await import("crypto");
         crypto.randomFillSync(challenge);
     }
 
@@ -92,10 +98,10 @@ export async function generateAuthenticationOptions(userId?: string) {
             .select('credential_id, transports')
             .eq('user_id', userId);
 
-        allowCredentials = (userCreds || []).map((cred: any) => ({
+        allowCredentials = (userCreds || []).map((cred: StoredCredential) => ({
             id: base64ToBuffer(cred.credential_id),
             type: "public-key" as const,
-            transports: cred.transports || ["internal"],
+            transports: (cred.transports || ["internal"]) as AuthenticatorTransport[],
         }));
     }
 
@@ -118,7 +124,15 @@ export async function generateAuthenticationOptions(userId?: string) {
  */
 export async function verifyRegistrationResponse(
     userId: string,
-    credential: any,
+    credential: {
+        id: string;
+        rawId: ArrayBuffer;
+        response: {
+            attestationObject: ArrayBuffer;
+            getTransports?: () => string[];
+        };
+        authenticatorAttachment?: string;
+    },
     expectedChallenge: string,
     deviceName?: string
 ) {
@@ -169,8 +183,9 @@ export async function verifyRegistrationResponse(
  * Verify authentication response
  */
 export async function verifyAuthenticationResponse(
-    credential: any,
-    expectedChallenge: string
+    credential: {
+        rawId: ArrayBuffer;
+    }
 ) {
     try {
         const credentialId = bufferToBase64(credential.rawId);

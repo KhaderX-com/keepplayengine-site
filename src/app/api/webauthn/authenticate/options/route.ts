@@ -69,10 +69,11 @@ export async function POST(request: NextRequest) {
         });
 
         return response;
-    } catch (error: any) {
-        console.error("Error generating authentication options:", error);
+    } catch (error) {
+        const err = error as Error;
+        console.error("Error generating authentication options:", err);
         return NextResponse.json(
-            { error: "Failed to generate authentication options", details: error.message },
+            { error: "Failed to generate authentication options", details: err.message },
             { status: 500 }
         );
     }

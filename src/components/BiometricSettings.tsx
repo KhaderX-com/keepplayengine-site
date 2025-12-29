@@ -76,7 +76,7 @@ export default function BiometricSettings() {
                     ...options.user,
                     id: new Uint8Array(options.user.id),
                 },
-                excludeCredentials: options.excludeCredentials?.map((cred: any) => ({
+                excludeCredentials: options.excludeCredentials?.map((cred: { id: number[]; type: string; transports?: string[] }) => ({
                     ...cred,
                     id: new Uint8Array(cred.id),
                 })),
@@ -125,9 +125,10 @@ export default function BiometricSettings() {
             setSuccess("Biometric authentication enrolled successfully!");
             setDeviceName("");
             await loadDevices();
-        } catch (err: any) {
-            console.error("Enrollment error:", err);
-            setError(err.message || "Failed to enroll biometric authentication");
+        } catch (err) {
+            const error = err as Error;
+            console.error("Enrollment error:", error);
+            setError(error.message || "Failed to enroll biometric authentication");
         } finally {
             setEnrolling(false);
         }
@@ -151,8 +152,9 @@ export default function BiometricSettings() {
 
             setSuccess("Device removed successfully");
             await loadDevices();
-        } catch (err: any) {
-            setError(err.message || "Failed to remove device");
+        } catch (err) {
+            const error = err as Error;
+            setError(error.message || "Failed to remove device");
         }
     };
 
@@ -252,7 +254,7 @@ export default function BiometricSettings() {
                         </button>
                     </div>
                     <p className="mt-2 text-xs text-gray-500">
-                        You'll be prompted to use your fingerprint, Face ID, or device PIN
+                        You&apos;ll be prompted to use your fingerprint, Face ID, or device PIN
                     </p>
                 </div>
             )}

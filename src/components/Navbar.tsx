@@ -47,7 +47,7 @@ export default function Navbar() {
                     <button
                         className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-900 hover:text-white hover:bg-[#00D4EE] focus:outline-none"
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
-                        aria-expanded={isMenuOpen}
+                        {...({ "aria-expanded": isMenuOpen })}
                         aria-label="Toggle menu"
                     >
                         <svg

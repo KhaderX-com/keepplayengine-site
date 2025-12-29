@@ -3,7 +3,7 @@
 import { signIn } from "next-auth/react";
 import { useState, FormEvent, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { isWebAuthnSupported, isPlatformAuthenticatorAvailable, bufferToBase64 } from "@/lib/webauthn";
+import { isWebAuthnSupported, isPlatformAuthenticatorAvailable } from "@/lib/webauthn";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -13,7 +13,6 @@ export default function AdminLoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [biometricAvailable, setBiometricAvailable] = useState(false);
-  const [showBiometric, setShowBiometric] = useState(false);
   const [biometricLoading, setBiometricLoading] = useState(false);
 
   // Check biometric availability on mount
@@ -55,7 +54,7 @@ export default function AdminLoginPage() {
       const publicKeyOptions = {
         ...options,
         challenge: new Uint8Array(options.challenge),
-        allowCredentials: options.allowCredentials?.map((cred: any) => ({
+        allowCredentials: options.allowCredentials?.map((cred: { id: number[]; type: string; transports?: string[] }) => ({
           ...cred,
           id: new Uint8Array(cred.id),
         })),
@@ -115,9 +114,10 @@ export default function AdminLoginPage() {
       } else {
         throw new Error("Session creation failed");
       }
-    } catch (err: any) {
-      console.error("Biometric auth error:", err);
-      setError(err.message || "Biometric authentication failed");
+    } catch (err) {
+      const error = err as Error;
+      console.error("Biometric auth error:", error);
+      setError(error.message || "Biometric authentication failed");
       setBiometricLoading(false);
     }
   };

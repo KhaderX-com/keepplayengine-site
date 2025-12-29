@@ -7,7 +7,7 @@ import { getUserBiometricDevices, removeBiometricDevice } from "@/lib/webauthn";
  * GET /api/webauthn/devices
  * Get user's registered biometric devices
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
     try {
         const session = await getServerSession(authOptions);
 
@@ -21,10 +21,11 @@ export async function GET(request: NextRequest) {
             success: true,
             devices,
         });
-    } catch (error: any) {
-        console.error("Error fetching devices:", error);
+    } catch (error) {
+        const err = error as Error;
+        console.error("Error fetching devices:", err);
         return NextResponse.json(
-            { error: "Failed to fetch devices", details: error.message },
+            { error: "Failed to fetch devices", details: err.message },
             { status: 500 }
         );
     }
@@ -57,10 +58,11 @@ export async function DELETE(request: NextRequest) {
             success: true,
             message: "Device removed successfully",
         });
-    } catch (error: any) {
-        console.error("Error removing device:", error);
+    } catch (error) {
+        const err = error as Error;
+        console.error("Error removing device:", err);
         return NextResponse.json(
-            { error: "Failed to remove device", details: error.message },
+            { error: "Failed to remove device", details: err.message },
             { status: 500 }
         );
     }

@@ -77,10 +77,11 @@ export async function POST(request: NextRequest) {
         });
 
         return response;
-    } catch (error: any) {
-        console.error("Error verifying registration:", error);
+    } catch (error) {
+        const err = error as Error;
+        console.error("Error verifying registration:", err);
         return NextResponse.json(
-            { error: "Failed to verify registration", details: error.message },
+            { error: "Failed to verify registration", details: err.message },
             { status: 500 }
         );
     }
