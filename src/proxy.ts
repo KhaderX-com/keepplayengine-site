@@ -18,6 +18,7 @@ export async function proxy(request: NextRequest) {
         if (
             pathname === "/admin/login" ||
             pathname.startsWith("/api/auth") ||
+            pathname.startsWith("/api/webauthn") ||
             pathname.startsWith("/_next") ||
             pathname.startsWith("/static")
         ) {
@@ -97,6 +98,7 @@ export async function proxy(request: NextRequest) {
         if (
             pathname === "/admin/login" ||
             pathname.startsWith("/api/auth") ||
+            pathname.startsWith("/api/webauthn") ||
             pathname.startsWith("/_next") ||
             pathname.startsWith("/static")
         ) {
