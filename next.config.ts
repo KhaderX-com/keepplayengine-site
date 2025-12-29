@@ -124,6 +124,18 @@ const pwaConfig = withPWA({
       },
     },
     {
+      urlPattern: /\/manifest\.json$/i,
+      handler: "NetworkFirst",
+      options: {
+        cacheName: "manifest",
+        expiration: {
+          maxEntries: 1,
+          maxAgeSeconds: 60 * 60, // 1 hour
+        },
+        networkTimeoutSeconds: 5,
+      },
+    },
+    {
       urlPattern: /\/api\/.*$/i,
       handler: "NetworkFirst",
       method: "GET",
