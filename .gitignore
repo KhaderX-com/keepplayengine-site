@@ -95,3 +95,4 @@ scripts/
 # VSCode workspace settings (may contain local paths)
 /.vscode/
 .vscode/
+.vercel
