@@ -42,20 +42,23 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?   // Hashed password for credentials login
-  role          UserRole  @default(USER)
-  isActive      Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                  String    @id @default(cuid())
+  name                String?
+  email               String?   @unique
+  emailVerified       DateTime?
+  image               String?
+  password            String?   // Hashed password for credentials login
+  role                UserRole  @default(USER)
+  isActive            Boolean   @default(true)
+  biometricEnabled    Boolean   @default(false) // Whether biometric auth is enabled
+  requireBiometric    Boolean   @default(false) // Whether biometric is required for login
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
   
-  accounts      Account[]
-  sessions      Session[]
-  loginAttempts LoginAttempt[]
+  accounts            Account[]
+  sessions            Session[]
+  loginAttempts       LoginAttempt[]
+  webauthnCredentials WebAuthnCredential[]
 }
 
 model VerificationToken {
@@ -80,6 +83,25 @@ model LoginAttempt {
   
   @@index([email, timestamp])
   @@index([ipAddress, timestamp])
+}
+
+// WebAuthn/Biometric Authentication
+model WebAuthnCredential {
+  id                String   @id @default(cuid())
+  userId            String
+  credentialId      String   @unique // Base64 encoded credential ID
+  publicKey         String   @db.Text // Base64 encoded public key
+  counter           BigInt   @default(0) // Signature counter for replay protection
+  deviceName        String?  // User-friendly device name
+  deviceType        String?  // "platform" (biometric) or "cross-platform" (security key)
+  transports        String[] // ["usb", "nfc", "ble", "internal"]
+  createdAt         DateTime @default(now())
+  lastUsedAt        DateTime @default(now())
+  
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([credentialId])
 }
 
 enum UserRole {

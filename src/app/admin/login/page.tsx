@@ -1,8 +1,9 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { isWebAuthnSupported, isPlatformAuthenticatorAvailable, bufferToBase64 } from "@/lib/webauthn";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -11,6 +12,115 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [biometricAvailable, setBiometricAvailable] = useState(false);
+  const [showBiometric, setShowBiometric] = useState(false);
+  const [biometricLoading, setBiometricLoading] = useState(false);
+
+  // Check biometric availability on mount
+  useEffect(() => {
+    const checkBiometric = async () => {
+      if (isWebAuthnSupported()) {
+        const available = await isPlatformAuthenticatorAvailable();
+        setBiometricAvailable(available);
+      }
+    };
+    checkBiometric();
+  }, []);
+
+  const handleBiometricAuth = async () => {
+    if (!email) {
+      setError("Please enter your email first");
+      return;
+    }
+
+    setBiometricLoading(true);
+    setError("");
+
+    try {
+      // Get authentication options
+      const optionsRes = await fetch("/api/webauthn/authenticate/options", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!optionsRes.ok) {
+        const data = await optionsRes.json();
+        throw new Error(data.error || "Failed to get authentication options");
+      }
+
+      const { options } = await optionsRes.json();
+
+      // Convert arrays back to Uint8Arrays
+      const publicKeyOptions = {
+        ...options,
+        challenge: new Uint8Array(options.challenge),
+        allowCredentials: options.allowCredentials?.map((cred: any) => ({
+          ...cred,
+          id: new Uint8Array(cred.id),
+        })),
+      };
+
+      // Trigger biometric authentication
+      const credential = await navigator.credentials.get({
+        publicKey: publicKeyOptions,
+      });
+
+      if (!credential) {
+        throw new Error("Authentication cancelled");
+      }
+
+      // Prepare credential for verification
+      const publicKeyCredential = credential as PublicKeyCredential;
+      const response = publicKeyCredential.response as AuthenticatorAssertionResponse;
+
+      const credentialData = {
+        id: publicKeyCredential.id,
+        rawId: Array.from(new Uint8Array(publicKeyCredential.rawId)),
+        type: publicKeyCredential.type,
+        response: {
+          clientDataJSON: Array.from(new Uint8Array(response.clientDataJSON)),
+          authenticatorData: Array.from(new Uint8Array(response.authenticatorData)),
+          signature: Array.from(new Uint8Array(response.signature)),
+          userHandle: response.userHandle
+            ? Array.from(new Uint8Array(response.userHandle))
+            : null,
+        },
+      };
+
+      // Verify authentication
+      const verifyRes = await fetch("/api/webauthn/authenticate/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credential: credentialData }),
+      });
+
+      if (!verifyRes.ok) {
+        const data = await verifyRes.json();
+        throw new Error(data.error || "Authentication failed");
+      }
+
+      // Success - sign in with NextAuth
+      const result = await signIn("credentials", {
+        email,
+        password: "__BIOMETRIC_AUTH__", // Special flag for biometric
+        redirect: false,
+      });
+
+      if (result?.ok) {
+        setTimeout(() => {
+          router.push("/admin");
+          router.refresh();
+        }, 100);
+      } else {
+        throw new Error("Session creation failed");
+      }
+    } catch (err: any) {
+      console.error("Biometric auth error:", err);
+      setError(err.message || "Biometric authentication failed");
+      setBiometricLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -213,6 +323,74 @@ export default function AdminLoginPage() {
             </button>
           </form>
 
+          {/* Biometric Authentication Option */}
+          {biometricAvailable && email && (
+            <div className="mt-4">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white text-gray-500">Or continue with</span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleBiometricAuth}
+                disabled={biometricLoading || loading}
+                className="mt-4 w-full flex justify-center items-center py-3 px-4 border-2 border-blue-200 rounded-lg shadow-sm text-sm font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                {biometricLoading ? (
+                  <>
+                    <svg
+                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-700"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Authenticating...
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      className="w-5 h-5 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"
+                      />
+                    </svg>
+                    Biometric Authentication
+                  </>
+                )}
+              </button>
+
+              <p className="mt-2 text-xs text-center text-gray-500">
+                Use fingerprint, Face ID, or device PIN
+              </p>
+            </div>
+          )}
+
           {/* Security Info */}
           <div className="mt-6 pt-6 border-t border-gray-200">
             <div className="text-xs text-gray-600 space-y-2.5">
@@ -258,6 +436,22 @@ export default function AdminLoginPage() {
                 </svg>
                 All access attempts are logged and monitored
               </p>
+              {biometricAvailable && (
+                <p className="flex items-center">
+                  <svg
+                    className="w-4 h-4 text-green-600 mr-2 flex-shrink-0"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  Biometric authentication available
+                </p>
+              )}
             </div>
           </div>
         </div>
