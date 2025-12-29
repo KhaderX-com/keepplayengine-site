@@ -32,7 +32,40 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+.env
 .env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.backup
+
+# Sensitive configuration files
+config.local.js
+secrets.json
+credentials.json
+
+# Database files
+*.sqlite
+*.sqlite3
+*.db
+
+# Logs with potential sensitive info
+*.log
+logs/
+*.log.*
+
+# Backup files
+*.backup
+*.bak
+*.tmp
+*.temp
+
+# IDE and editor files with potential secrets
+.idea/
+.vscode/settings.json
+*.swp
+*.swo
+*~
 
 # vercel
 .vercel
@@ -42,5 +75,15 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# Documentation (contains security docs - keep local only)
 /docs/
 docs/
+
+# Scripts (contains admin creation script - keep local only)
+/scripts/
+scripts/
+
+# VSCode workspace settings (may contain local paths)
+/.vscode/
+.vscode/
