@@ -52,7 +52,7 @@ export interface AdminUser {
     two_factor_enabled: boolean;
     two_factor_secret: string | null;
     backup_codes: string[] | null;
-    metadata: Record<string, any>;
+    metadata: Record<string, unknown>;
     created_at: string;
     updated_at: string;
     created_by: string | null;
@@ -64,7 +64,7 @@ export interface AdminSession {
     session_token: string;
     ip_address: string;
     user_agent: string | null;
-    device_info: Record<string, any>;
+    device_info: Record<string, unknown>;
     expires_at: string;
     last_activity_at: string;
     is_revoked: boolean;
@@ -79,11 +79,11 @@ export interface AdminLoginAttempt {
     email: string;
     ip_address: string;
     user_agent: string | null;
-    device_info: Record<string, any>;
+    device_info: Record<string, unknown>;
     attempt_type: string;
     success: boolean;
     failure_reason: string | null;
-    geo_location: Record<string, any>;
+    geo_location: Record<string, unknown>;
     created_at: string;
 }
 
@@ -94,7 +94,7 @@ export interface AdminActivityLog {
     resource_type: string;
     resource_id: string | null;
     description: string | null;
-    changes: Record<string, any>;
+    changes: Record<string, unknown>;
     ip_address: string;
     user_agent: string | null;
     severity: 'info' | 'warning' | 'critical';

@@ -47,7 +47,7 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 .env.backup
-!.env.example
+.env.example
 
 # Sensitive configuration files
 config.local.js

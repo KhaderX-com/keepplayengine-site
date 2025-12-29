@@ -1,6 +1,6 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { supabaseAdmin, AdminRoleType } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase";
 import bcrypt from "bcryptjs";
 
 // Maximum login attempts before lockout

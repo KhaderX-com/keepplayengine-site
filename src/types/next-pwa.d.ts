@@ -35,7 +35,7 @@ declare module 'next-pwa' {
                     ignoreMethod?: boolean;
                     ignoreVary?: boolean;
                 };
-                plugins?: any[];
+                plugins?: unknown[];
                 fetchOptions?: RequestInit;
                 networkTimeoutSeconds?: number;
                 rangeRequests?: boolean;
