@@ -1,11 +1,12 @@
 {
-    "name": "KeepPlay Engine Admin",
-    "short_name": "KPE Admin",
-    "description": "KeepPlay Engine Administrative Panel",
-    "start_url": "/admin/login",
+    "name": "KeepPlay Engine - Play-to-Earn Ecosystem",
+    "short_name": "KeepPlay",
+    "description": "A Play-to-Earn Ecosystem That Never Runs Dry. Build technology that engages and excites players.",
+    "start_url": "/",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#2563eb",
+    "scope": "/",
     "icons": [
         {
             "src": "/icon-192.png",
@@ -18,11 +19,40 @@
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "maskable any"
+        },
+        {
+            "src": "/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
         }
     ],
     "categories": [
         "business",
-        "productivity"
+        "productivity",
+        "entertainment"
     ],
-    "orientation": "portrait-primary"
+    "orientation": "any",
+    "screenshots": [],
+    "shortcuts": [
+        {
+            "name": "Admin Panel",
+            "short_name": "Admin",
+            "description": "Access the administrative panel",
+            "url": "/admin/login",
+            "icons": [
+                {
+                    "src": "/icon-192.png",
+                    "sizes": "192x192"
+                }
+            ]
+        }
+    ],
+    "prefer_related_applications": false
 }

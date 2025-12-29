@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "@/app/globals.css";
 import { getServerSession } from "next-auth";
@@ -20,18 +20,19 @@ export const metadata: Metadata = {
     description: "Secure administrative interface for KeepPlay Engine",
     robots: "noindex, nofollow",
     manifest: "/manifest.json",
-    themeColor: "#2563eb",
-    viewport: {
-        width: "device-width",
-        initialScale: 1,
-        maximumScale: 1,
-        userScalable: false,
-    },
     appleWebApp: {
         capable: true,
         statusBarStyle: "default",
         title: "KPE Admin",
     },
+};
+
+export const viewport: Viewport = {
+    themeColor: "#2563eb",
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
 };
 
 export default async function AdminLayout({
