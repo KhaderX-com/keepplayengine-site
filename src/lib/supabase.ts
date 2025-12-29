@@ -1,21 +1,44 @@
 import { createClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!supabaseUrl) {
-    throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable');
+// Only initialize admin client on server-side
+// This prevents client-side bundle from including sensitive keys
+let _supabaseAdmin: SupabaseClient | null = null;
+
+function getSupabaseAdmin(): SupabaseClient {
+    // Check if running on server-side
+    if (typeof window !== 'undefined') {
+        throw new Error('supabaseAdmin can only be used on the server-side');
+    }
+
+    if (!supabaseUrl) {
+        throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable');
+    }
+
+    if (!supabaseServiceKey) {
+        throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable');
+    }
+
+    if (!_supabaseAdmin) {
+        _supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+            auth: {
+                autoRefreshToken: false,
+                persistSession: false
+            }
+        });
+    }
+
+    return _supabaseAdmin;
 }
 
-if (!supabaseServiceKey) {
-    throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable');
-}
-
-// Client for server-side operations (bypasses RLS)
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-    auth: {
-        autoRefreshToken: false,
-        persistSession: false
+// Export as a proxy that throws helpful error if used client-side
+export const supabaseAdmin = new Proxy({} as SupabaseClient, {
+    get(_target, prop) {
+        const admin = getSupabaseAdmin();
+        return admin[prop as keyof SupabaseClient];
     }
 });
 

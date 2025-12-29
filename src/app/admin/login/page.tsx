@@ -3,7 +3,7 @@
 import { signIn } from "next-auth/react";
 import { useState, FormEvent, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { isWebAuthnSupported, isPlatformAuthenticatorAvailable } from "@/lib/webauthn";
+import { isWebAuthnSupported, isPlatformAuthenticatorAvailable } from "@/lib/webauthn-client";
 
 export default function AdminLoginPage() {
   const router = useRouter();
