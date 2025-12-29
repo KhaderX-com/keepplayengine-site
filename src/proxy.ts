@@ -53,18 +53,27 @@ export async function proxy(request: NextRequest) {
             return NextResponse.redirect(new URL("/", mainSiteUrl));
         }
 
-        // Add security headers for admin panel
+        // Add comprehensive security headers for admin panel
         const response = NextResponse.next();
 
-        // Strict security headers
-        response.headers.set("X-Frame-Options", "DENY");
-        response.headers.set("X-Content-Type-Options", "nosniff");
-        response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-        response.headers.set("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
+        // Content Security Policy (Enhanced)
         response.headers.set(
             "Content-Security-Policy",
-            "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self';"
+            "default-src 'self'; " +
+            "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live; " +
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+            "font-src 'self' https://fonts.gstatic.com; " +
+            "img-src 'self' data: https: blob:; " +
+            "connect-src 'self' https://*.supabase.co https://public-pwa.vercel.app; " +
+            "frame-ancestors 'none';"
         );
+
+        // Security Headers
+        response.headers.set("X-Frame-Options", "DENY");
+        response.headers.set("X-Content-Type-Options", "nosniff");
+        response.headers.set("X-XSS-Protection", "1; mode=block");
+        response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+        response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
         response.headers.set(
             "Strict-Transport-Security",
             "max-age=31536000; includeSubDomains; preload"
@@ -120,6 +129,8 @@ export async function proxy(request: NextRequest) {
         const response = NextResponse.next();
         response.headers.set("X-Frame-Options", "DENY");
         response.headers.set("X-Content-Type-Options", "nosniff");
+        response.headers.set("X-XSS-Protection", "1; mode=block");
+        response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
         return response;
     }
 

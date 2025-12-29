@@ -39,6 +39,7 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
+# CRITICAL: Never commit these files - they contain sensitive secrets
 .env*
 .env
 .env.local
@@ -46,6 +47,7 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 .env.backup
+!.env.example
 
 # Sensitive configuration files
 config.local.js

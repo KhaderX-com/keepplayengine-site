@@ -55,11 +55,14 @@ export default async function AdminLayout({
 }>) {
     const session = await getServerSession(authOptions);
 
+    // Server-side authentication check
+    // Note: Cloudflare Access provides additional layer of security
+    // This check ensures NextAuth session is valid
+
     return (
         <html lang="en">
             <head>
                 <link rel="icon" href="/icon-192.png" />
-                <link rel="apple-touch-icon" href="/icon-192.png" />
                 <meta name="mobile-web-app-capable" content="yes" />
                 <meta name="apple-mobile-web-app-capable" content="yes" />
             </head>
