@@ -42,14 +42,14 @@ export async function POST(request: NextRequest) {
             success: true,
             options: {
                 ...options,
-                challenge: Array.from(options.challenge instanceof ArrayBuffer ? new Uint8Array(options.challenge) : options.challenge),
+                challenge: Array.from(new Uint8Array(options.challenge as ArrayBuffer)),
                 user: {
                     ...options.user,
-                    id: Array.from(options.user.id instanceof ArrayBuffer ? new Uint8Array(options.user.id) : options.user.id),
+                    id: Array.from(new Uint8Array(options.user.id as ArrayBuffer)),
                 },
                 excludeCredentials: options.excludeCredentials?.map((cred) => ({
                     ...cred,
-                    id: Array.from(cred.id instanceof ArrayBuffer ? new Uint8Array(cred.id) : cred.id),
+                    id: Array.from(new Uint8Array(cred.id as ArrayBuffer)),
                 })),
             },
             challenge,

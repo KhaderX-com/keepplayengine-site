@@ -43,10 +43,10 @@ export async function POST(request: NextRequest) {
             success: true,
             options: {
                 ...options,
-                challenge: Array.from(options.challenge instanceof ArrayBuffer ? new Uint8Array(options.challenge) : options.challenge),
+                challenge: Array.from(new Uint8Array(options.challenge as ArrayBuffer)),
                 allowCredentials: options.allowCredentials?.map((cred) => ({
                     ...cred,
-                    id: Array.from(cred.id instanceof ArrayBuffer ? new Uint8Array(cred.id) : cred.id),
+                    id: Array.from(new Uint8Array(cred.id as ArrayBuffer)),
                 })),
             },
             challenge,

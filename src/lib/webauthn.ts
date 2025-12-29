@@ -265,8 +265,8 @@ export async function removeBiometricDevice(userId: string, credentialId: string
 }
 
 // Utility functions for buffer/base64 conversion
-export function bufferToBase64(buffer: ArrayBuffer): string {
-    const bytes = new Uint8Array(buffer);
+export function bufferToBase64(buffer: ArrayBuffer | Uint8Array): string {
+    const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
     let binary = '';
     for (let i = 0; i < bytes.byteLength; i++) {
         binary += String.fromCharCode(bytes[i]);
@@ -285,7 +285,7 @@ export function base64ToBuffer(base64: string): ArrayBuffer {
 
 export function stringToBuffer(str: string): ArrayBuffer {
     const encoder = new TextEncoder();
-    return encoder.encode(str);
+    return encoder.encode(str).buffer;
 }
 
 export function bufferToString(buffer: ArrayBuffer): string {
