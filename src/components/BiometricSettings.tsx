@@ -12,6 +12,12 @@ interface BiometricDevice {
     last_used_at: string;
 }
 
+interface BiometricConfig {
+    biometricEnabled: boolean;
+    allowEnrollment: boolean;
+    notes?: string;
+}
+
 export default function BiometricSettings() {
     const { data: session } = useSession();
     const [devices, setDevices] = useState<BiometricDevice[]>([]);
@@ -21,9 +27,15 @@ export default function BiometricSettings() {
     const [success, setSuccess] = useState("");
     const [biometricAvailable, setBiometricAvailable] = useState(false);
     const [deviceName, setDeviceName] = useState("");
+    const [config, setConfig] = useState<BiometricConfig>({
+        biometricEnabled: false,
+        allowEnrollment: false
+    });
+    const [configLoading, setConfigLoading] = useState(true);
 
     useEffect(() => {
         checkBiometricSupport();
+        loadConfig();
         loadDevices();
     }, []);
 
@@ -31,6 +43,20 @@ export default function BiometricSettings() {
         if (isWebAuthnSupported()) {
             const available = await isPlatformAuthenticatorAvailable();
             setBiometricAvailable(available);
+        }
+    };
+
+    const loadConfig = async () => {
+        try {
+            const res = await fetch("/api/webauthn/config");
+            if (res.ok) {
+                const data = await res.json();
+                setConfig(data);
+            }
+        } catch (err) {
+            console.error("Failed to load config:", err);
+        } finally {
+            setConfigLoading(false);
         }
     };
 
@@ -162,6 +188,28 @@ export default function BiometricSettings() {
         return null;
     }
 
+    // If biometric layer is completely disabled, don't show anything
+    if (!configLoading && !config.biometricEnabled) {
+        return (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                <div className="flex items-center space-x-3">
+                    <svg className="h-8 w-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <div>
+                        <h3 className="text-lg font-semibold text-yellow-900">Biometric Authentication Unavailable</h3>
+                        <p className="text-sm text-yellow-700 mt-1">
+                            Biometric authentication is currently disabled by your administrator.
+                        </p>
+                        {config.notes && (
+                            <p className="text-xs text-yellow-600 mt-2 italic">Note: {config.notes}</p>
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
@@ -180,8 +228,15 @@ export default function BiometricSettings() {
                 </div>
             )}
 
+            {/* Configuration Loading */}
+            {configLoading && (
+                <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p className="text-sm text-blue-700">Loading biometric configuration...</p>
+                </div>
+            )}
+
             {/* Availability Check */}
-            {!biometricAvailable && (
+            {!biometricAvailable && !configLoading && (
                 <div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                     <p className="text-sm text-yellow-700">
                         Biometric authentication is not available on this device.
@@ -190,8 +245,25 @@ export default function BiometricSettings() {
                 </div>
             )}
 
-            {/* Enrollment Section */}
-            {biometricAvailable && (
+            {/* Enrollment Disabled Notice */}
+            {!config.allowEnrollment && !configLoading && biometricAvailable && (
+                <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-start space-x-3">
+                        <svg className="h-5 w-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div>
+                            <p className="text-sm font-semibold text-blue-900">Enrollment Currently Restricted</p>
+                            <p className="text-sm text-blue-700 mt-1">
+                                New biometric device enrollment is temporarily disabled. You can still authenticate with existing devices.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Enrollment Section - Only show if allowed */}
+            {biometricAvailable && config.allowEnrollment && !configLoading && (
                 <div className="mb-6">
                     <h3 className="text-lg font-semibold text-gray-800 mb-3">
                         Enroll New Device

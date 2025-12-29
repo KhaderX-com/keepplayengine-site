@@ -17,6 +17,34 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "Email required" }, { status: 400 });
         }
 
+        // Check if enrollment is allowed from Supabase config
+        const { data: config, error: configError } = await supabaseAdmin
+            .from('biometric_config')
+            .select('allow_enrollment, biometric_enabled')
+            .eq('id', 'global')
+            .single();
+
+        if (configError || !config) {
+            return NextResponse.json(
+                { error: "Biometric enrollment is not available. Please contact your administrator." },
+                { status: 403 }
+            );
+        }
+
+        if (!config.biometric_enabled) {
+            return NextResponse.json(
+                { error: "Biometric authentication is currently disabled." },
+                { status: 403 }
+            );
+        }
+
+        if (!config.allow_enrollment) {
+            return NextResponse.json(
+                { error: "Biometric enrollment is not permitted at this time. Please contact your administrator." },
+                { status: 403 }
+            );
+        }
+
         // Get user by email
         const { data: user, error: userError } = await supabaseAdmin
             .from("admin_users")

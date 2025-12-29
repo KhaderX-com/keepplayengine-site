@@ -109,3 +109,13 @@ enum UserRole {
   ADMIN
   SUPER_ADMIN
 }
+
+// Biometric Security Configuration (Controlled from Supabase)
+model BiometricConfig {
+  id                        String   @id @default("global") // Singleton record
+  biometricEnabled          Boolean  @default(true)  // Global toggle for entire biometric layer
+  allowEnrollment           Boolean  @default(false) // Allow users to set up new biometric devices
+  updatedAt                 DateTime @updatedAt
+  updatedBy                 String?  // Admin user ID who made the change
+  notes                     String?  @db.Text // Admin notes for changes (e.g., "Disabled due to security incident")
+}
