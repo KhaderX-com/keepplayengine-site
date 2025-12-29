@@ -1,7 +1,7 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { useState, FormEvent, useEffect } from "react";
+import { useState, FormEvent, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { isWebAuthnSupported, isPlatformAuthenticatorAvailable } from "@/lib/webauthn-client";
 
@@ -22,6 +22,14 @@ export default function AdminLoginPage() {
     notes?: string;
   } | null>(null);
   const [configLoading, setConfigLoading] = useState(true);
+
+  // 4th Security Layer: Vault PIN
+  const [biometricVerified, setBiometricVerified] = useState(false);
+  const [vaultPin, setVaultPin] = useState(["", "", ""]);
+  const [pinLoading, setPinLoading] = useState(false);
+  const [pinLocked, setPinLocked] = useState(false);
+  const [lockoutRemaining, setLockoutRemaining] = useState(0);
+  const pinInputRefs = useRef<(HTMLInputElement | null)[]>([null, null, null]);
 
   // Check biometric availability and config on mount
   useEffect(() => {
@@ -47,6 +55,115 @@ export default function AdminLoginPage() {
     checkBiometric();
     loadConfig();
   }, []);
+
+  // Lockout countdown effect
+  useEffect(() => {
+    if (lockoutRemaining > 0) {
+      const timer = setInterval(() => {
+        setLockoutRemaining((prev) => {
+          if (prev <= 1) {
+            setPinLocked(false);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [lockoutRemaining]);
+
+  // Focus first PIN input when PIN step becomes active
+  useEffect(() => {
+    if (biometricVerified && pinInputRefs.current[0]) {
+      setTimeout(() => pinInputRefs.current[0]?.focus(), 100);
+    }
+  }, [biometricVerified]);
+
+  // Handle PIN input change
+  const handlePinChange = (index: number, value: string) => {
+    // Only allow single digits
+    if (value.length > 1) value = value.slice(-1);
+    if (value && !/^\d$/.test(value)) return;
+
+    const newPin = [...vaultPin];
+    newPin[index] = value;
+    setVaultPin(newPin);
+    setError("");
+
+    // Auto-advance to next input
+    if (value && index < 2) {
+      pinInputRefs.current[index + 1]?.focus();
+    }
+
+    // Auto-submit when all digits entered
+    if (value && index === 2 && newPin.every(d => d !== "")) {
+      handleVaultPinSubmit(newPin.join(""));
+    }
+  };
+
+  // Handle PIN keydown for backspace navigation
+  const handlePinKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && !vaultPin[index] && index > 0) {
+      pinInputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  // Handle vault PIN verification
+  const handleVaultPinSubmit = async (pin: string) => {
+    setPinLoading(true);
+    setError("");
+
+    try {
+      const verifyRes = await fetch("/api/auth/verify-vault-pin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pin }),
+      });
+
+      const data = await verifyRes.json();
+
+      if (data.locked) {
+        setPinLocked(true);
+        setLockoutRemaining(data.remainingSeconds || 300);
+        setVaultPin(["", "", ""]);
+        setError(data.error || "Too many attempts. Please wait.");
+        setPinLoading(false);
+        return;
+      }
+
+      if (!verifyRes.ok || !data.valid) {
+        setVaultPin(["", "", ""]);
+        setError(data.error || "Invalid vault PIN");
+        setPinLoading(false);
+        pinInputRefs.current[0]?.focus();
+        return;
+      }
+
+      // PIN verified! Now create the final session
+      console.log("Vault PIN verified! Creating session...");
+
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.ok) {
+        setTimeout(() => {
+          router.push("/admin");
+          router.refresh();
+        }, 100);
+      } else {
+        throw new Error("Session creation failed");
+      }
+    } catch (err) {
+      const error = err as Error;
+      console.error("Vault PIN error:", error);
+      setError(error.message || "Verification failed");
+      setVaultPin(["", "", ""]);
+      setPinLoading(false);
+    }
+  };
 
   // Handle biometric enrollment for first-time users
   const handleBiometricEnroll = async () => {
@@ -211,23 +328,11 @@ export default function AdminLoginPage() {
         throw new Error(data.error || "Authentication failed");
       }
 
-      // Success - now complete the login by creating session
-      console.log("Biometric verified! Creating session...");
-
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
-      });
-
-      if (result?.ok) {
-        setTimeout(() => {
-          router.push("/admin");
-          router.refresh();
-        }, 100);
-      } else {
-        throw new Error("Session creation failed");
-      }
+      // Success - biometric verified, now proceed to vault PIN (4th layer)
+      console.log("Biometric verified! Proceeding to vault PIN...");
+      setBiometricVerified(true);
+      setBiometricLoading(false);
+      setError("");
     } catch (err) {
       const error = err as Error;
       console.error("Biometric auth error:", error);
@@ -384,7 +489,7 @@ export default function AdminLoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
-                  placeholder="admin@keepplayengine.com"
+                  placeholder="security•••"
                   disabled={loading}
                 />
               </div>
@@ -462,7 +567,7 @@ export default function AdminLoginPage() {
           )}
 
           {/* Step 2: Biometric Verification (replaces password form) */}
-          {passwordVerified && biometricAvailable && biometricConfig?.biometricEnabled && (
+          {passwordVerified && !biometricVerified && biometricAvailable && biometricConfig?.biometricEnabled && (
             <div className="space-y-6">
               <div className="text-center">
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
@@ -631,8 +736,118 @@ export default function AdminLoginPage() {
             </div>
           )}
 
+          {/* Step 3: Vault PIN Verification (Final Security Layer) */}
+          {biometricVerified && (
+            <div className="space-y-6">
+              <div className="text-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-100 rounded-full mb-4">
+                  <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  Vault Access
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Enter your secure vault PIN to complete access
+                </p>
+              </div>
+
+              {/* Progress indicator showing all 4 security layers */}
+              <div className="flex items-center justify-center space-x-2 py-2">
+                <div className="flex items-center">
+                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                    <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <span className="ml-1 text-xs text-gray-500">CF</span>
+                </div>
+                <div className="w-4 h-0.5 bg-green-500"></div>
+                <div className="flex items-center">
+                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                    <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <span className="ml-1 text-xs text-gray-500">Auth</span>
+                </div>
+                <div className="w-4 h-0.5 bg-green-500"></div>
+                <div className="flex items-center">
+                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                    <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <span className="ml-1 text-xs text-gray-500">Bio</span>
+                </div>
+                <div className="w-4 h-0.5 bg-emerald-300"></div>
+                <div className="flex items-center">
+                  <div className="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center animate-pulse">
+                    <span className="text-white text-xs font-bold">4</span>
+                  </div>
+                  <span className="ml-1 text-xs text-emerald-600 font-medium">PIN</span>
+                </div>
+              </div>
+
+              {/* PIN Input */}
+              <div className="flex justify-center space-x-4" role="group" aria-label="Vault PIN input">
+                {[0, 1, 2].map((index) => (
+                  <input
+                    key={index}
+                    ref={(el) => { pinInputRefs.current[index] = el; }}
+                    type="password"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={vaultPin[index]}
+                    onChange={(e) => handlePinChange(index, e.target.value)}
+                    onKeyDown={(e) => handlePinKeyDown(index, e)}
+                    disabled={pinLoading || pinLocked}
+                    className="w-14 h-16 text-center text-2xl font-bold border-2 border-gray-300 rounded-xl bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    autoComplete="off"
+                    aria-label={`PIN digit ${index + 1}`}
+                    title={`PIN digit ${index + 1}`}
+                  />
+                ))}
+              </div>
+
+              {/* Lockout Warning */}
+              {pinLocked && lockoutRemaining > 0 && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <div className="flex items-center justify-center">
+                    <svg className="w-5 h-5 text-red-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                    <span className="text-sm text-red-700 font-medium">
+                      Security lockout: {Math.floor(lockoutRemaining / 60)}:{(lockoutRemaining % 60).toString().padStart(2, '0')}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Loading indicator */}
+              {pinLoading && (
+                <div className="flex justify-center">
+                  <svg className="animate-spin h-8 w-8 text-emerald-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                </div>
+              )}
+
+              <div className="flex items-center justify-center pt-2">
+                <div className="flex items-center space-x-2 text-xs text-gray-500">
+                  <svg className="w-4 h-4 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span>Bank-grade vault protection • 3 attempts max</span>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Biometric layer disabled */}
-          {passwordVerified && (!biometricConfig?.biometricEnabled || configLoading) && (
+          {passwordVerified && !biometricVerified && (!biometricConfig?.biometricEnabled || configLoading) && (
             <div className="space-y-6">
               <div className="text-center">
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-yellow-100 rounded-full mb-4">
@@ -670,7 +885,7 @@ export default function AdminLoginPage() {
           )}
 
           {/* No biometric available error */}
-          {passwordVerified && biometricConfig?.biometricEnabled && !biometricAvailable && (
+          {passwordVerified && !biometricVerified && biometricConfig?.biometricEnabled && !biometricAvailable && (
             <div className="space-y-6">
               <div className="text-center">
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4">
@@ -706,6 +921,7 @@ export default function AdminLoginPage() {
         {/* Security Info */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-6">
           <div className="text-xs text-gray-600 space-y-2.5">
+            <p className="font-semibold text-gray-700 mb-3">🔐 4-Layer Security System</p>
             <p className="flex items-center">
               <svg
                 className="w-4 h-4 text-green-600 mr-2 flex-shrink-0"
@@ -718,7 +934,7 @@ export default function AdminLoginPage() {
                   clipRule="evenodd"
                 />
               </svg>
-              Rate limiting active (5 attempts per 15 min)
+              Layer 1: Cloudflare Access Protection
             </p>
             <p className="flex items-center">
               <svg
@@ -732,21 +948,7 @@ export default function AdminLoginPage() {
                   clipRule="evenodd"
                 />
               </svg>
-              Session expires after 2 hours of activity
-            </p>
-            <p className="flex items-center">
-              <svg
-                className="w-4 h-4 text-green-600 mr-2 flex-shrink-0"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              All access attempts are logged and monitored
+              Layer 2: Email &amp; Password Authentication
             </p>
             {biometricAvailable && (
               <p className="flex items-center">
@@ -761,9 +963,23 @@ export default function AdminLoginPage() {
                     clipRule="evenodd"
                   />
                 </svg>
-                Biometric authentication
+                Layer 3: Biometric Verification
               </p>
             )}
+            <p className="flex items-center">
+              <svg
+                className="w-4 h-4 text-emerald-600 mr-2 flex-shrink-0"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              Layer 4: Vault PIN (Bank-Grade)
+            </p>
           </div>
         </div>
 
