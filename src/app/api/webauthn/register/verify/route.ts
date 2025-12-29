@@ -1,27 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { verifyRegistrationResponse } from "@/lib/webauthn";
 import { supabaseAdmin } from "@/lib/supabase";
 
 /**
  * POST /api/webauthn/register/verify
  * Verify and store a biometric credential registration
+ * Works BEFORE session is created (during login flow)
  */
 export async function POST(request: NextRequest) {
     try {
-        const session = await getServerSession(authOptions);
+        const { email, credential, deviceName } = await request.json();
 
-        if (!session?.user?.id) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        if (!email) {
+            return NextResponse.json({ error: "Email required" }, { status: 400 });
         }
 
-        // Only allow admins to register biometric
-        if (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN") {
-            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        // Get user by email
+        const { data: user, error: userError } = await supabaseAdmin
+            .from("admin_users")
+            .select("id")
+            .eq("email", email)
+            .eq("is_active", true)
+            .single();
+
+        if (userError || !user) {
+            return NextResponse.json({ error: "User not found" }, { status: 404 });
         }
 
-        const { credential, deviceName } = await request.json();
         const challenge = request.cookies.get("webauthn_challenge")?.value;
 
         if (!challenge) {
@@ -44,7 +49,7 @@ export async function POST(request: NextRequest) {
 
         // Verify and store the credential
         const result = await verifyRegistrationResponse(
-            session.user.id,
+            user.id,
             processedCredential,
             challenge,
             deviceName
@@ -66,7 +71,7 @@ export async function POST(request: NextRequest) {
         const userAgent = request.headers.get("user-agent") || null;
 
         await supabaseAdmin.from("admin_activity_log").insert({
-            admin_user_id: session.user.id,
+            admin_user_id: user.id,
             action: "biometric_enrolled",
             resource_type: "authentication",
             ip_address: ipAddress,

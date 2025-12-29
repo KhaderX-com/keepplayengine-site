@@ -1,6 +1,5 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
+import { supabaseAdmin } from "@/lib/supabase";
 import {
     generateRegistrationOptions,
 } from "@/lib/webauthn";
@@ -8,24 +7,32 @@ import {
 /**
  * POST /api/webauthn/register/options
  * Generate registration options for enrolling a biometric credential
+ * Works BEFORE session is created (during login flow)
  */
-export async function POST() {
+export async function POST(request: NextRequest) {
     try {
-        const session = await getServerSession(authOptions);
+        const { email } = await request.json();
 
-        if (!session?.user?.id) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        if (!email) {
+            return NextResponse.json({ error: "Email required" }, { status: 400 });
         }
 
-        // Only allow admins to register biometric
-        if (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN") {
-            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        // Get user by email
+        const { data: user, error: userError } = await supabaseAdmin
+            .from("admin_users")
+            .select("id, full_name, email")
+            .eq("email", email)
+            .eq("is_active", true)
+            .single();
+
+        if (userError || !user) {
+            return NextResponse.json({ error: "User not found" }, { status: 404 });
         }
 
         const { options, challenge } = await generateRegistrationOptions(
-            session.user.id,
-            session.user.name || session.user.email || "Admin",
-            session.user.email || "admin@keepplayengine.com"
+            user.id,
+            user.full_name || user.email || "Admin",
+            user.email || "admin@keepplayengine.com"
         );
 
         // Store challenge in session or temporary storage

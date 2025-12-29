@@ -17,21 +17,28 @@ export async function POST(request: NextRequest) {
         // Get user by email
         const { data: user, error: userError } = await supabaseAdmin
             .from("admin_users")
-            .select("id, biometric_enabled")
+            .select("id")
             .eq("email", email)
             .eq("is_active", true)
             .single();
 
         if (userError || !user) {
             return NextResponse.json(
-                { error: "User not found or biometric not enabled" },
+                { error: "User not found" },
                 { status: 404 }
             );
         }
 
-        if (!user.biometric_enabled) {
+        // Check if user has any enrolled credentials
+        const { data: credentials } = await supabaseAdmin
+            .from("webauthn_credentials")
+            .select("id")
+            .eq("user_id", user.id)
+            .limit(1);
+
+        if (!credentials || credentials.length === 0) {
             return NextResponse.json(
-                { error: "Biometric authentication not enabled for this user" },
+                { error: "No biometric credentials enrolled" },
                 { status: 400 }
             );
         }

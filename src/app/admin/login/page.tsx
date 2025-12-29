@@ -15,7 +15,7 @@ export default function AdminLoginPage() {
   const [biometricAvailable, setBiometricAvailable] = useState(false);
   const [biometricLoading, setBiometricLoading] = useState(false);
   const [passwordVerified, setPasswordVerified] = useState(false); // Track password step
-  const [requiresBiometric, setRequiresBiometric] = useState(false); // Check if biometric required
+  const [needsEnrollment, setNeedsEnrollment] = useState(false); // User needs to enroll biometric first
 
   // Check biometric availability on mount
   useEffect(() => {
@@ -27,6 +27,94 @@ export default function AdminLoginPage() {
     };
     checkBiometric();
   }, []);
+
+  // Handle biometric enrollment for first-time users
+  const handleBiometricEnroll = async () => {
+    setBiometricLoading(true);
+    setError("");
+
+    try {
+      // Get registration options
+      const optionsRes = await fetch("/api/webauthn/register/options", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!optionsRes.ok) {
+        const data = await optionsRes.json();
+        throw new Error(data.error || "Failed to get registration options");
+      }
+
+      const { options } = await optionsRes.json();
+
+      // Convert arrays back to Uint8Arrays
+      const publicKeyOptions = {
+        ...options,
+        challenge: new Uint8Array(options.challenge),
+        user: {
+          ...options.user,
+          id: new Uint8Array(options.user.id),
+        },
+        excludeCredentials: options.excludeCredentials?.map((cred: { id: number[]; type: string }) => ({
+          ...cred,
+          id: new Uint8Array(cred.id),
+        })),
+      };
+
+      // Trigger biometric enrollment
+      const credential = await navigator.credentials.create({
+        publicKey: publicKeyOptions,
+      });
+
+      if (!credential) {
+        throw new Error("Enrollment cancelled");
+      }
+
+      // Prepare credential for verification
+      const publicKeyCredential = credential as PublicKeyCredential;
+      const response = publicKeyCredential.response as AuthenticatorAttestationResponse;
+
+      const credentialData = {
+        id: publicKeyCredential.id,
+        rawId: Array.from(new Uint8Array(publicKeyCredential.rawId)),
+        type: publicKeyCredential.type,
+        response: {
+          clientDataJSON: Array.from(new Uint8Array(response.clientDataJSON)),
+          attestationObject: Array.from(new Uint8Array(response.attestationObject)),
+        },
+      };
+
+      // Verify and save the credential
+      const verifyRes = await fetch("/api/webauthn/register/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          credential: credentialData,
+          deviceName: navigator.userAgent.includes("Mobile") ? "Mobile Device" : "Desktop Browser"
+        }),
+      });
+
+      if (!verifyRes.ok) {
+        const data = await verifyRes.json();
+        throw new Error(data.error || "Enrollment verification failed");
+      }
+
+      // Success - enrollment complete, now do biometric auth
+      console.log("Biometric enrolled! Now verifying...");
+      setNeedsEnrollment(false);
+      setBiometricLoading(false);
+
+      // Automatically trigger biometric auth after enrollment
+      setTimeout(() => handleBiometricAuth(), 500);
+    } catch (err) {
+      const error = err as Error;
+      console.error("Biometric enrollment error:", error);
+      setError(error.message || "Biometric enrollment failed");
+      setBiometricLoading(false);
+    }
+  };
 
   const handleBiometricAuth = async () => {
     setBiometricLoading(true);
@@ -166,12 +254,10 @@ export default function AdminLoginPage() {
       });
 
       console.log("Check enrollment status:", checkRes.status); // Debug
-      console.log("Check enrollment URL:", checkRes.url); // Debug
-      console.log("Check enrollment content-type:", checkRes.headers.get("content-type")); // Debug
 
       // Get the response text first to debug
       const checkText = await checkRes.text();
-      console.log("Check enrollment raw response (first 200 chars):", checkText.substring(0, 200)); // Debug
+      console.log("Check enrollment raw response:", checkText.substring(0, 200)); // Debug
 
       let checkData;
       try {
@@ -179,43 +265,21 @@ export default function AdminLoginPage() {
         console.log("Enrollment data:", checkData); // Debug
       } catch (parseError) {
         console.error("Failed to parse enrollment response as JSON:", parseError);
-        console.error("Full response:", checkText);
         setError("Server error during biometric check");
         setLoading(false);
         return;
       }
 
-      if (checkRes.ok) {
-        const { enrolled } = checkData;
+      const { enrolled } = checkData;
 
-        if (enrolled && biometricAvailable) {
-          // User has biometric enrolled - require it BEFORE creating session
-          console.log("Biometric enrolled. Requiring second factor...");
-          setPasswordVerified(true);
-          setRequiresBiometric(true);
-          setLoading(false);
-          setError("");
-          return; // STOP HERE - don't create session yet
-        }
-      }
-
-      // No biometric required - create session now
-      console.log("No biometric required. Creating session...");
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
-      });
-
-      if (result?.ok) {
-        setTimeout(() => {
-          router.push("/admin");
-          router.refresh();
-        }, 100);
-      } else {
-        setError(result?.error || "Login failed");
-        setLoading(false);
-      }
+      // ALWAYS require biometric after password verification
+      // If not enrolled, user must enroll first before they can login
+      console.log("Password verified. Moving to biometric step...");
+      setPasswordVerified(true);
+      setNeedsEnrollment(!enrolled);
+      setLoading(false);
+      setError("");
+      // STOP HERE - don't create session until biometric is verified
     } catch (err) {
       const error = err as Error;
       console.error("Caught error in handleSubmit:", error); // Debug log
@@ -395,25 +459,31 @@ export default function AdminLoginPage() {
           </form>
 
           {/* Biometric Authentication - REQUIRED Second Step */}
-          {passwordVerified && requiresBiometric && biometricAvailable && (
+          {passwordVerified && biometricAvailable && (
             <div className="mt-6 p-6 bg-blue-50 border-2 border-blue-200 rounded-lg">
               <div className="text-center mb-4">
                 <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full mb-3">
                   <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4" />
                   </svg>
                 </div>
                 <h3 className="text-lg font-semibold text-blue-900 mb-2">
                   Step 2: Biometric Verification Required
                 </h3>
-                <p className="text-sm text-blue-700 mb-4">
-                  Complete authentication with your fingerprint, Face ID, or device PIN
-                </p>
+                {needsEnrollment ? (
+                  <p className="text-sm text-blue-700 mb-4">
+                    First time? Set up your fingerprint, Face ID, or device PIN to continue
+                  </p>
+                ) : (
+                  <p className="text-sm text-blue-700 mb-4">
+                    Complete authentication with your fingerprint, Face ID, or device PIN
+                  </p>
+                )}
               </div>
 
               <button
                 type="button"
-                onClick={handleBiometricAuth}
+                onClick={needsEnrollment ? handleBiometricEnroll : handleBiometricAuth}
                 disabled={biometricLoading}
                 className="w-full flex justify-center items-center py-3 px-4 border-2 border-blue-600 rounded-lg shadow-sm text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
@@ -439,7 +509,7 @@ export default function AdminLoginPage() {
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                       ></path>
                     </svg>
-                    Verifying Biometric...
+                    {needsEnrollment ? "Setting up Biometric..." : "Verifying Biometric..."}
                   </>
                 ) : (
                   <>
@@ -456,10 +526,29 @@ export default function AdminLoginPage() {
                         d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"
                       />
                     </svg>
-                    Scan Biometric to Complete Login
+                    {needsEnrollment ? "Set Up Biometric Now" : "Scan Biometric to Complete Login"}
                   </>
                 )}
               </button>
+            </div>
+          )}
+
+          {/* No biometric available warning */}
+          {passwordVerified && !biometricAvailable && (
+            <div className="mt-6 p-6 bg-red-50 border-2 border-red-200 rounded-lg">
+              <div className="text-center">
+                <div className="inline-flex items-center justify-center w-12 h-12 bg-red-100 rounded-full mb-3">
+                  <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-red-900 mb-2">
+                  Biometric Required
+                </h3>
+                <p className="text-sm text-red-700">
+                  This device does not support biometric authentication. Please use a device with fingerprint, Face ID, or Windows Hello to complete login.
+                </p>
+              </div>
             </div>
           )}
 
