@@ -1,25 +1,25 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabase";
 
 /**
  * GET /api/webauthn/config
  * Fetch biometric configuration from Supabase
+ * 
+ * SECURITY NOTE: This endpoint is PUBLIC (no auth required) because:
+ * 1. It's needed BEFORE user authentication (during login flow)
+ * 2. Returns only read-only boolean flags (UI control)
+ * 3. No sensitive data is exposed
+ * 4. Database table has RLS protecting write operations
+ * 
  * This controls:
  * - Whether biometric layer is visible at all (emergency kill switch)
  * - Whether users can enroll new biometric devices
  */
 export async function GET() {
     try {
-        const session = await getServerSession(authOptions);
-
-        if (!session?.user) {
-            return NextResponse.json(
-                { error: "Unauthorized" },
-                { status: 401 }
-            );
-        }
+        // Note: This endpoint is intentionally PUBLIC (no auth required)
+        // It only returns read-only configuration flags that control UI behavior
+        // The actual security is enforced by RLS on the database table
 
         // Fetch global biometric configuration from Supabase
         const { data, error } = await supabaseAdmin
