@@ -98,3 +98,6 @@ scripts/
 /.vscode/
 .vscode/
 .vercel
+
+/.github/
+.github/
