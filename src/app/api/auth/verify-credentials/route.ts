@@ -8,10 +8,15 @@ import bcrypt from "bcryptjs";
  * Used for 2FA flow where we need to check biometric before session creation
  */
 export async function POST(request: NextRequest) {
+    console.log("verify-credentials endpoint called"); // Debug
     try {
-        const { email, password } = await request.json();
+        const body = await request.json();
+        console.log("Request body:", { email: body.email, hasPassword: !!body.password }); // Debug
+
+        const { email, password } = body;
 
         if (!email || !password) {
+            console.error("Missing email or password");
             return NextResponse.json(
                 { error: "Email and password required", valid: false },
                 { status: 400 }
@@ -83,8 +88,9 @@ export async function POST(request: NextRequest) {
             email: admin.email,
             name: admin.name,
         });
-    } catch (error: any) {
+    } catch (error) {
         console.error("Error verifying credentials:", error);
+        console.error("Error details:", error instanceof Error ? error.message : String(error));
         return NextResponse.json(
             { error: "Authentication failed", valid: false },
             { status: 500 }

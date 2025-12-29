@@ -136,14 +136,19 @@ export default function AdminLoginPage() {
         body: JSON.stringify({ email, password }),
       });
 
+      console.log("Verify response status:", verifyRes.status); // Debug
+
       if (!verifyRes.ok) {
         const data = await verifyRes.json();
+        console.error("Verify failed:", data); // Debug
         setError(data.error || "Invalid credentials");
         setLoading(false);
         return;
       }
 
-      const { valid, userId } = await verifyRes.json();
+      const verifyData = await verifyRes.json();
+      console.log("Verify data:", verifyData); // Debug
+      const { valid } = verifyData;
 
       if (!valid) {
         setError("Invalid email or password");
@@ -192,7 +197,9 @@ export default function AdminLoginPage() {
         setLoading(false);
       }
     } catch (err) {
-      console.error("Caught error:", err); // Debug log
+      const error = err as Error;
+      console.error("Caught error in handleSubmit:", error); // Debug log
+      console.error("Error stack:", error.stack); // Debug stack trace
       setError("An unexpected error occurred. Please try again.");
       setLoading(false);
     }
