@@ -26,16 +26,26 @@ export async function POST(request: NextRequest) {
             .eq("is_active", true)
             .single();
 
-        if (adminError || !admin) {
-            console.error("Admin not found:", email);
+        if (adminError || !admin || !admin.password_hash) {
+            console.error("Admin not found:", email, adminError);
             return NextResponse.json(
                 { error: "Invalid credentials", valid: false },
                 { status: 401 }
             );
         }
 
+        // Check if admin account is locked
+        if (admin.is_locked) {
+            if (admin.locked_until && new Date(admin.locked_until) > new Date()) {
+                return NextResponse.json(
+                    { error: `Account is locked until ${new Date(admin.locked_until).toLocaleString()}`, valid: false },
+                    { status: 403 }
+                );
+            }
+        }
+
         // Verify password
-        const passwordValid = await bcrypt.compare(password, admin.password);
+        const passwordValid = await bcrypt.compare(password, admin.password_hash);
 
         if (!passwordValid) {
             console.error("Invalid password for:", email);
