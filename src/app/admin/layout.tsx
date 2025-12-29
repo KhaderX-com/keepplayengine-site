@@ -25,6 +25,18 @@ export const metadata: Metadata = {
         statusBarStyle: "default",
         title: "KPE Admin",
     },
+    formatDetection: {
+        telephone: false,
+    },
+    icons: {
+        icon: [
+            { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+            { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+        ],
+        apple: [
+            { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+        ],
+    },
 };
 
 export const viewport: Viewport = {
@@ -47,6 +59,8 @@ export default async function AdminLayout({
             <head>
                 <link rel="icon" href="/icon-192.png" />
                 <link rel="apple-touch-icon" href="/icon-192.png" />
+                <meta name="mobile-web-app-capable" content="yes" />
+                <meta name="apple-mobile-web-app-capable" content="yes" />
             </head>
             <body
                 className={`${geistSans.variable} ${geistMono.variable} antialiased`}
