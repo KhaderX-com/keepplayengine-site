@@ -499,11 +499,6 @@ export default function AdminLoginPage() {
                 </p>
               </div>
 
-              {/* DEBUG INFO - Remove in production */}
-              <div className="text-xs text-gray-400 bg-gray-50 p-2 rounded">
-                Debug: hasCredentials={String(hasCredentials)}, allowEnrollment={String(biometricConfig?.allowEnrollment)}
-              </div>
-
               {/* Show enrollment button FIRST if user has no credentials and enrollment is allowed */}
               {!hasCredentials && biometricConfig?.allowEnrollment && (
                 <>
