@@ -318,7 +318,9 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 flex items-center justify-center px-4 sm:px-6 lg:px-8">
+    // add a small space at the top for better mobile view
+
+    <div className="min-h-screen pt-6 sm:pt-8 bg-gradient-to-br from-gray-50 via-white to-gray-100 flex items-center justify-center px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
         <div className="text-center">
@@ -340,29 +342,6 @@ export default function AdminLoginPage() {
             </div>
           </div>
           <h2 className="text-3xl font-bold text-gray-900">Admin Access</h2>
-          <p className="mt-2 text-sm text-gray-600">
-            KeepPlay Engine Administrative Panel
-          </p>
-          <div className="mt-4 flex items-center justify-center space-x-2">
-            <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-red-50 text-red-700 border border-red-200">
-              <svg
-                className="w-3 h-3 mr-1.5"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              Restricted Area
-            </span>
-            <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-green-50 text-green-700 border border-green-200">
-              <span className="w-2 h-2 bg-green-600 rounded-full mr-1.5 animate-pulse"></span>
-              Secure Connection
-            </span>
-          </div>
         </div>
 
         {/* Login Form */}
@@ -475,7 +454,7 @@ export default function AdminLoginPage() {
                         d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
                       />
                     </svg>
-                    Continue with Password
+                    Continue
                   </>
                 )}
               </button>
@@ -782,7 +761,7 @@ export default function AdminLoginPage() {
                     clipRule="evenodd"
                   />
                 </svg>
-                Biometric authentication available
+                Biometric authentication
               </p>
             )}
           </div>
