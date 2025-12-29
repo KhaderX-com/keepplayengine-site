@@ -96,12 +96,23 @@ export default function AdminLoginPage() {
         throw new Error(data.error || "Authentication failed");
       }
 
-      // Success - now complete the login
-      console.log("Biometric verified! Completing login...");
-      setTimeout(() => {
-        router.push("/admin");
-        router.refresh();
-      }, 100);
+      // Success - now complete the login by creating session
+      console.log("Biometric verified! Creating session...");
+
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.ok) {
+        setTimeout(() => {
+          router.push("/admin");
+          router.refresh();
+        }, 100);
+      } else {
+        throw new Error("Session creation failed");
+      }
     } catch (err) {
       const error = err as Error;
       console.error("Biometric auth error:", error);
@@ -116,58 +127,68 @@ export default function AdminLoginPage() {
     setLoading(true);
 
     try {
-      console.log("Step 1: Verifying password..."); // Debug log
+      console.log("Step 1: Verifying credentials..."); // Debug log
 
+      // First, just verify credentials without creating session
+      const verifyRes = await fetch("/api/auth/verify-credentials", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!verifyRes.ok) {
+        const data = await verifyRes.json();
+        setError(data.error || "Invalid credentials");
+        setLoading(false);
+        return;
+      }
+
+      const { valid, userId } = await verifyRes.json();
+
+      if (!valid) {
+        setError("Invalid email or password");
+        setLoading(false);
+        return;
+      }
+
+      console.log("Password verified!"); // Debug log
+
+      // Check if user has biometric enrolled
+      const checkRes = await fetch("/api/webauthn/check-enrollment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      if (checkRes.ok) {
+        const { enrolled } = await checkRes.json();
+
+        if (enrolled && biometricAvailable) {
+          // User has biometric enrolled - require it BEFORE creating session
+          console.log("Biometric enrolled. Requiring second factor...");
+          setPasswordVerified(true);
+          setRequiresBiometric(true);
+          setLoading(false);
+          setError("");
+          return; // STOP HERE - don't create session yet
+        }
+      }
+
+      // No biometric required - create session now
+      console.log("No biometric required. Creating session...");
       const result = await signIn("credentials", {
         email,
         password,
         redirect: false,
       });
 
-      console.log("SignIn result:", JSON.stringify(result, null, 2)); // Debug log
-
-      if (result?.error) {
-        console.error("Login error:", result.error); // Debug log
-        setError(result.error);
-        setLoading(false);
-      } else if (result?.ok) {
-        console.log("Password verified!"); // Debug log
-
-        // Check if user has biometric enrolled
-        const checkRes = await fetch("/api/webauthn/check-enrollment", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
-        });
-
-        if (checkRes.ok) {
-          const { enrolled } = await checkRes.json();
-
-          if (enrolled && biometricAvailable) {
-            // User has biometric enrolled - require it
-            console.log("Biometric enrolled. Requiring second factor...");
-            setPasswordVerified(true);
-            setRequiresBiometric(true);
-            setLoading(false);
-            setError("✓ Password verified. Please complete biometric verification.");
-          } else {
-            // No biometric - complete login
-            console.log("No biometric required. Logging in...");
-            setTimeout(() => {
-              router.push("/admin");
-              router.refresh();
-            }, 100);
-          }
-        } else {
-          // Can't check enrollment, allow login
-          setTimeout(() => {
-            router.push("/admin");
-            router.refresh();
-          }, 100);
-        }
+      if (result?.ok) {
+        setTimeout(() => {
+          router.push("/admin");
+          router.refresh();
+        }, 100);
       } else {
-        console.error("Unexpected result:", result); // Debug log
-        setError("An unexpected error occurred. Please try again.");
+        setError(result?.error || "Login failed");
         setLoading(false);
       }
     } catch (err) {
