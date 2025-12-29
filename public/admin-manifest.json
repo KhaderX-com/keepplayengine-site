@@ -9,7 +9,7 @@
     "scope": "https://admin.keepplayengine.com/",
     "icons": [
         {
-            "src": "https://pwa.keepplayengine.com/admin-icon-192.png",
+            "src": "https://public-pwa.vercel.app/admin-icon-192.png",
             "sizes": "192x192",
             "type": "image/png",
             "purpose": "maskable any"
@@ -21,13 +21,13 @@
             "purpose": "maskable any"
         },
         {
-            "src": "https://pwa.keepplayengine.com/admin-icon-192.png",
+            "src": "https://public-pwa.vercel.app/admin-icon-192.png",
             "sizes": "192x192",
             "type": "image/png",
             "purpose": "any"
         },
         {
-            "src": "https://pwa.keepplayengine.com/admin-icon-512.png",
+            "src": "https://public-pwa.vercel.app/admin-icon-512.png",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "any"
@@ -47,7 +47,7 @@
             "url": "https://admin.keepplayengine.com/admin/login",
             "icons": [
                 {
-                    "src": "https://pwa.keepplayengine.com/admin-icon-192.png",
+                    "src": "https://public-pwa.vercel.app/admin-icon-192.png",
                     "sizes": "192x192"
                 }
             ]
