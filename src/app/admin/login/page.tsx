@@ -165,8 +165,28 @@ export default function AdminLoginPage() {
         body: JSON.stringify({ email }),
       });
 
+      console.log("Check enrollment status:", checkRes.status); // Debug
+      console.log("Check enrollment URL:", checkRes.url); // Debug
+      console.log("Check enrollment content-type:", checkRes.headers.get("content-type")); // Debug
+
+      // Get the response text first to debug
+      const checkText = await checkRes.text();
+      console.log("Check enrollment raw response (first 200 chars):", checkText.substring(0, 200)); // Debug
+
+      let checkData;
+      try {
+        checkData = JSON.parse(checkText);
+        console.log("Enrollment data:", checkData); // Debug
+      } catch (parseError) {
+        console.error("Failed to parse enrollment response as JSON:", parseError);
+        console.error("Full response:", checkText);
+        setError("Server error during biometric check");
+        setLoading(false);
+        return;
+      }
+
       if (checkRes.ok) {
-        const { enrolled } = await checkRes.json();
+        const { enrolled } = checkData;
 
         if (enrolled && biometricAvailable) {
           // User has biometric enrolled - require it BEFORE creating session
