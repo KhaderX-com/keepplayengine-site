@@ -1,0 +1,20 @@
+{
+    "version": 2,
+    "name": "keepplay-pwa",
+    "builds": [
+        {
+            "src": "public-pwa/**",
+            "use": "@vercel/static"
+        }
+    ],
+    "routes": [
+        {
+            "src": "/(.*)",
+            "dest": "/public-pwa/$1",
+            "headers": {
+                "Access-Control-Allow-Origin": "*",
+                "Cache-Control": "public, max-age=31536000, immutable"
+            }
+        }
+    ]
+}

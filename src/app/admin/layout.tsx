@@ -19,7 +19,8 @@ export const metadata: Metadata = {
     title: "Admin Panel - KeepPlay Engine",
     description: "Secure administrative interface for KeepPlay Engine",
     robots: "noindex, nofollow",
-    manifest: "/manifest.json",
+    // PWA manifest served from public CDN to bypass Cloudflare Access
+    manifest: "https://pwa.keepplayengine.com/admin-manifest.json",
     appleWebApp: {
         capable: true,
         statusBarStyle: "default",
@@ -30,11 +31,11 @@ export const metadata: Metadata = {
     },
     icons: {
         icon: [
-            { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
-            { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+            { url: "https://pwa.keepplayengine.com/admin-icon-192.png", sizes: "192x192", type: "image/png" },
+            { url: "https://pwa.keepplayengine.com/admin-icon-512.png", sizes: "512x512", type: "image/png" },
         ],
         apple: [
-            { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+            { url: "https://pwa.keepplayengine.com/admin-icon-192.png", sizes: "192x192", type: "image/png" },
         ],
     },
 };
