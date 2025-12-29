@@ -22,10 +22,20 @@ interface StoredCredential {
     transports?: string[];
 }
 
+// Get the correct rpId based on environment
+const getRpId = () => {
+    // In production, use the main domain (without subdomain for broader WebAuthn support)
+    if (process.env.NODE_ENV === "production") {
+        return process.env.WEBAUTHN_RP_ID || "keepplayengine.com";
+    }
+    // In development, use localhost
+    return "localhost";
+};
+
 // WebAuthn configuration
 export const WEBAUTHN_CONFIG = {
     rpName: "KeepPlay Engine Admin",
-    rpId: typeof window !== "undefined" ? window.location.hostname : "localhost",
+    rpId: getRpId(),
     timeout: 60000, // 60 seconds
     attestation: "none" as AttestationConveyancePreference,
     authenticatorSelection: {
