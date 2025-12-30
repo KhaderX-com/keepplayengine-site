@@ -142,18 +142,48 @@ export async function POST(request: Request) {
         // Get the vault PIN hash from environment (NEVER from database)
         const vaultPinHash = process.env.ADMIN_VAULT_PIN_HASH;
 
+        // DEBUG: Log hash info in development only
+        if (process.env.NODE_ENV === 'development') {
+            console.log('🔐 Vault PIN Debug:');
+            console.log('   PIN entered:', pin);
+            console.log('   Hash exists:', !!vaultPinHash);
+            console.log('   Hash prefix:', vaultPinHash?.substring(0, 7));
+            console.log('   Hash length:', vaultPinHash?.length);
+        }
+
         if (!vaultPinHash) {
             // This should never happen in production
+            const isDev = process.env.NODE_ENV === 'development';
             console.error("CRITICAL: ADMIN_VAULT_PIN_HASH not configured");
+
+            if (isDev) {
+                console.error("\n⚠️  DEVELOPMENT ERROR: Missing ADMIN_VAULT_PIN_HASH");
+                console.error("📖 To fix this:");
+                console.error("   1. Run: npx tsx scripts/generate-vault-pin-hash.ts 123");
+                console.error("   2. Add the output to .env.local");
+                console.error("   3. Restart your dev server");
+                console.error("   See docs/FIX_VAULT_PIN_DEV.md for details\n");
+            }
+
             await randomDelay();
             return NextResponse.json(
-                { error: "Security system misconfigured", valid: false },
+                {
+                    error: isDev
+                        ? "ADMIN_VAULT_PIN_HASH not configured. Run: npx tsx scripts/generate-vault-pin-hash.ts 123"
+                        : "Security system misconfigured",
+                    valid: false
+                },
                 { status: 500 }
             );
         }
 
         // Verify PIN using bcrypt (constant-time comparison built-in)
         const isValid = await bcrypt.compare(pin, vaultPinHash);
+
+        // DEBUG: Log result in development only
+        if (process.env.NODE_ENV === 'development') {
+            console.log('   bcrypt.compare result:', isValid);
+        }
 
         // Update state based on result
         state.lastAttempt = now;
