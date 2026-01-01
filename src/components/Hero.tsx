@@ -7,7 +7,7 @@ export default function Hero() {
             <div className="absolute inset-0 overflow-hidden">
                 <div className="absolute -top-40 -right-40 w-64 h-64 sm:w-96 sm:h-96 bg-[#00E5FF]/10 rounded-full blur-3xl"></div>
                 <div className="absolute -bottom-40 -left-40 w-64 h-64 sm:w-96 sm:h-96 bg-purple-300/20 rounded-full blur-3xl"></div>
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] sm:w-[600px] h-[400px] sm:h-[600px] bg-blue-200/10 rounded-full blur-3xl"></div>
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-100 sm:w-150 h-100 sm:h-150 bg-blue-200/10 rounded-full blur-3xl"></div>
             </div>
 
             <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-16 lg:py-20">

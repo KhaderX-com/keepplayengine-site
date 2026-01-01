@@ -195,6 +195,8 @@ export default function AdminPage() {
                 <AdminHeader
                     user={session.user}
                     onToggleMobileMenu={handleToggleMobileMenu}
+                    title={activeTab === "dashboard" ? "Dashboard" : activeTab === "audit" ? "Audit Logs" : "Active Sessions"}
+                    subtitle={activeTab === "dashboard" ? "Welcome back to your admin panel" : activeTab === "audit" ? "Monitor system activity and security events" : "Manage active user sessions"}
                 />
 
                 {/* Page Content - Responsive Padding */}

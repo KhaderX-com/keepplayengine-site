@@ -17,6 +17,9 @@ const eslintConfig = defineConfig([
     rules: {
       // Disable overly strict ARIA validation that doesn't recognize dynamic boolean-to-string conversion
       "jsx-a11y/aria-props": "off",
+      // Allow inline styles for dynamic colors from database
+      "react/forbid-component-props": "off",
+      "react/forbid-dom-props": "off",
     },
   },
 ]);

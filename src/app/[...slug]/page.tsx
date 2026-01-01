@@ -6,7 +6,7 @@ export default function CatchAllPage() {
     return (
         <div className="min-h-screen flex flex-col">
             <Navbar />
-            <main className="flex-grow pt-16 sm:pt-20">
+            <main className="grow pt-16 sm:pt-20">
                 <ComingSoon />
             </main>
             <Footer />

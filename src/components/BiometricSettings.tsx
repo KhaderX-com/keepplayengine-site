@@ -366,7 +366,7 @@ export default function BiometricSettings() {
                                 className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200"
                             >
                                 <div className="flex items-center space-x-3">
-                                    <div className="flex-shrink-0">
+                                    <div className="shrink-0">
                                         <svg
                                             className="h-8 w-8 text-blue-600"
                                             fill="none"

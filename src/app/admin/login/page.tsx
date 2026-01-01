@@ -425,7 +425,7 @@ export default function AdminLoginPage() {
   return (
     // add a small space at the top for better mobile view
 
-    <div className="min-h-screen pt-6 sm:pt-8 bg-gradient-to-br from-gray-50 via-white to-gray-100 flex items-center justify-center px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen pt-6 sm:pt-8 bg-linear-to-br from-gray-50 via-white to-gray-100 flex items-center justify-center px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
         <div className="text-center">
@@ -455,7 +455,7 @@ export default function AdminLoginPage() {
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
               <div className="flex">
                 <svg
-                  className="w-5 h-5 text-red-600 mr-3 flex-shrink-0"
+                  className="w-5 h-5 text-red-600 mr-3 shrink-0"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >

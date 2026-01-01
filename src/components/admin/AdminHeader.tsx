@@ -2,6 +2,7 @@
 
 import { signOut } from "next-auth/react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface AdminHeaderProps {
     user?: {
@@ -10,10 +11,13 @@ interface AdminHeaderProps {
         role?: string;
     };
     onToggleMobileMenu: () => void;
+    title?: string;
+    subtitle?: string;
 }
 
-export default function AdminHeader({ user, onToggleMobileMenu }: AdminHeaderProps) {
+export default function AdminHeader({ user, onToggleMobileMenu, title = "Dashboard", subtitle = "Welcome back to your admin panel" }: AdminHeaderProps) {
     const [showUserMenu, setShowUserMenu] = useState(false);
+    const router = useRouter();
 
     return (
         <header className="h-14 sm:h-16 lg:h-20 bg-white border-b border-gray-200 sticky top-0 z-10">
@@ -38,15 +42,15 @@ export default function AdminHeader({ user, onToggleMobileMenu }: AdminHeaderPro
 
                     {/* Page Title / Breadcrumb - Responsive */}
                     <div>
-                        <h2 className="text-base sm:text-lg lg:text-2xl font-bold text-gray-900">Dashboard</h2>
-                        <p className="hidden sm:block text-xs lg:text-sm text-gray-500 mt-0.5">Welcome back to your admin panel</p>
+                        <h2 className="text-base sm:text-lg lg:text-2xl font-bold text-gray-900">{title}</h2>
+                        {subtitle && <p className="hidden sm:block text-xs lg:text-sm text-gray-500 mt-0.5">{subtitle}</p>}
                     </div>
                 </div>
 
                 {/* Right Section - PWA Optimized */}
                 <div className="flex items-center space-x-2 sm:space-x-3 lg:space-x-4">
                     {/* Security Badge - Hidden on mobile */}
-                    <div className="hidden md:flex items-center space-x-2 bg-gradient-to-r from-green-50 to-green-100 px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg border border-green-200">
+                    <div className="hidden md:flex items-center space-x-2 bg-linear-to-r from-green-50 to-green-100 px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg border border-green-200">
                         <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                         <span className="text-xs font-semibold text-green-700">Secure</span>
                     </div>
@@ -75,7 +79,7 @@ export default function AdminHeader({ user, onToggleMobileMenu }: AdminHeaderPro
                                 </span>
                             </div>
                             <div className="text-left hidden sm:hidden lg:block">
-                                <p className="text-xs lg:text-sm font-semibold text-gray-900 truncate max-w-[100px] lg:max-w-none">
+                                <p className="text-xs lg:text-sm font-semibold text-gray-900 truncate max-w-25 lg:max-w-none">
                                     {user?.name || user?.email?.split("@")[0]}
                                 </p>
                                 <p className="text-[10px] lg:text-xs text-blue-600 font-medium">
@@ -122,7 +126,7 @@ export default function AdminHeader({ user, onToggleMobileMenu }: AdminHeaderPro
                                     <button
                                         onClick={() => {
                                             setShowUserMenu(false);
-                                            // Profile action
+                                            router.push('/admin/profile');
                                         }}
                                         className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-3 touch-manipulation active:bg-gray-100"
                                     >

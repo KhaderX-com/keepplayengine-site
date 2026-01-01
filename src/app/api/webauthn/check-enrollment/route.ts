@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
             enrolled,
             biometricEnabled: user.biometric_enabled,
         });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Error checking enrollment:", error);
         return NextResponse.json({ enrolled: false });
     }
