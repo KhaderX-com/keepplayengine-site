@@ -41,10 +41,13 @@ export default function AdminSidebar({ activeSessions = 0, isMobileMenuOpen, onC
         };
     }, [isMobileMenuOpen]);
 
-    // Close mobile menu on navigation
+    // Close mobile menu on navigation - only when pathname or searchParams actually change
     useEffect(() => {
-        onCloseMobileMenu();
-    }, [pathname, searchParams, onCloseMobileMenu]);
+        if (isMobileMenuOpen) {
+            onCloseMobileMenu();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pathname, searchParams]);
 
     const navigation: NavItem[] = [
         {

@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminHeader from "@/components/admin/AdminHeader";
 
@@ -64,10 +64,15 @@ export default function AdminPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-    const handleToggleMobileMenu = () => {
+    const handleToggleMobileMenu = useCallback(() => {
         console.log('Toggle mobile menu:', !isMobileMenuOpen);
         setIsMobileMenuOpen(!isMobileMenuOpen);
-    };
+    }, [isMobileMenuOpen]);
+
+    const handleCloseMobileMenu = useCallback(() => {
+        console.log('Closing mobile menu');
+        setIsMobileMenuOpen(false);
+    }, []);
 
     // Update active tab based on URL parameter
     useEffect(() => {
@@ -181,10 +186,7 @@ export default function AdminPage() {
             <AdminSidebar
                 activeSessions={sessions.length}
                 isMobileMenuOpen={isMobileMenuOpen}
-                onCloseMobileMenu={() => {
-                    console.log('Closing mobile menu');
-                    setIsMobileMenuOpen(false);
-                }}
+                onCloseMobileMenu={handleCloseMobileMenu}
             />
 
             {/* Main Content Area - Mobile First */}
