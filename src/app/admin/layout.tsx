@@ -1,19 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "@/app/globals.css";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import SessionProvider from "@/components/SessionProvider";
-
-const geistSans = Geist({
-    variable: "--font-geist-sans",
-    subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-    variable: "--font-geist-mono",
-    subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
     title: "Admin Panel - KeepPlay Engine",
@@ -60,19 +48,8 @@ export default async function AdminLayout({
     // This check ensures NextAuth session is valid
 
     return (
-        <html lang="en">
-            <head>
-                <link rel="icon" href="/icon-192.png" />
-                <meta name="mobile-web-app-capable" content="yes" />
-                <meta name="apple-mobile-web-app-capable" content="yes" />
-            </head>
-            <body
-                className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-            >
-                <SessionProvider session={session}>
-                    {children}
-                </SessionProvider>
-            </body>
-        </html>
+        <SessionProvider session={session}>
+            {children}
+        </SessionProvider>
     );
 }

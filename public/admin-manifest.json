@@ -2,32 +2,32 @@
     "name": "KeepPlay Engine - Admin Panel",
     "short_name": "KPE Admin",
     "description": "Administrative panel for KeepPlay Engine",
-    "start_url": "https://admin.keepplayengine.com/admin/login",
+    "start_url": "/admin/",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#2563eb",
-    "scope": "https://admin.keepplayengine.com/",
+    "scope": "/admin/",
     "icons": [
         {
-            "src": "https://public-pwa.vercel.app/admin-icon-192.png",
+            "src": "/admin-icon-192.png",
             "sizes": "192x192",
             "type": "image/png",
             "purpose": "maskable any"
         },
         {
-            "src": "https://pwa.keepplayengine.com/admin-icon-512.png",
+            "src": "/admin-icon-512.png",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "maskable any"
         },
         {
-            "src": "https://public-pwa.vercel.app/admin-icon-192.png",
+            "src": "/admin-icon-192.png",
             "sizes": "192x192",
             "type": "image/png",
             "purpose": "any"
         },
         {
-            "src": "https://public-pwa.vercel.app/admin-icon-512.png",
+            "src": "/admin-icon-512.png",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "any"
@@ -44,10 +44,10 @@
             "name": "Login",
             "short_name": "Login",
             "description": "Go to login page",
-            "url": "https://admin.keepplayengine.com/admin/login",
+            "url": "/admin/login",
             "icons": [
                 {
-                    "src": "https://public-pwa.vercel.app/admin-icon-192.png",
+                    "src": "/admin-icon-192.png",
                     "sizes": "192x192"
                 }
             ]

@@ -34,13 +34,13 @@ export async function GET(request: Request) {
 
         const { data: users } = await supabaseAdmin
             .from("admin_users")
-            .select("uuid, email, username")
-            .in("uuid", userIds);
+            .select("id, email, full_name")
+            .in("id", userIds);
 
         // Map user details to logs
         const logsWithUsers = logs?.map(log => ({
             ...log,
-            user: users?.find(u => u.uuid === log.admin_user_id),
+            user: users?.find(u => u.id === log.admin_user_id),
         }));
 
         return NextResponse.json({

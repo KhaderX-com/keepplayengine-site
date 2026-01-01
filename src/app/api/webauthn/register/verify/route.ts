@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyRegistrationResponse } from "@/lib/webauthn";
 import { supabaseAdmin } from "@/lib/supabase";
+import { getClientIP, getDeviceInfo } from "@/lib/request-utils";
 
 /**
  * POST /api/webauthn/register/verify
@@ -64,11 +65,10 @@ export async function POST(request: NextRequest) {
 
         response.cookies.delete("webauthn_challenge");
 
-        // Log the activity
-        const ipAddress = request.headers.get("x-forwarded-for") ||
-            request.headers.get("x-real-ip") ||
-            "unknown";
+        // Log the activity with proper IP extraction
+        const ipAddress = getClientIP(request);
         const userAgent = request.headers.get("user-agent") || null;
+        const deviceInfo = getDeviceInfo(userAgent);
 
         await supabaseAdmin.from("admin_activity_log").insert({
             admin_user_id: user.id,
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
             user_agent: userAgent,
             description: `Enrolled biometric device: ${deviceName || "Unnamed device"}`,
             severity: "info",
-            changes: {},
+            changes: { device_info: deviceInfo },
         });
 
         return response;

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
+import { getClientIP, getDeviceInfo } from "@/lib/request-utils";
 import bcrypt from "bcryptjs";
 
 /**
@@ -55,11 +56,10 @@ export async function POST(request: NextRequest) {
         if (!passwordValid) {
             console.error("Invalid password for:", email);
 
-            // Log failed attempt
-            const ipAddress = request.headers.get("x-forwarded-for") ||
-                request.headers.get("x-real-ip") ||
-                "unknown";
+            // Log failed attempt with proper IP extraction
+            const ipAddress = getClientIP(request);
             const userAgent = request.headers.get("user-agent") || null;
+            const deviceInfo = getDeviceInfo(userAgent);
 
             await supabaseAdmin.from("admin_login_attempts").insert({
                 email,
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
                 admin_user_id: null,
                 attempt_type: "password",
                 failure_reason: "Invalid password",
-                device_info: {},
+                device_info: deviceInfo,
                 geo_location: {},
             });
 

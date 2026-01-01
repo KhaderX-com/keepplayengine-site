@@ -7,6 +7,29 @@ import bcrypt from "bcryptjs";
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutes
 
+/**
+ * Extract the real client IP from NextAuth request headers
+ * Handles Cloudflare, Vercel, and nginx proxy setups
+ */
+function extractIPFromHeaders(headers: Record<string, string | string[] | undefined>): string {
+    // Helper to get string value from header
+    const getHeader = (name: string): string | undefined => {
+        const value = headers[name];
+        return Array.isArray(value) ? value[0] : value;
+    };
+
+    // Priority order for IP extraction
+    const possibleIPs = [
+        getHeader("cf-connecting-ip"),      // Cloudflare
+        getHeader("true-client-ip"),        // Cloudflare Enterprise / Akamai
+        getHeader("x-real-ip"),             // nginx
+        getHeader("x-forwarded-for")?.split(",")[0]?.trim(),  // Standard proxy
+        getHeader("x-vercel-forwarded-for"), // Vercel
+    ].filter(Boolean);
+
+    return possibleIPs[0] || "unknown";
+}
+
 // Check if admin user is locked out due to failed login attempts
 async function isAdminLockedOut(email: string, ipAddress: string): Promise<boolean> {
     const lockoutTime = new Date(Date.now() - LOCKOUT_DURATION).toISOString();
@@ -89,9 +112,8 @@ export const authOptions: NextAuthOptions = {
                     throw new Error("Email and password required");
                 }
 
-                const ipAddress = (req.headers?.["x-forwarded-for"] as string) ||
-                    (req.headers?.["x-real-ip"] as string) ||
-                    "unknown";
+                // Extract real IP using priority order for proxy headers
+                const ipAddress = extractIPFromHeaders(req.headers || {});
                 const userAgent = req.headers?.["user-agent"] || null;
 
                 // Check if admin is locked out

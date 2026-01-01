@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuthenticationResponse } from "@/lib/webauthn";
 import { supabaseAdmin } from "@/lib/supabase";
+import { getClientIP, getDeviceInfo } from "@/lib/request-utils";
 
 /**
  * POST /api/webauthn/authenticate/verify
@@ -77,11 +78,10 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Log successful biometric authentication
-        const ipAddress = request.headers.get("x-forwarded-for") ||
-            request.headers.get("x-real-ip") ||
-            "unknown";
+        // Log successful biometric authentication with proper IP extraction
+        const ipAddress = getClientIP(request);
         const userAgent = request.headers.get("user-agent") || null;
+        const deviceInfo = getDeviceInfo(userAgent);
 
         await supabaseAdmin.from("admin_login_attempts").insert({
             email: user.email,
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
             admin_user_id: user.id,
             attempt_type: "biometric",
             failure_reason: null,
-            device_info: {},
+            device_info: deviceInfo,
             geo_location: {},
         });
 
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
             user_agent: userAgent,
             description: "Successful biometric authentication",
             severity: "info",
-            changes: {},
+            changes: { device_info: deviceInfo },
         });
 
         // Clear cookies
@@ -121,13 +121,12 @@ export async function POST(request: NextRequest) {
         const err = error as Error;
         console.error("Error verifying authentication:", err);
 
-        // Log failed attempt
+        // Log failed attempt with proper IP extraction
         const email = request.cookies.get("webauthn_auth_email")?.value;
         if (email) {
-            const ipAddress = request.headers.get("x-forwarded-for") ||
-                request.headers.get("x-real-ip") ||
-                "unknown";
+            const ipAddress = getClientIP(request);
             const userAgent = request.headers.get("user-agent") || null;
+            const deviceInfo = getDeviceInfo(userAgent);
 
             await supabaseAdmin.from("admin_login_attempts").insert({
                 email,
@@ -136,7 +135,7 @@ export async function POST(request: NextRequest) {
                 success: false,
                 attempt_type: "biometric",
                 failure_reason: err.message || "Biometric verification failed",
-                device_info: {},
+                device_info: deviceInfo,
                 geo_location: {},
             });
         }

@@ -31,13 +31,13 @@ export async function GET() {
 
         const { data: users } = await supabaseAdmin
             .from("admin_users")
-            .select("uuid, email, username")
-            .in("uuid", userIds);
+            .select("id, email, full_name")
+            .in("id", userIds);
 
         // Map user details to sessions
         const sessionsWithUsers = sessions?.map(session => ({
             ...session,
-            user: users?.find(u => u.uuid === session.admin_user_id),
+            user: users?.find(u => u.id === session.admin_user_id),
         }));
 
         return NextResponse.json({
