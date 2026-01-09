@@ -98,6 +98,7 @@ export default function TaskManagerPage() {
             <AdminSidebar
                 isMobileMenuOpen={isMobileMenuOpen}
                 onCloseMobileMenu={() => setIsMobileMenuOpen(false)}
+                userRole={session?.user?.role}
             />
 
             {/* Main Content */}

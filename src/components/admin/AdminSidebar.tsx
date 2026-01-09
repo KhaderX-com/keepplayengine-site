@@ -22,9 +22,10 @@ interface AdminSidebarProps {
     activeSessions?: number;
     isMobileMenuOpen: boolean;
     onCloseMobileMenu: () => void;
+    userRole?: string;
 }
 
-export default function AdminSidebar({ activeSessions = 0, isMobileMenuOpen, onCloseMobileMenu }: AdminSidebarProps) {
+export default function AdminSidebar({ activeSessions = 0, isMobileMenuOpen, onCloseMobileMenu, userRole }: AdminSidebarProps) {
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const [isCollapsed, setIsCollapsed] = useState(false);
@@ -76,7 +77,7 @@ export default function AdminSidebar({ activeSessions = 0, isMobileMenuOpen, onC
                 },
                 {
                     name: "Audit Logs",
-                    href: "/admin?tab=audit",
+                    href: "/admin/dashboard?tab=audit",
                     icon: (
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -85,7 +86,7 @@ export default function AdminSidebar({ activeSessions = 0, isMobileMenuOpen, onC
                 },
                 {
                     name: "Active Sessions",
-                    href: "/admin?tab=sessions",
+                    href: "/admin/dashboard?tab=sessions",
                     icon: (
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -134,6 +135,17 @@ export default function AdminSidebar({ activeSessions = 0, isMobileMenuOpen, onC
                         </svg>
                     ),
                 },
+                // Only show Label Management for SUPER_ADMIN
+                ...(userRole === 'SUPER_ADMIN' ? [{
+                    name: "Label Management",
+                    href: "/admin/labels",
+                    icon: (
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                        </svg>
+                    ),
+                }] : []),
             ],
         },
     ];
@@ -262,7 +274,7 @@ export default function AdminSidebar({ activeSessions = 0, isMobileMenuOpen, onC
                                                 isActive = pathname === "/admin" && !currentTab;
                                             } else if (subItem.href.includes("?tab=")) {
                                                 const itemTab = subItem.href.split("tab=")[1];
-                                                isActive = pathname === "/admin" && currentTab === itemTab;
+                                                isActive = (pathname === "/admin" || pathname === "/admin/dashboard") && currentTab === itemTab;
                                             }
                                             // Handle Task Manager routes
                                             else if (subItem.href === "/admin/tasks") {

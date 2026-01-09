@@ -31,7 +31,7 @@ export async function GET() {
 }
 
 // =====================================================
-// POST - Create a new label
+// POST - Create a new label (SUPER_ADMIN only)
 // =====================================================
 export async function POST(request: Request) {
     try {
@@ -40,10 +40,20 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        // Check if user is SUPER_ADMIN
+        if (session.user.role !== 'SUPER_ADMIN') {
+            return NextResponse.json({ error: 'Only Super Admins can create labels' }, { status: 403 });
+        }
+
         const body = await request.json();
 
         if (!body.name?.trim()) {
             return NextResponse.json({ error: 'Name is required' }, { status: 400 });
+        }
+
+        // Validate color format
+        if (body.color && !/^#[0-9A-Fa-f]{6}$/.test(body.color)) {
+            return NextResponse.json({ error: 'Invalid color format. Use hex format like #FF5733' }, { status: 400 });
         }
 
         const { data: label, error } = await supabaseAdmin
@@ -58,6 +68,9 @@ export async function POST(request: Request) {
 
         if (error) {
             console.error('Error creating label:', error);
+            if (error.code === '23505') {
+                return NextResponse.json({ error: 'A label with this name already exists' }, { status: 409 });
+            }
             return NextResponse.json({ error: 'Failed to create label' }, { status: 500 });
         }
 
