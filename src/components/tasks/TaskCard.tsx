@@ -4,8 +4,8 @@ import { useState } from 'react';
 import Image from 'next/image';
 import type { Task, TaskStatus, TeamMember } from '@/types/tasks';
 import { PRIORITY_CONFIG } from '@/types/tasks';
-import { updateTask, deleteTask } from '@/lib/tasks';
-import { AlertDialog } from '@/components/ui/alert-dialog';
+import { updateTask } from '@/lib/tasks';
+import SubTaskList from './SubTaskList';
 
 interface TaskCardProps {
     task: Task;
@@ -24,10 +24,17 @@ export default function TaskCard({
 }: TaskCardProps) {
     const [isUpdating, setIsUpdating] = useState(false);
     const [showQuickActions, setShowQuickActions] = useState(false);
-    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
     const priorityConfig = PRIORITY_CONFIG[task.priority];
-    const assignee = task.assignee || members.find(m => m.id === task.assignee_id);
+
+    // Support multiple assignees
+    const assignees = task.assignees && task.assignees.length > 0
+        ? task.assignees
+        : task.assignee
+            ? [task.assignee]
+            : task.assignee_id
+                ? [members.find(m => m.id === task.assignee_id)].filter(Boolean)
+                : [];
 
     const isOverdue = task.due_date &&
         new Date(task.due_date) < new Date() &&
@@ -45,21 +52,7 @@ export default function TaskCard({
         }
     };
 
-    const handleDeleteClick = () => {
-        setShowDeleteDialog(true);
-    };
 
-    const handleDeleteConfirm = async () => {
-        try {
-            setIsUpdating(true);
-            await deleteTask(task.id);
-            onUpdate();
-        } catch (error) {
-            console.error('Failed to delete task:', error);
-        } finally {
-            setIsUpdating(false);
-        }
-    };
 
     const formatDueDate = (date: string) => {
         const d = new Date(date);
@@ -78,15 +71,25 @@ export default function TaskCard({
 
     return (
         <div
-            className={`group bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 
-                p-3 sm:p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer
-                ${isDragging ? 'opacity-50 rotate-2 scale-105' : ''}
+            className={`group bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 
+                p-4 shadow-sm hover:shadow-lg transition-all duration-200 cursor-pointer
+                ${isDragging ? 'opacity-50 shadow-2xl scale-105 border-blue-400' : ''}
                 ${isUpdating ? 'opacity-70 pointer-events-none' : ''}
-                touch-manipulation active:scale-[0.98]`}
+                touch-manipulation active:scale-[0.98] relative
+                hover:border-gray-300 dark:hover:border-gray-600`}
             onClick={() => onOpenDetail(task)}
             onMouseEnter={() => setShowQuickActions(true)}
             onMouseLeave={() => setShowQuickActions(false)}
         >
+            {/* Drag Handle - always visible on mobile, hover on desktop */}
+            <div className="absolute left-2 top-1/2 -translate-y-1/2 md:opacity-0 md:group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing touch-manipulation z-10">
+                <div className="p-2 rounded-lg bg-gray-50 dark:bg-gray-700/50 md:bg-transparent">
+                    <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M9 3h2v2H9V3zm0 4h2v2H9V7zm0 4h2v2H9v-2zm0 4h2v2H9v-2zm0 4h2v2H9v-2zm4-16h2v2h-2V3zm0 4h2v2h-2V7zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2z" />
+                    </svg>
+                </div>
+            </div>
+
             {/* Header: Priority & Quick Actions */}
             <div className="flex items-start justify-between gap-2 mb-2">
                 <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
@@ -94,24 +97,7 @@ export default function TaskCard({
                     {priorityConfig.label}
                 </span>
 
-                {/* Quick Actions - Desktop */}
-                <div className={`hidden sm:flex items-center gap-1 transition-opacity duration-200
-                    ${showQuickActions ? 'opacity-100' : 'opacity-0'}`}>
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteClick();
-                        }}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 
-                            dark:hover:bg-red-900/20 transition-colors"
-                        title="Delete task"
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                    </button>
-                </div>
+
 
                 {/* Mobile: Three dot menu */}
                 <button
@@ -166,52 +152,60 @@ export default function TaskCard({
                 </div>
             )}
 
-            {/* Subtasks Progress */}
-            {task.subtask_count !== undefined && task.subtask_count > 0 && (
-                <div className="mb-3">
-                    <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-1">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                        </svg>
-                        <span>{task.completed_subtask_count}/{task.subtask_count} subtasks</span>
-                    </div>
-                    <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                        <div
-                            className="h-full bg-blue-500 rounded-full transition-all duration-300"
-                            style={{
-                                width: `${(task.completed_subtask_count! / task.subtask_count) * 100}%`
-                            }}
-                        />
-                    </div>
-                </div>
+            {/* Subtasks with Curved Lines */}
+            {task.subtasks && task.subtasks.length > 0 && (
+                <SubTaskList
+                    subtasks={task.subtasks}
+                    members={members}
+                    onSubTaskClick={onOpenDetail}
+                    onUpdate={onUpdate}
+                    parentTaskId={task.id}
+                />
             )}
 
             {/* Footer: Assignee & Due Date */}
             <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
-                {/* Assignee */}
-                <div className="flex items-center gap-2">
-                    {assignee ? (
+                {/* Assignees - show multiple */}
+                <div className="flex items-center gap-1.5">
+                    {assignees.length > 0 ? (
                         <>
-                            <div
-                                className="w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-white text-xs font-medium"
-                                style={{ backgroundColor: assignee.color }}
-                                title={assignee.name}
-                            >
-                                {assignee.avatar_url ? (
-                                    <Image
-                                        src={assignee.avatar_url}
-                                        alt={assignee.name}
-                                        width={28}
-                                        height={28}
-                                        className="w-full h-full rounded-full object-cover"
-                                    />
-                                ) : (
-                                    assignee.name.charAt(0).toUpperCase()
-                                )}
-                            </div>
-                            <span className="text-xs text-gray-500 dark:text-gray-400 hidden sm:inline">
-                                {assignee.name}
+                            {assignees.slice(0, 2).map((assignee, index) => (
+                                <div
+                                    key={assignee!.id}
+                                    className="w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-white text-xs font-medium border-2 border-white dark:border-gray-800"
+                                    style={{
+                                        backgroundColor: assignee!.color,
+                                        marginLeft: index > 0 ? '-8px' : '0'
+                                    }}
+                                    title={assignee!.name}
+                                >
+                                    {assignee!.avatar_url ? (
+                                        <Image
+                                            src={assignee!.avatar_url}
+                                            alt={assignee!.name}
+                                            width={28}
+                                            height={28}
+                                            className="w-full h-full rounded-full object-cover"
+                                        />
+                                    ) : (
+                                        assignee!.name.charAt(0).toUpperCase()
+                                    )}
+                                </div>
+                            ))}
+                            {assignees.length > 2 && (
+                                <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gray-200 dark:bg-gray-700 
+                                    flex items-center justify-center text-xs font-medium text-gray-600 dark:text-gray-300 -ml-2 border-2 border-white dark:border-gray-800"
+                                    title={`+${assignees.length - 2} more`}
+                                >
+                                    +{assignees.length - 2}
+                                </div>
+                            )}
+                            <span className="text-xs text-gray-500 dark:text-gray-400 hidden sm:inline ml-1">
+                                {assignees.length === 1
+                                    ? assignees[0]!.name
+                                    : assignees.length === 2
+                                        ? `${assignees[0]!.name} & ${assignees[1]!.name}`
+                                        : `${assignees[0]!.name} +${assignees.length - 1}`}
                             </span>
                         </>
                     ) : (
@@ -276,34 +270,9 @@ export default function TaskCard({
                     >
                         <span className="text-green-500">●</span> Done
                     </button>
-                    <hr className="my-1 border-gray-200 dark:border-gray-700" />
-                    <button
-                        onClick={() => {
-                            handleDeleteClick();
-                            setShowQuickActions(false);
-                        }}
-                        className="w-full px-4 py-2 text-left text-sm text-red-500 
-                            hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                        Delete
-                    </button>
+
                 </div>
             )}
-
-            <AlertDialog
-                open={showDeleteDialog}
-                onOpenChange={setShowDeleteDialog}
-                title="Delete Task"
-                description={`Are you sure you want to delete "${task.title}"? This action cannot be undone and will permanently remove the task and all its associated data.`}
-                onConfirm={handleDeleteConfirm}
-                confirmText="Delete Task"
-                cancelText="Cancel"
-                variant="danger"
-            />
         </div>
     );
 }

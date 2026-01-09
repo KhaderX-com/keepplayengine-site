@@ -127,37 +127,6 @@ export default function NotificationsPage() {
                 />
 
                 <main className="p-4 sm:p-6 lg:p-8">
-                    {/* Page Header */}
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-                        <div>
-                            <h1 className="text-2xl font-bold text-gray-900">Notification Center</h1>
-                            <p className="text-gray-600 mt-1">
-                                {unreadCount > 0 ? `${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}` : 'All caught up!'}
-                            </p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            {unreadCount > 0 && (
-                                <button
-                                    onClick={() => markAsRead()}
-                                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
-                                >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                    </svg>
-                                    Mark all as read
-                                </button>
-                            )}
-                            <button
-                                onClick={() => setShowSendModal(true)}
-                                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-                            >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                                </svg>
-                                Send Notification
-                            </button>
-                        </div>
-                    </div>
 
                     {/* Tabs */}
                     <div className="flex items-center gap-1 mb-6 bg-gray-100 p-1 rounded-lg w-fit">
@@ -170,8 +139,8 @@ export default function NotificationsPage() {
                                 key={tab.id}
                                 onClick={() => setSelectedTab(tab.id as typeof selectedTab)}
                                 className={`px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2 ${selectedTab === tab.id
-                                        ? 'bg-white text-gray-900 shadow-sm'
-                                        : 'text-gray-600 hover:text-gray-900'
+                                    ? 'bg-white text-gray-900 shadow-sm'
+                                    : 'text-gray-600 hover:text-gray-900'
                                     }`}
                             >
                                 {tab.label}

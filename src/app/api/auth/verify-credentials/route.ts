@@ -9,10 +9,8 @@ import bcrypt from "bcryptjs";
  * Used for 2FA flow where we need to check biometric before session creation
  */
 export async function POST(request: NextRequest) {
-    console.log("verify-credentials endpoint called"); // Debug
     try {
         const body = await request.json();
-        console.log("Request body:", { email: body.email, hasPassword: !!body.password }); // Debug
 
         const { email, password } = body;
 
@@ -78,9 +76,6 @@ export async function POST(request: NextRequest) {
                 { status: 401 }
             );
         }
-
-        // Password is valid
-        console.log("Credentials verified for:", email);
 
         return NextResponse.json({
             valid: true,

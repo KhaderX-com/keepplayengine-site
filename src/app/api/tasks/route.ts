@@ -77,7 +77,7 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: 'Failed to fetch tasks' }, { status: 500 });
         }
 
-        // Fetch labels for each task
+        // Fetch labels and assignees for each task
         const taskIds = tasks?.map(t => t.id) || [];
         if (taskIds.length > 0) {
             const { data: labelAssignments } = await supabaseAdmin
@@ -88,24 +88,43 @@ export async function GET(request: Request) {
                 `)
                 .in('task_id', taskIds);
 
-            // Fetch subtask counts
-            const { data: subtaskCounts } = await supabaseAdmin
-                .from('tasks')
-                .select('parent_task_id, status')
-                .in('parent_task_id', taskIds);
+            // Fetch multiple assignees
+            const { data: assigneeData } = await supabaseAdmin
+                .from('task_assignees')
+                .select(`
+                    task_id,
+                    team_member:team_members(*)
+                `)
+                .in('task_id', taskIds);
 
-            // Attach labels and subtask counts to tasks
+            // Fetch subtasks with full details
+            const { data: subtasksData } = await supabaseAdmin
+                .from('tasks')
+                .select(`
+                    *,
+                    assignee:team_members!tasks_assignee_id_fkey(*)
+                `)
+                .in('parent_task_id', taskIds)
+                .order('position', { ascending: true });
+
+            // Attach labels, assignees, and subtasks to tasks
             const tasksWithLabels = tasks?.map(task => {
                 const taskLabels = labelAssignments
                     ?.filter(la => la.task_id === task.id)
                     .map(la => la.label) || [];
 
-                const taskSubtasks = subtaskCounts?.filter(s => s.parent_task_id === task.id) || [];
+                const taskAssignees = assigneeData
+                    ?.filter(a => a.task_id === task.id)
+                    .map(a => a.team_member) || [];
+
+                const taskSubtasks = subtasksData?.filter(s => s.parent_task_id === task.id) || [];
                 const completedSubtasks = taskSubtasks.filter(s => s.status === 'done');
 
                 return {
                     ...task,
                     labels: taskLabels,
+                    assignees: taskAssignees,
+                    subtasks: taskSubtasks,
                     subtask_count: taskSubtasks.length,
                     completed_subtask_count: completedSubtasks.length,
                 };
@@ -181,6 +200,26 @@ export async function POST(request: Request) {
         if (error) {
             console.error('Error creating task:', error);
             return NextResponse.json({ error: 'Failed to create task' }, { status: 500 });
+        }
+
+        // Assign multiple assignees if provided via assignee_ids
+        if (body.assignee_ids?.length) {
+            await supabaseAdmin
+                .from('task_assignees')
+                .insert(
+                    body.assignee_ids.map(assigneeId => ({
+                        task_id: task.id,
+                        team_member_id: assigneeId,
+                    }))
+                );
+        } else if (body.assignee_id) {
+            // Backwards compatibility: single assignee
+            await supabaseAdmin
+                .from('task_assignees')
+                .insert({
+                    task_id: task.id,
+                    team_member_id: body.assignee_id,
+                });
         }
 
         // Assign labels if provided

@@ -24,6 +24,11 @@ export async function GET() {
             return NextResponse.json({ error: 'Failed to fetch stats' }, { status: 500 });
         }
 
+        // Get task assignees from junction table
+        const { data: taskAssignees } = await supabaseAdmin
+            .from('task_assignees')
+            .select('task_id, team_member_id');
+
         // Get team members
         const { data: members } = await supabaseAdmin
             .from('team_members')
@@ -43,14 +48,28 @@ export async function GET() {
                 new Date(t.due_date) < now &&
                 t.status !== 'done'
             ).length || 0,
-            by_assignee: members?.map(member => ({
-                member,
-                total: tasks?.filter(t => t.assignee_id === member.id).length || 0,
-                completed: tasks?.filter(t =>
-                    t.assignee_id === member.id &&
-                    t.status === 'done'
-                ).length || 0,
-            })) || [],
+            by_assignee: members?.map(member => {
+                // Get task IDs assigned to this member from task_assignees table
+                const memberTaskIds = taskAssignees
+                    ?.filter(ta => ta.team_member_id === member.id)
+                    .map(ta => ta.task_id) || [];
+
+                // Also include tasks with old assignee_id field for backwards compatibility
+                const legacyTasks = tasks?.filter(t => t.assignee_id === member.id) || [];
+                const legacyTaskIds = legacyTasks.map(t => t.id);
+
+                // Combine both (remove duplicates)
+                const allTaskIds = [...new Set([...memberTaskIds, ...legacyTaskIds])];
+
+                // Filter tasks that belong to this member
+                const memberTasks = tasks?.filter(t => allTaskIds.includes(t.id)) || [];
+
+                return {
+                    member,
+                    total: memberTasks.length,
+                    completed: memberTasks.filter(t => t.status === 'done').length,
+                };
+            }) || [],
         };
 
         return NextResponse.json({ stats });

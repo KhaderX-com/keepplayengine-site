@@ -36,6 +36,10 @@ export default function TaskModal({
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    // Subtasks state
+    const [subtasks, setSubtasks] = useState<{ title: string; priority: TaskPriority }[]>([]);
+    const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
+
     // Reset form when modal opens/closes or task changes
     useEffect(() => {
         if (isOpen) {
@@ -55,6 +59,7 @@ export default function TaskModal({
                 setAssigneeId('');
                 setDueDate('');
                 setSelectedLabels([]);
+                setSubtasks([]);
             }
             setError(null);
         }
@@ -72,21 +77,50 @@ export default function TaskModal({
             setIsSubmitting(true);
             setError(null);
 
+            // Handle "both" assignee by sending both IDs
+            let assigneeIds: string[] | undefined;
+            if (assigneeId === 'both') {
+                const khaderMember = members.find(m => m.name === 'Khader');
+                const amroMember = members.find(m => m.name === 'Amro');
+                if (khaderMember && amroMember) {
+                    assigneeIds = [khaderMember.id, amroMember.id];
+                }
+            } else if (assigneeId) {
+                assigneeIds = [assigneeId];
+            }
+
             const data = {
                 title: title.trim(),
                 description: description.trim() || undefined,
                 status,
                 priority,
-                assignee_id: assigneeId || undefined,
+                assignee_id: assigneeId && assigneeId !== 'both' ? assigneeId : undefined,
+                assignee_ids: assigneeIds,
                 due_date: dueDate || undefined,
                 label_ids: selectedLabels,
                 parent_task_id: parentTaskId,
             };
 
+            let taskId: string;
+
             if (task) {
                 await updateTask(task.id, data);
+                taskId = task.id;
             } else {
-                await createTask(data);
+                const createdTask = await createTask(data);
+                taskId = createdTask.id;
+            }
+
+            // Create subtasks if any
+            if (subtasks.length > 0 && taskId) {
+                for (const subtask of subtasks) {
+                    await createTask({
+                        title: subtask.title,
+                        priority: subtask.priority,
+                        status: 'todo',
+                        parent_task_id: taskId,
+                    });
+                }
             }
 
             onSave();
@@ -96,6 +130,23 @@ export default function TaskModal({
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const handleAddSubtask = () => {
+        if (newSubtaskTitle.trim()) {
+            setSubtasks([...subtasks, { title: newSubtaskTitle.trim(), priority: 'medium' }]);
+            setNewSubtaskTitle('');
+        }
+    };
+
+    const handleRemoveSubtask = (index: number) => {
+        setSubtasks(subtasks.filter((_, i) => i !== index));
+    };
+
+    const handleSubtaskPriorityChange = (index: number, priority: TaskPriority) => {
+        const updated = [...subtasks];
+        updated[index].priority = priority;
+        setSubtasks(updated);
     };
 
     const toggleLabel = (labelId: string) => {
@@ -123,16 +174,18 @@ export default function TaskModal({
                     max-h-[90vh] sm:max-h-[85vh] flex flex-col">
 
                     {/* Header */}
-                    <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b 
-                        border-gray-200 dark:border-gray-700 shrink-0">
-                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b 
+                        border-gray-200 dark:border-gray-700 shrink-0 sticky top-0 bg-white dark:bg-gray-900 z-10">
+                        <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
                             {task ? 'Edit Task' : parentTaskId ? 'Add Subtask' : 'New Task'}
                         </h2>
                         <button
-                            onClick={onClose} aria-label="Close modal" className="p-2 rounded-lg text-gray-400 hover:text-gray-600 
-                                hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                            onClick={onClose}
+                            aria-label="Close modal"
+                            className="p-2 rounded-lg text-gray-400 hover:text-gray-600 
+                                hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors touch-manipulation active:scale-95"
                         >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                                     d="M6 18L18 6M6 6l12 12" />
                             </svg>
@@ -141,7 +194,7 @@ export default function TaskModal({
 
                     {/* Form */}
                     <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
-                        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-4">
+                        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-3 sm:py-4 space-y-3 sm:space-y-4">
                             {/* Error Message */}
                             {error && (
                                 <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 
@@ -152,7 +205,7 @@ export default function TaskModal({
 
                             {/* Title */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                                <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                                     Title <span className="text-red-500">*</span>
                                 </label>
                                 <input
@@ -160,10 +213,12 @@ export default function TaskModal({
                                     value={title}
                                     onChange={(e) => setTitle(e.target.value)}
                                     placeholder="What needs to be done?"
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 
-                                        bg-white dark:bg-gray-800 text-gray-900 dark:text-white
+                                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-gray-300 dark:border-gray-600 
+                                        bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm sm:text-base
+                                        placeholder-gray-400 dark:placeholder-gray-500
                                         focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                                        placeholder-gray-400 transition-all text-base"
+                                        transition-colors touch-manipulation"
+                                    required
                                     autoFocus
                                 />
                             </div>
@@ -249,6 +304,7 @@ export default function TaskModal({
                                             transition-all text-base appearance-none"
                                     >
                                         <option value="">Unassigned</option>
+                                        {!task && <option value="both">Both Khader & Amro</option>}
                                         {members.map((member) => (
                                             <option key={member.id} value={member.id}>
                                                 {member.name}
@@ -274,6 +330,100 @@ export default function TaskModal({
                                     />
                                 </div>
                             </div>
+
+                            {/* Subtasks Section - Only show when NOT editing a subtask */}
+                            {!parentTaskId && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Subtasks
+                                    </label>
+
+                                    {/* Add subtask input */}
+                                    <div className="flex gap-2 mb-3">
+                                        <input
+                                            type="text"
+                                            value={newSubtaskTitle}
+                                            onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                                            onKeyPress={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    e.preventDefault();
+                                                    handleAddSubtask();
+                                                }
+                                            }}
+                                            placeholder="Add a subtask..."
+                                            className="flex-1 px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 
+                                                bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm
+                                                focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                                                placeholder-gray-400 transition-all"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={handleAddSubtask}
+                                            disabled={!newSubtaskTitle.trim()}
+                                            className="px-4 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-medium
+                                                hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed
+                                                flex items-center gap-2 shrink-0"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                            </svg>
+                                            Add
+                                        </button>
+                                    </div>
+
+                                    {/* Subtasks list */}
+                                    {subtasks.length > 0 && (
+                                        <div className="space-y-2 max-h-48 overflow-y-auto">
+                                            {subtasks.map((subtask, index) => (
+                                                <div
+                                                    key={index}
+                                                    className="flex items-center gap-2 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 
+                                                        border border-gray-200 dark:border-gray-700 group"
+                                                >
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                                            {subtask.title}
+                                                        </p>
+                                                    </div>
+
+                                                    <select
+                                                        value={subtask.priority}
+                                                        onChange={(e) => handleSubtaskPriorityChange(index, e.target.value as TaskPriority)}
+                                                        aria-label="Select subtask priority"
+                                                        className="px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 
+                                                            bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-xs
+                                                            focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                    >
+                                                        {Object.entries(PRIORITY_CONFIG).map(([key, config]) => (
+                                                            <option key={key} value={key}>
+                                                                {config.label}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleRemoveSubtask(index)}
+                                                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 
+                                                            dark:hover:bg-red-900/20 transition-colors opacity-0 group-hover:opacity-100"
+                                                        title="Remove subtask"
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {subtasks.length === 0 && (
+                                        <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+                                            No subtasks added yet. Add subtasks to break down this task into smaller steps.
+                                        </p>
+                                    )}
+                                </div>
+                            )}
 
                             {/* Labels */}
                             <div>

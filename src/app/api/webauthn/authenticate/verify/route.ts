@@ -8,14 +8,10 @@ import { getClientIP, getDeviceInfo } from "@/lib/request-utils";
  * Verify biometric authentication and create session
  */
 export async function POST(request: NextRequest) {
-    console.log("authenticate/verify endpoint called"); // Debug
     try {
         const { credential } = await request.json();
         const challenge = request.cookies.get("webauthn_auth_challenge")?.value;
         const email = request.cookies.get("webauthn_auth_email")?.value;
-
-        console.log("Challenge:", challenge ? "present" : "missing"); // Debug
-        console.log("Email from cookie:", email); // Debug
 
         if (!challenge) {
             return NextResponse.json(
@@ -47,11 +43,9 @@ export async function POST(request: NextRequest) {
         };
 
         // Verify the credential
-        console.log("Calling verifyAuthenticationResponse..."); // Debug
         const result = await verifyAuthenticationResponse(
             processedCredential
         );
-        console.log("Verification result:", result); // Debug
 
         if (!result.success) {
             return NextResponse.json(
@@ -67,8 +61,6 @@ export async function POST(request: NextRequest) {
             .eq("id", result.userId)
             .eq("is_active", true)
             .single();
-
-        console.log("User lookup result:", { user, userError, userId: result.userId }); // Debug
 
         if (userError || !user) {
             console.error("User lookup failed:", userError);

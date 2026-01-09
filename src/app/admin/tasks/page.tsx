@@ -11,9 +11,10 @@ import TaskBoard from '@/components/tasks/TaskBoard';
 import TaskModal from '@/components/tasks/TaskModal';
 import TaskDetail from '@/components/tasks/TaskDetail';
 import TaskStatsCards, { TeamProgress } from '@/components/tasks/TaskStats';
+import SubTaskList from '@/components/tasks/SubTaskList';
 
 export default function TaskManagerPage() {
-    const { status } = useSession();
+    const { data: session, status } = useSession();
     const router = useRouter();
 
     // State
@@ -26,6 +27,7 @@ export default function TaskManagerPage() {
     const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
     const [editingTask, setEditingTask] = useState<Task | null>(null);
     const [initialStatus, setInitialStatus] = useState<TaskStatus>('todo');
+    const [parentTaskId, setParentTaskId] = useState<string | undefined>(undefined);
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
 
@@ -59,14 +61,23 @@ export default function TaskManagerPage() {
 
     const handleAddTask = (status: TaskStatus = 'todo') => {
         setEditingTask(null);
+        setParentTaskId(undefined);
         setInitialStatus(status);
         setIsTaskModalOpen(true);
     };
 
     const handleEditTask = (task: Task) => {
         setEditingTask(task);
+        setParentTaskId(undefined);
         setIsTaskModalOpen(true);
         setIsDetailOpen(false);
+    };
+
+    const handleAddSubtask = (parentId: string) => {
+        setEditingTask(null);
+        setParentTaskId(parentId);
+        setInitialStatus('todo');
+        setIsTaskModalOpen(true);
     };
 
     const handleOpenDetail = (task: Task) => {
@@ -93,42 +104,26 @@ export default function TaskManagerPage() {
             <div className="lg:pl-64">
                 {/* Header */}
                 <AdminHeader
+                    user={session?.user}
                     onToggleMobileMenu={() => setIsMobileMenuOpen(true)}
                     title="Task Manager"
                     subtitle="Manage and track tasks with your team"
                 />
 
                 {/* Page Content */}
-                <main className="p-4 sm:p-6 lg:p-8 pt-20 lg:pt-24">
-                    {/* Page Header */}
-                    <div className="mb-6 sm:mb-8">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                            <div>
-                                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-                                    Task Manager
-                                </h1>
-                                <p className="text-gray-500 dark:text-gray-400 mt-1">
-                                    Manage and track tasks with your team
-                                </p>
-                            </div>
-                            <button
-                                onClick={() => handleAddTask()}
-                                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 
-                                    bg-blue-600 text-white rounded-xl font-medium
-                                    hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-                                    transition-all shadow-lg shadow-blue-600/25 active:scale-[0.98]"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                </svg>
-                                <span>New Task</span>
-                            </button>
-                        </div>
-                    </div>
+                <main className="p-4 sm:p-6 lg:p-8 pt-6 lg:pt-8">
 
-                    {/* Stats Cards */}
-                    <div className="mb-6">
-                        <TaskStatsCards stats={stats} loading={statsLoading} />
+                    {/* Dashboard Overview - Stats & Team Progress */}
+                    <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
+                        {/* Stats Cards */}
+                        <div className="xl:col-span-2">
+                            <TaskStatsCards stats={stats} loading={statsLoading} />
+                        </div>
+
+                        {/* Team Progress */}
+                        <div className="xl:col-span-1">
+                            <TeamProgress stats={stats} loading={statsLoading} />
+                        </div>
                     </div>
 
                     {/* Filters & View Toggle - Mobile Optimized */}
@@ -237,39 +232,29 @@ export default function TaskManagerPage() {
                         </div>
                     </div>
 
-                    {/* Main Content Area */}
-                    <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-                        {/* Task Board / List */}
-                        <div className="xl:col-span-3">
-                            {tasksLoading ? (
-                                <div className="flex items-center justify-center py-20">
-                                    <div className="animate-spin w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full" />
-                                </div>
-                            ) : view === 'board' ? (
-                                <TaskBoard
-                                    tasks={filteredTasks}
-                                    members={members}
-                                    onUpdate={handleRefresh}
-                                    onOpenDetail={handleOpenDetail}
-                                    onAddTask={handleAddTask}
-                                />
-                            ) : (
-                                <TaskListView
-                                    tasks={filteredTasks}
-                                    members={members}
-                                    labels={labels}
-                                    onUpdate={handleRefresh}
-                                    onOpenDetail={handleOpenDetail}
-                                    onAddTask={handleAddTask}
-                                />
-                            )}
+                    {/* Task Board / List - Full Width */}
+                    {tasksLoading ? (
+                        <div className="flex items-center justify-center py-20">
+                            <div className="animate-spin w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full" />
                         </div>
-
-                        {/* Sidebar: Team Progress */}
-                        <div className="xl:col-span-1">
-                            <TeamProgress stats={stats} loading={statsLoading} />
-                        </div>
-                    </div>
+                    ) : view === 'board' ? (
+                        <TaskBoard
+                            tasks={filteredTasks}
+                            members={members}
+                            onUpdate={handleRefresh}
+                            onOpenDetail={handleOpenDetail}
+                            onAddTask={handleAddTask}
+                        />
+                    ) : (
+                        <TaskListView
+                            tasks={filteredTasks}
+                            members={members}
+                            labels={labels}
+                            onUpdate={handleRefresh}
+                            onOpenDetail={handleOpenDetail}
+                            onAddTask={handleAddTask}
+                        />
+                    )}
                 </main>
             </div>
 
@@ -279,9 +264,11 @@ export default function TaskManagerPage() {
                 onClose={() => {
                     setIsTaskModalOpen(false);
                     setEditingTask(null);
+                    setParentTaskId(undefined);
                 }}
                 onSave={handleRefresh}
                 task={editingTask}
+                parentTaskId={parentTaskId}
                 initialStatus={initialStatus}
                 members={members}
                 labels={labels}
@@ -299,6 +286,7 @@ export default function TaskManagerPage() {
                 labels={labels}
                 onUpdate={handleRefresh}
                 onEdit={handleEditTask}
+                onAddSubtask={handleAddSubtask}
             />
         </div>
     );
@@ -307,6 +295,8 @@ export default function TaskManagerPage() {
 // List View Component
 function TaskListView({
     tasks,
+    members,
+    onUpdate,
     onOpenDetail,
     onAddTask,
 }: {
@@ -375,6 +365,19 @@ function TaskListView({
                                                 <p className="text-sm text-gray-500 dark:text-gray-400 truncate mt-1">
                                                     {task.description}
                                                 </p>
+                                            )}
+
+                                            {/* Subtasks with Curved Lines */}
+                                            {task.subtasks && task.subtasks.length > 0 && (
+                                                <div className="mt-3">
+                                                    <SubTaskList
+                                                        subtasks={task.subtasks}
+                                                        members={members}
+                                                        onSubTaskClick={onOpenDetail}
+                                                        onUpdate={onUpdate}
+                                                        parentTaskId={task.id}
+                                                    />
+                                                </div>
                                             )}
                                         </div>
 

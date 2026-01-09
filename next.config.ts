@@ -6,6 +6,16 @@ const nextConfig: NextConfig = {
   // Add empty turbopack config to silence Next.js 16 warning
   // The webpack config from next-pwa still works fine
   turbopack: {},
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+        port: '',
+        pathname: '/destej60y/**',
+      },
+    ],
+  },
 };
 
 const pwaConfig = withPWA({

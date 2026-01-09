@@ -142,15 +142,6 @@ export async function POST(request: Request) {
         // Get the vault PIN hash from environment (NEVER from database)
         const vaultPinHash = process.env.ADMIN_VAULT_PIN_HASH;
 
-        // DEBUG: Log hash info in development only
-        if (process.env.NODE_ENV === 'development') {
-            console.log('🔐 Vault PIN Debug:');
-            console.log('   PIN entered:', pin);
-            console.log('   Hash exists:', !!vaultPinHash);
-            console.log('   Hash prefix:', vaultPinHash?.substring(0, 7));
-            console.log('   Hash length:', vaultPinHash?.length);
-        }
-
         if (!vaultPinHash) {
             // This should never happen in production
             const isDev = process.env.NODE_ENV === 'development';
@@ -179,11 +170,6 @@ export async function POST(request: Request) {
 
         // Verify PIN using bcrypt (constant-time comparison built-in)
         const isValid = await bcrypt.compare(pin, vaultPinHash);
-
-        // DEBUG: Log result in development only
-        if (process.env.NODE_ENV === 'development') {
-            console.log('   bcrypt.compare result:', isValid);
-        }
 
         // Update state based on result
         state.lastAttempt = now;

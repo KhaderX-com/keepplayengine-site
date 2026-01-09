@@ -149,7 +149,6 @@ View all notifications: https://keepplayengine.com/admin/notifications
             throw error;
         }
 
-        console.log('Email notification sent successfully:', data?.id);
         return { success: true, messageId: data?.id };
 
     } catch (error) {

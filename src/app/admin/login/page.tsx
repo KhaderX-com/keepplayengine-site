@@ -46,8 +46,6 @@ export default function AdminLoginPage() {
           const data = await res.json();
           setBiometricConfig(data);
         }
-      } catch (err) {
-        console.error("Failed to load biometric config:", err);
       } finally {
         setConfigLoading(false);
       }
@@ -140,8 +138,6 @@ export default function AdminLoginPage() {
       }
 
       // PIN verified! Now create the final session
-      console.log("Vault PIN verified! Creating session...");
-
       const result = await signIn("credentials", {
         email,
         password,
@@ -158,7 +154,6 @@ export default function AdminLoginPage() {
       }
     } catch (err) {
       const error = err as Error;
-      console.error("Vault PIN error:", error);
       setError(error.message || "Verification failed");
       setVaultPin(["", "", ""]);
       setPinLoading(false);
@@ -239,7 +234,6 @@ export default function AdminLoginPage() {
       }
 
       // Success - enrollment complete, now do biometric auth
-      console.log("Biometric enrolled! Now verifying...");
       setHasCredentials(true);
       setBiometricLoading(false);
 
@@ -247,7 +241,6 @@ export default function AdminLoginPage() {
       setTimeout(() => handleBiometricAuth(), 500);
     } catch (err) {
       const error = err as Error;
-      console.error("Biometric enrollment error:", error);
       setError(error.message || "Biometric enrollment failed");
       setBiometricLoading(false);
     }
@@ -329,13 +322,11 @@ export default function AdminLoginPage() {
       }
 
       // Success - biometric verified, now proceed to vault PIN (4th layer)
-      console.log("Biometric verified! Proceeding to vault PIN...");
       setBiometricVerified(true);
       setBiometricLoading(false);
       setError("");
     } catch (err) {
       const error = err as Error;
-      console.error("Biometric auth error:", error);
       setError(error.message || "Biometric authentication failed");
       setBiometricLoading(false);
     }
@@ -347,8 +338,6 @@ export default function AdminLoginPage() {
     setLoading(true);
 
     try {
-      console.log("Step 1: Verifying credentials..."); // Debug log
-
       // First, just verify credentials without creating session
       const verifyRes = await fetch("/api/auth/verify-credentials", {
         method: "POST",
@@ -356,18 +345,14 @@ export default function AdminLoginPage() {
         body: JSON.stringify({ email, password }),
       });
 
-      console.log("Verify response status:", verifyRes.status); // Debug
-
       if (!verifyRes.ok) {
         const data = await verifyRes.json();
-        console.error("Verify failed:", data); // Debug
         setError(data.error || "Invalid credentials");
         setLoading(false);
         return;
       }
 
       const verifyData = await verifyRes.json();
-      console.log("Verify data:", verifyData); // Debug
       const { valid } = verifyData;
 
       if (!valid) {
@@ -376,8 +361,6 @@ export default function AdminLoginPage() {
         return;
       }
 
-      console.log("Password verified!"); // Debug log
-
       // Check if user has biometric enrolled
       const checkRes = await fetch("/api/webauthn/check-enrollment", {
         method: "POST",
@@ -385,18 +368,12 @@ export default function AdminLoginPage() {
         body: JSON.stringify({ email }),
       });
 
-      console.log("Check enrollment status:", checkRes.status); // Debug
-
-      // Get the response text first to debug
       const checkText = await checkRes.text();
-      console.log("Check enrollment raw response:", checkText.substring(0, 200)); // Debug
 
       let checkData;
       try {
         checkData = JSON.parse(checkText);
-        console.log("Enrollment data:", checkData); // Debug
       } catch (parseError) {
-        console.error("Failed to parse enrollment response as JSON:", parseError);
         setError("Server error during biometric check");
         setLoading(false);
         return;
@@ -405,9 +382,6 @@ export default function AdminLoginPage() {
       const { enrolled } = checkData;
 
       // ALWAYS require biometric after password verification
-      console.log("Password verified. Moving to biometric step...");
-      console.log("Has credentials enrolled:", enrolled);
-      console.log("Biometric config:", biometricConfig);
       setPasswordVerified(true);
       setHasCredentials(enrolled);
       setLoading(false);
@@ -415,8 +389,6 @@ export default function AdminLoginPage() {
       // STOP HERE - don't create session until biometric is verified
     } catch (err) {
       const error = err as Error;
-      console.error("Caught error in handleSubmit:", error); // Debug log
-      console.error("Error stack:", error.stack); // Debug stack trace
       setError("An unexpected error occurred. Please try again.");
       setLoading(false);
     }

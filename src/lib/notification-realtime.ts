@@ -56,7 +56,6 @@ export function useNotificationRealtime({
                     filter: `recipient_id=eq.${userId}`
                 },
                 (payload) => {
-                    console.log('New notification received:', payload.new);
                     onNewNotification?.(payload.new);
 
                     // Show browser notification if permission granted

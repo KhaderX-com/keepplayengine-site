@@ -65,12 +65,10 @@ export default function AdminPage() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const handleToggleMobileMenu = useCallback(() => {
-        console.log('Toggle mobile menu:', !isMobileMenuOpen);
         setIsMobileMenuOpen(!isMobileMenuOpen);
     }, [isMobileMenuOpen]);
 
     const handleCloseMobileMenu = useCallback(() => {
-        console.log('Closing mobile menu');
         setIsMobileMenuOpen(false);
     }, []);
 
@@ -121,7 +119,6 @@ export default function AdminPage() {
                 setSessions(sessionsData.sessions);
             }
         } catch (error) {
-            console.error("Error fetching dashboard data:", error);
         } finally {
             setIsLoading(false);
         }
@@ -137,7 +134,6 @@ export default function AdminPage() {
                 setSessions(sessions.filter(s => s.id !== sessionId));
             }
         } catch (error) {
-            console.error("Error revoking session:", error);
         }
     };
 
@@ -380,22 +376,7 @@ export default function AdminPage() {
                     {/* Audit Logs Tab - Mobile Optimized */}
                     {activeTab === "audit" && (
                         <div className="space-y-4 sm:space-y-6 max-w-7xl mx-auto">
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                                <div>
-                                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Audit Logs</h2>
-                                    <p className="text-sm text-gray-600 mt-1">Activity tracking and security monitoring</p>
-                                </div>
-                                <button
-                                    onClick={fetchDashboardData}
-                                    className="px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-semibold text-white transition-all flex items-center space-x-2 touch-manipulation active:scale-95"
-                                >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                    </svg>
-                                    <span className="hidden sm:inline">Refresh</span>
-                                    <span className="sm:hidden">Reload</span>
-                                </button>
-                            </div>
+                            {/* header removed - title shown in main navbar */}
 
                             {/* Mobile: Card View, Desktop: Table View */}
                             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
@@ -523,22 +504,7 @@ export default function AdminPage() {
                     {/* Active Sessions Tab - Mobile Optimized */}
                     {activeTab === "sessions" && (
                         <div className="space-y-4 sm:space-y-6 max-w-7xl mx-auto">
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                                <div>
-                                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Active Sessions</h2>
-                                    <p className="text-sm text-gray-600 mt-1">Monitor and manage active sessions</p>
-                                </div>
-                                <button
-                                    onClick={fetchDashboardData}
-                                    className="px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-semibold text-white transition-all flex items-center space-x-2 touch-manipulation active:scale-95"
-                                >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                    </svg>
-                                    <span className="hidden sm:inline">Refresh</span>
-                                    <span className="sm:hidden">Reload</span>
-                                </button>
-                            </div>
+                            {/* header removed - title shown in main navbar */}
 
                             <div className="grid gap-3 sm:gap-4">
                                 {sessions.length === 0 ? (

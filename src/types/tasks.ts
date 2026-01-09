@@ -48,11 +48,16 @@ export interface Task {
 
     // Joined relations (optional)
     assignee?: TeamMember | null;
+    assignees?: TeamMember[]; // Multiple assignees support
     creator?: TeamMember | null;
     labels?: TaskLabel[];
     subtasks?: Task[];
     subtask_count?: number;
     completed_subtask_count?: number;
+
+    // Hierarchical display properties
+    depth?: number;
+    has_children?: boolean;
 }
 
 export interface TaskComment {
@@ -92,6 +97,7 @@ export interface CreateTaskRequest {
     status?: TaskStatus;
     priority?: TaskPriority;
     assignee_id?: string;
+    assignee_ids?: string[]; // Multiple assignees support
     parent_task_id?: string;
     due_date?: string;
     estimated_hours?: number;
@@ -156,15 +162,53 @@ export interface DragItem {
 // HELPER FUNCTIONS
 // =====================================================
 
-export const PRIORITY_CONFIG: Record<TaskPriority, { label: string; color: string; bgColor: string }> = {
-    low: { label: 'Low', color: 'text-gray-500', bgColor: 'bg-gray-100 dark:bg-gray-800' },
-    medium: { label: 'Medium', color: 'text-blue-500', bgColor: 'bg-blue-100 dark:bg-blue-900/30' },
-    high: { label: 'High', color: 'text-orange-500', bgColor: 'bg-orange-100 dark:bg-orange-900/30' },
-    urgent: { label: 'Urgent', color: 'text-red-500', bgColor: 'bg-red-100 dark:bg-red-900/30' },
+export const PRIORITY_CONFIG: Record<TaskPriority, { label: string; color: string; bgColor: string; className: string }> = {
+    low: {
+        label: 'Low',
+        color: 'text-gray-500',
+        bgColor: 'bg-gray-100 dark:bg-gray-800',
+        className: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+    },
+    medium: {
+        label: 'Medium',
+        color: 'text-blue-500',
+        bgColor: 'bg-blue-100 dark:bg-blue-900/30',
+        className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+    },
+    high: {
+        label: 'High',
+        color: 'text-orange-500',
+        bgColor: 'bg-orange-100 dark:bg-orange-900/30',
+        className: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+    },
+    urgent: {
+        label: 'Urgent',
+        color: 'text-red-500',
+        bgColor: 'bg-red-100 dark:bg-red-900/30',
+        className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+    },
 };
 
-export const STATUS_CONFIG: Record<TaskStatus, { label: string; color: string; bgColor: string; icon: string }> = {
-    todo: { label: 'To Do', color: 'text-gray-500', bgColor: 'bg-gray-500', icon: '○' },
-    in_progress: { label: 'In Progress', color: 'text-blue-500', bgColor: 'bg-blue-500', icon: '◐' },
-    done: { label: 'Done', color: 'text-green-500', bgColor: 'bg-green-500', icon: '●' },
+export const STATUS_CONFIG: Record<TaskStatus, { label: string; color: string; bgColor: string; icon: string; className: string }> = {
+    todo: {
+        label: 'To Do',
+        color: 'text-gray-500',
+        bgColor: 'bg-gray-500',
+        icon: '○',
+        className: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+    },
+    in_progress: {
+        label: 'In Progress',
+        color: 'text-blue-500',
+        bgColor: 'bg-blue-500',
+        icon: '◐',
+        className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+    },
+    done: {
+        label: 'Done',
+        color: 'text-green-500',
+        bgColor: 'bg-green-500',
+        icon: '●',
+        className: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+    },
 };

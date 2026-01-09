@@ -208,6 +208,7 @@ export const authOptions: NextAuthOptions = {
             if (user) {
                 token.id = user.id;
                 token.role = user.role;
+                token.image = user.image;
             }
             return token;
         },
@@ -215,6 +216,7 @@ export const authOptions: NextAuthOptions = {
             if (session.user) {
                 session.user.id = token.id;
                 session.user.role = token.role;
+                session.user.image = token.image;
             }
             return session;
         },
@@ -227,7 +229,6 @@ export const authOptions: NextAuthOptions = {
         },
     },
     secret: process.env.NEXTAUTH_SECRET,
-    debug: process.env.NODE_ENV === "development",
     // Security options
     cookies: {
         sessionToken: {

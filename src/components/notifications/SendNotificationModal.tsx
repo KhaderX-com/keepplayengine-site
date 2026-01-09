@@ -109,7 +109,7 @@ export default function SendNotificationModal({
     const selectedRecipientData = recipients.find(r => r.email === selectedRecipient);
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
             {/* Backdrop */}
             <div
                 className="absolute inset-0 bg-black/50 backdrop-blur-sm"
@@ -117,34 +117,34 @@ export default function SendNotificationModal({
             />
 
             {/* Modal */}
-            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg animate-in zoom-in-95 duration-200">
+            <div className="relative bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-full sm:max-w-lg max-h-[90vh] sm:max-h-[85vh] overflow-hidden animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                            <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100 sticky top-0 bg-white z-10">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                        <div className="w-9 h-9 sm:w-10 sm:h-10 bg-blue-100 rounded-xl flex items-center justify-center shrink-0">
+                            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                             </svg>
                         </div>
                         <div>
-                            <h2 className="text-lg font-semibold text-gray-900">Send Notification</h2>
-                            <p className="text-sm text-gray-500">Notify your team member</p>
+                            <h2 className="text-base sm:text-lg font-semibold text-gray-900">Send Notification</h2>
+                            <p className="text-xs sm:text-sm text-gray-500">Notify your team member</p>
                         </div>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                        className="p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors touch-manipulation"
                         title="Close modal"
                         aria-label="Close modal"
                     >
-                        <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5 sm:w-6 sm:h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
                 </div>
 
                 {/* Form */}
-                <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-5 overflow-y-auto max-h-[calc(90vh-5rem)] sm:max-h-none">
                     {/* Success Message */}
                     {success && (
                         <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-xl">
@@ -174,11 +174,11 @@ export default function SendNotificationModal({
 
                     {/* Recipient Selection */}
                     <div>
-                        <label htmlFor="recipient-select" className="block text-sm font-medium text-gray-700 mb-2">
+                        <label htmlFor="recipient-select" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                             Send to
                         </label>
                         {loading ? (
-                            <div className="h-12 bg-gray-100 rounded-xl animate-pulse" />
+                            <div className="h-11 sm:h-12 bg-gray-100 rounded-xl animate-pulse" />
                         ) : (
                             <div className="relative">
                                 <select
@@ -187,7 +187,7 @@ export default function SendNotificationModal({
                                     onChange={(e) => setSelectedRecipient(e.target.value)}
                                     required
                                     aria-label="Select recipient"
-                                    className="w-full h-12 px-4 pr-10 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer"
+                                    className="w-full h-11 sm:h-12 px-3 sm:px-4 pr-10 bg-gray-50 border border-gray-200 rounded-xl text-sm sm:text-base text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer touch-manipulation"
                                 >
                                     <option value="">Select a team member...</option>
                                     {recipients.map((recipient) => (
@@ -285,30 +285,32 @@ export default function SendNotificationModal({
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center justify-end gap-3 pt-2">
+                    <div className="flex items-center justify-end gap-2 sm:gap-3 pt-4 sticky bottom-0 bg-white pb-safe -mx-4 sm:-mx-6 px-4 sm:px-6 pb-4 border-t sm:border-0 border-gray-100 mt-2 sm:mt-0">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-5 py-2.5 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-colors"
+                            className="px-4 sm:px-5 py-2.5 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 active:bg-gray-200 rounded-xl transition-colors touch-manipulation"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={sending || !selectedRecipient || !title || !message}
-                            className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            className="px-4 sm:px-5 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 touch-manipulation"
                         >
                             {sending ? (
                                 <>
                                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                    Sending...
+                                    <span className="hidden sm:inline">Sending...</span>
+                                    <span className="sm:hidden">...</span>
                                 </>
                             ) : (
                                 <>
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                                     </svg>
-                                    Send Notification
+                                    <span className="hidden sm:inline">Send Notification</span>
+                                    <span className="sm:hidden">Send</span>
                                 </>
                             )}
                         </button>

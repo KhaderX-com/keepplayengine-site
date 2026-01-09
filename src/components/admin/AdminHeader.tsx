@@ -10,6 +10,7 @@ interface AdminHeaderProps {
         name?: string | null;
         email?: string | null;
         role?: string;
+        image?: string | null;
     };
     onToggleMobileMenu: () => void;
     title?: string;
@@ -50,11 +51,7 @@ export default function AdminHeader({ user, onToggleMobileMenu, title = "Dashboa
 
                 {/* Right Section - PWA Optimized */}
                 <div className="flex items-center space-x-2 sm:space-x-3 lg:space-x-4">
-                    {/* Security Badge - Hidden on mobile */}
-                    <div className="hidden md:flex items-center space-x-2 bg-linear-to-r from-green-50 to-green-100 px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg border border-green-200">
-                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                        <span className="text-xs font-semibold text-green-700">Secure</span>
-                    </div>
+                    {/* Security badge removed per request */}
 
                     {/* Notifications - Using the new NotificationBell component */}
                     <NotificationBell className="flex items-center" />
@@ -66,10 +63,18 @@ export default function AdminHeader({ user, onToggleMobileMenu, title = "Dashboa
                             className="flex items-center space-x-2 p-1.5 sm:p-2 pr-2 sm:pr-3 lg:pr-4 rounded-lg hover:bg-gray-100 transition-colors touch-manipulation active:scale-95"
                             aria-label="User menu"
                         >
-                            <div className="w-8 h-8 sm:w-9 sm:h-9 lg:w-10 lg:h-10 bg-blue-600 rounded-full flex items-center justify-center shrink-0">
-                                <span className="text-white font-bold text-sm">
-                                    {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "A"}
-                                </span>
+                            <div className="w-8 h-8 sm:w-9 sm:h-9 lg:w-10 lg:h-10 bg-blue-600 rounded-full flex items-center justify-center shrink-0 overflow-hidden">
+                                {user?.image ? (
+                                    <img
+                                        src={user.image}
+                                        alt={user?.name || user?.email || "User"}
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <span className="text-white font-bold text-sm">
+                                        {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "A"}
+                                    </span>
+                                )}
                             </div>
                             <div className="text-left hidden sm:hidden lg:block">
                                 <p className="text-xs lg:text-sm font-semibold text-gray-900 truncate max-w-25 lg:max-w-none">
