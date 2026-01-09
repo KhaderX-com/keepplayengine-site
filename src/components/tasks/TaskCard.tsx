@@ -81,14 +81,7 @@ export default function TaskCard({
             onMouseEnter={() => setShowQuickActions(true)}
             onMouseLeave={() => setShowQuickActions(false)}
         >
-            {/* Drag Handle - always visible on mobile, hover on desktop */}
-            <div className="absolute left-2 top-1/2 -translate-y-1/2 md:opacity-0 md:group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing touch-manipulation z-10">
-                <div className="p-2 rounded-lg bg-gray-50 dark:bg-gray-700/50 md:bg-transparent">
-                    <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M9 3h2v2H9V3zm0 4h2v2H9V7zm0 4h2v2H9v-2zm0 4h2v2H9v-2zm0 4h2v2H9v-2zm4-16h2v2h-2V3zm0 4h2v2h-2V7zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2z" />
-                    </svg>
-                </div>
-            </div>
+            {/* Drag Handle - hidden but drag functionality remains on the card */}
 
             {/* Header: Priority & Quick Actions */}
             <div className="flex items-start justify-between gap-2 mb-2">
