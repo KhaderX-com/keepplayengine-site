@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Pencil, Trash2, Plus, Check, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,6 +30,54 @@ export default function LabelManagement({ onLabelsChange }: LabelManagementProps
     });
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    // Long-press (mobile) state to reveal actions
+    const [longPressedId, setLongPressedId] = useState<string | null>(null);
+    const longPressTimer = useRef<number | null>(null);
+    const touchMoved = useRef(false);
+
+    const startLongPress = (id: string) => (e: React.TouchEvent) => {
+        touchMoved.current = false;
+        if (longPressTimer.current) window.clearTimeout(longPressTimer.current);
+        longPressTimer.current = window.setTimeout(() => {
+            setLongPressedId(id);
+            longPressTimer.current = null;
+        }, 600); // 600ms long-press
+    };
+
+    const cancelLongPress = () => {
+        if (longPressTimer.current) {
+            window.clearTimeout(longPressTimer.current);
+            longPressTimer.current = null;
+        }
+    };
+
+    const onTouchMove = () => {
+        touchMoved.current = true;
+        cancelLongPress();
+    };
+
+    const onTouchEnd = () => {
+        cancelLongPress();
+        // keep longPressedId set so buttons remain visible until the user taps elsewhere
+    };
+
+    // Hide actions when tapping outside the pressed card
+    useEffect(() => {
+        const handler = (e: TouchEvent) => {
+            const target = e.target as HTMLElement;
+            if (!longPressedId) return;
+            const el = target.closest('[data-label-id]');
+            if (!el || el.getAttribute('data-label-id') !== longPressedId) {
+                setLongPressedId(null);
+            }
+        };
+        document.addEventListener('touchstart', handler);
+        return () => document.removeEventListener('touchstart', handler);
+    }, [longPressedId]);
+
+    // Cleanup on unmount
+    useEffect(() => () => cancelLongPress(), []);
 
     useEffect(() => {
         fetchLabels();
@@ -109,13 +157,21 @@ export default function LabelManagement({ onLabelsChange }: LabelManagementProps
         }
     };
 
-    const handleDelete = async (label: TaskLabel) => {
-        if (!confirm(`Are you sure you want to delete "${label.name}"? This action cannot be undone.`)) {
-            return;
-        }
+    // Delete flow using a confirmation modal
+    const [deleteCandidate, setDeleteCandidate] = useState<TaskLabel | null>(null);
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [deleting, setDeleting] = useState(false);
 
+    const handleDelete = (label: TaskLabel) => {
+        setDeleteCandidate(label);
+        setShowDeleteDialog(true);
+    };
+
+    const handleDeleteConfirmed = async () => {
+        if (!deleteCandidate) return;
+        setDeleting(true);
         try {
-            const response = await fetch(`/api/tasks/labels/${label.id}`, {
+            const response = await fetch(`/api/tasks/labels/${deleteCandidate.id}`, {
                 method: 'DELETE',
             });
 
@@ -125,10 +181,14 @@ export default function LabelManagement({ onLabelsChange }: LabelManagementProps
                 throw new Error(data.error || 'Failed to delete label');
             }
 
+            setShowDeleteDialog(false);
+            setDeleteCandidate(null);
             await fetchLabels();
             onLabelsChange?.();
         } catch (err: unknown) {
             alert(err instanceof Error ? err.message : 'Failed to delete label');
+        } finally {
+            setDeleting(false);
         }
     };
 
@@ -173,6 +233,11 @@ export default function LabelManagement({ onLabelsChange }: LabelManagementProps
                 {labels.map((label) => (
                     <div
                         key={label.id}
+                        data-label-id={label.id}
+                        onTouchStart={startLongPress(label.id)}
+                        onTouchMove={onTouchMove}
+                        onTouchEnd={onTouchEnd}
+                        onTouchCancel={cancelLongPress}
                         className="group relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200"
                     >
                         <div className="flex items-start justify-between gap-3">
@@ -201,7 +266,7 @@ export default function LabelManagement({ onLabelsChange }: LabelManagementProps
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className={`flex items-center gap-1 shrink-0 transition-opacity opacity-100 md:opacity-0 md:group-hover:opacity-100 ${longPressedId === label.id ? 'md:opacity-100' : ''}`}>
                                 <button
                                     onClick={() => handleEdit(label)}
                                     className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400 transition-colors"
@@ -311,8 +376,8 @@ export default function LabelManagement({ onLabelsChange }: LabelManagementProps
                                                 type="button"
                                                 onClick={() => setFormData({ ...formData, color })}
                                                 className={`w-8 h-8 rounded border-2 transition-all hover:scale-110 ${formData.color === color
-                                                        ? 'border-gray-900 ring-2 ring-offset-2 ring-gray-900'
-                                                        : 'border-gray-200'
+                                                    ? 'border-gray-900 ring-2 ring-offset-2 ring-gray-900'
+                                                    : 'border-gray-200'
                                                     }`}
                                                 style={{ backgroundColor: color }}
                                                 title={color}
@@ -370,6 +435,52 @@ export default function LabelManagement({ onLabelsChange }: LabelManagementProps
                     </div>
                 </div>
             )}
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteDialog && deleteCandidate && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div
+                        className="absolute inset-0 bg-black/50"
+                        onClick={() => { setShowDeleteDialog(false); setDeleteCandidate(null); }}
+                    />
+
+                    <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full">
+                        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Delete Label</h2>
+                        </div>
+
+                        <div className="px-6 py-4">
+                            <p className="text-sm text-gray-700 dark:text-gray-300">
+                                Are you sure you want to delete "<span className="font-semibold">{deleteCandidate.name}</span>"? This action cannot be undone.
+                            </p>
+                        </div>
+
+                        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-end gap-3">
+                            <button
+                                type="button"
+                                onClick={() => { setShowDeleteDialog(false); setDeleteCandidate(null); }}
+                                disabled={deleting}
+                                className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleDeleteConfirmed}
+                                disabled={deleting}
+                                className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                            >
+                                {deleting ? (
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                ) : (
+                                    'Delete'
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 }

@@ -243,7 +243,7 @@ export default function AdminPage() {
                     <div className="max-w-7xl mx-auto">
                         {/* Welcome Section */}
                         <div className="mb-8">
-                            <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-lg border-2 border-gray-200">
+                            <div className="bg-white rounded-2xl p-6 sm:p-8 border border-gray-200">
                                 <div className="flex items-center justify-between flex-wrap gap-4">
                                     <div>
                                         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 bg-linear-to-r from-blue-600 via-blue-700 to-purple-700 bg-clip-text text-transparent">
@@ -265,7 +265,7 @@ export default function AdminPage() {
 
                         {/* Quick Stats */}
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-                            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 hover:shadow-md transition-all">
+                            <div className="bg-white rounded-xl p-4 border border-gray-200 hover:border-gray-300 transition-colors">
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <p className="text-gray-600 text-xs font-semibold uppercase">Users</p>
@@ -279,7 +279,7 @@ export default function AdminPage() {
                                 </div>
                             </div>
 
-                            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 hover:shadow-md transition-all">
+                            <div className="bg-white rounded-xl p-4 border border-gray-200 hover:border-gray-300 transition-colors">
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <p className="text-gray-600 text-xs font-semibold uppercase">Sessions</p>
@@ -293,7 +293,7 @@ export default function AdminPage() {
                                 </div>
                             </div>
 
-                            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 hover:shadow-md transition-all">
+                            <div className="bg-white rounded-xl p-4 border border-gray-200 hover:border-gray-300 transition-colors">
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <p className="text-gray-600 text-xs font-semibold uppercase">Tasks</p>
@@ -307,7 +307,7 @@ export default function AdminPage() {
                                 </div>
                             </div>
 
-                            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 hover:shadow-md transition-all">
+                            <div className="bg-white rounded-xl p-4 border border-gray-200 hover:border-gray-300 transition-colors">
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <p className="text-gray-600 text-xs font-semibold uppercase">Logins</p>
@@ -338,7 +338,7 @@ export default function AdminPage() {
                                         href={card.href}
                                         className="group block"
                                     >
-                                        <Card className="h-full hover:shadow-2xl transition-all duration-300 border-2 border-gray-200 hover:border-blue-400 bg-white overflow-hidden transform hover:-translate-y-1">
+                                        <Card className="h-full transition-all duration-300 border border-gray-200 hover:border-blue-400 bg-white overflow-hidden transform hover:-translate-y-1">
                                             <div className={`h-2 bg-linear-to-r ${card.gradient}`}></div>
                                             <CardHeader className="pb-3">
                                                 <div className="flex items-start justify-between">

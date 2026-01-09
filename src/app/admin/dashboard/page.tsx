@@ -194,51 +194,132 @@ export default function AdminDashboardPage() {
                     subtitle={activeTab === "audit" ? "Monitor system activity and security events" : "Manage active user sessions"}
                 />
 
-                <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8 overscroll-contain">
+                <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 lg:px-8 py-6 lg:py-8 overscroll-contain">
                     {activeTab === "audit" && (
-                        <div className="space-y-6 max-w-7xl mx-auto">
+                        <div className="space-y-4 sm:space-y-6 max-w-7xl mx-auto">
                             {/* Audit Management Component - SUPER_ADMIN Only */}
                             <AuditManagement userRole={(session.user as any)?.role} />
 
+                            {/* Mobile-First Responsive Audit Logs */}
                             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                                <div className="hidden md:block overflow-x-auto">
-                                    <table className="min-w-full divide-y divide-gray-200">
-                                        <thead className="bg-gray-50">
-                                            <tr>
-                                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Timestamp</th>
-                                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">User</th>
-                                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Action</th>
-                                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Resource</th>
-                                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">IP Address</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="bg-white divide-y divide-gray-200">
-                                            {activityLogs.length === 0 ? (
-                                                <tr>
-                                                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500">No activity logs found</td>
-                                                </tr>
-                                            ) : (
-                                                activityLogs.map((log) => (
-                                                    <tr key={log.id} className="hover:bg-gray-50">
-                                                        <td className="px-6 py-4 text-sm text-gray-900">{formatDate(log.created_at)}</td>
-                                                        <td className="px-6 py-4">
-                                                            <div className="text-sm font-medium text-gray-900">{log.user?.full_name || log.user?.email || 'Unknown'}</div>
-                                                            {log.user?.email && log.user?.full_name && <div className="text-xs text-gray-500">{log.user.email}</div>}
-                                                        </td>
-                                                        <td className="px-6 py-4">
-                                                            <span className={`px-3 py-1 text-xs font-bold rounded-full ${getActionBadgeColor(log.action)}`}>{log.action}</span>
-                                                        </td>
-                                                        <td className="px-6 py-4 text-sm text-gray-900">
-                                                            <div className="font-medium">{log.resource_type}</div>
-                                                            {log.description && <div className="text-xs text-gray-400 mt-1">{log.description}</div>}
-                                                        </td>
-                                                        <td className="px-6 py-4 text-sm font-mono text-gray-500">{formatIP(log.ip_address)}</td>
+                                {activityLogs.length === 0 ? (
+                                    <div className="px-4 py-12 text-center text-gray-500">
+                                        <svg className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                        <p className="text-sm sm:text-base">No activity logs found</p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        {/* Mobile Card View (default, mobile-first) */}
+                                        <div className="block lg:hidden divide-y divide-gray-100">
+                                            {activityLogs.map((log) => (
+                                                <div key={log.id} className="p-4 w-full overflow-hidden hover:bg-gray-50 active:bg-gray-100 transition-colors">
+                                                    {/* Header: User & Action */}
+                                                    <div className="flex items-start justify-between gap-3 mb-3 min-w-0">
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                                                                    <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                                    </svg>
+                                                                </div>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <p className="text-sm font-semibold text-gray-900 truncate">
+                                                                        {log.user?.full_name || log.user?.email || 'Unknown'}
+                                                                    </p>
+                                                                    {log.user?.email && log.user?.full_name && (
+                                                                        <p className="text-xs text-gray-500 truncate">{log.user.email}</p>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <span className={`px-2.5 py-1 text-xs font-bold rounded-full flex-shrink-0 max-w-[96px] truncate ${getActionBadgeColor(log.action)}`}>
+                                                            {log.action}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Resource Info */}
+                                                    <div className="mb-3 pl-4 sm:pl-10 min-w-0 overflow-hidden">
+                                                        <div className="flex items-start gap-2">
+                                                            <svg className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                                                            </svg>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-sm font-medium text-gray-900">{log.resource_type}</p>
+                                                                {log.description && (
+                                                                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-2 break-words">{log.description}</p>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Footer: Time & IP (stack vertically on small screens) */}
+                                                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4 text-xs text-gray-500 pl-4 sm:pl-10 pt-2 border-t border-gray-100 min-w-0 overflow-hidden">
+                                                        <div className="flex items-center gap-1.5 min-w-0 w-full">
+                                                            <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                            </svg>
+                                                            <span className="truncate">{formatDate(log.created_at)}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-1.5 mt-1 sm:mt-0 min-w-0 w-full sm:w-auto">
+                                                            <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                                                            </svg>
+                                                            <span className="font-mono text-xs truncate max-w-full sm:max-w-[140px]">{formatIP(log.ip_address)}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {/* Desktop Table View */}
+                                        <div className="hidden lg:block overflow-x-auto">
+                                            <table className="min-w-full divide-y divide-gray-200">
+                                                <thead className="bg-gray-50">
+                                                    <tr>
+                                                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Timestamp</th>
+                                                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">User</th>
+                                                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Action</th>
+                                                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Resource</th>
+                                                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">IP Address</th>
                                                     </tr>
-                                                ))
-                                            )}
-                                        </tbody>
-                                    </table>
-                                </div>
+                                                </thead>
+                                                <tbody className="bg-white divide-y divide-gray-200">
+                                                    {activityLogs.map((log) => (
+                                                        <tr key={log.id} className="hover:bg-gray-50 transition-colors">
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                                {formatDate(log.created_at)}
+                                                            </td>
+                                                            <td className="px-6 py-4">
+                                                                <div className="text-sm font-medium text-gray-900">
+                                                                    {log.user?.full_name || log.user?.email || 'Unknown'}
+                                                                </div>
+                                                                {log.user?.email && log.user?.full_name && (
+                                                                    <div className="text-xs text-gray-500">{log.user.email}</div>
+                                                                )}
+                                                            </td>
+                                                            <td className="px-6 py-4">
+                                                                <span className={`inline-flex px-3 py-1 text-xs font-bold rounded-full ${getActionBadgeColor(log.action)}`}>
+                                                                    {log.action}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-6 py-4 text-sm text-gray-900">
+                                                                <div className="font-medium">{log.resource_type}</div>
+                                                                {log.description && (
+                                                                    <div className="text-xs text-gray-500 mt-1 max-w-xs truncate">{log.description}</div>
+                                                                )}
+                                                            </td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500">
+                                                                {formatIP(log.ip_address)}
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </div>
                     )}
