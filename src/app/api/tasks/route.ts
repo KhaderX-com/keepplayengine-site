@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
 import type { CreateTaskRequest, TaskFilters } from '@/types/tasks';
+import { logActivityWithRequest } from '@/lib/activity-logger';
 
 // =====================================================
 // GET - Fetch tasks with filters
@@ -248,6 +249,20 @@ export async function POST(request: Request) {
             actor_id: currentMember?.id || null,
             action: 'created',
             metadata: { title: body.title },
+        });
+
+        // Log to admin activity log (excludes admin@keepplayengine.com)
+        await logActivityWithRequest(request, {
+            action: 'CREATE_TASK',
+            resourceType: 'task',
+            resourceId: task.id,
+            description: `Created task: "${task.title}"`,
+            changes: {
+                title: task.title,
+                status: task.status,
+                priority: task.priority,
+                assignee: task.assignee?.name || 'Unassigned',
+            },
         });
 
         return NextResponse.json({ task }, { status: 201 });

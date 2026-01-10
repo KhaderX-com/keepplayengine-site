@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
+import { logActivityWithRequest } from '@/lib/activity-logger';
 
 // =====================================================
 // GET - Fetch all task labels
@@ -73,6 +74,19 @@ export async function POST(request: Request) {
             }
             return NextResponse.json({ error: 'Failed to create label' }, { status: 500 });
         }
+
+        // Log to admin activity log (excludes admin@keepplayengine.com)
+        await logActivityWithRequest(request, {
+            action: 'CREATE_LABEL',
+            resourceType: 'label',
+            resourceId: label.id,
+            description: `Created label: "${label.name}" (${label.color})`,
+            changes: {
+                name: label.name,
+                color: label.color,
+                description: label.description,
+            },
+        });
 
         return NextResponse.json({ label }, { status: 201 });
     } catch (error) {

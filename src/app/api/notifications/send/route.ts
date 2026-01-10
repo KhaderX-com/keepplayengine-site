@@ -9,6 +9,7 @@ import {
 } from '@/lib/notifications';
 import { supabaseAdmin } from '@/lib/supabase';
 import type { SendNotificationRequest } from '@/types/notifications';
+import { logActivityWithRequest } from '@/lib/activity-logger';
 
 // POST /api/notifications/send - Send a notification to another admin
 export async function POST(request: NextRequest) {
@@ -100,6 +101,20 @@ export async function POST(request: NextRequest) {
                 await sendMessage(conversation.id, senderAdmin.id, message);
             }
         }
+
+        // Log to admin activity log (excludes admin@keepplayengine.com)
+        await logActivityWithRequest(request, {
+            action: 'SEND_NOTIFICATION',
+            resourceType: 'notification',
+            resourceId: notification.id,
+            description: `Sent notification: "${title}" to ${recipientAdmin.full_name || recipientAdmin.email} (${type})`,
+            changes: {
+                recipient: recipientAdmin.email,
+                type,
+                priority,
+                title,
+            },
+        });
 
         return NextResponse.json({
             success: true,

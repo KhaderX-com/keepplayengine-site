@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
+import { logActivityWithRequest } from '@/lib/activity-logger';
 
 // =====================================================
 // PATCH - Update a label (SUPER_ADMIN only)
@@ -70,6 +71,19 @@ export async function PATCH(
             return NextResponse.json({ error: 'Label not found' }, { status: 404 });
         }
 
+        // Log to admin activity log (excludes admin@keepplayengine.com)
+        const changesDescription = Object.entries(updates)
+            .map(([key, value]) => `${key}: ${value}`)
+            .join(', ');
+
+        await logActivityWithRequest(request, {
+            action: 'UPDATE_LABEL',
+            resourceType: 'label',
+            resourceId: id,
+            description: `Updated label: "${label.name}" (${changesDescription})`,
+            changes: updates,
+        });
+
         return NextResponse.json({ label });
     } catch (error) {
         console.error('Label PATCH error:', error);
@@ -109,6 +123,16 @@ export async function DELETE(
             );
         }
 
+        // Get label info before deletion for logging
+        const { data: labelToDelete } = await supabaseAdmin
+            .from('task_labels')
+            .select('name, color')
+            .eq('id', id)
+            .single();
+
+        const labelName = labelToDelete?.name || 'Unknown Label';
+        const labelColor = labelToDelete?.color || '#6B7280';
+
         const { error } = await supabaseAdmin
             .from('task_labels')
             .delete()
@@ -118,6 +142,15 @@ export async function DELETE(
             console.error('Error deleting label:', error);
             return NextResponse.json({ error: 'Failed to delete label' }, { status: 500 });
         }
+
+        // Log to admin activity log (excludes admin@keepplayengine.com)
+        await logActivityWithRequest(request, {
+            action: 'DELETE_LABEL',
+            resourceType: 'label',
+            resourceId: id,
+            description: `Deleted label: "${labelName}" (${labelColor})`,
+            severity: 'warning',
+        });
 
         return NextResponse.json({ success: true, message: 'Label deleted successfully' });
     } catch (error) {

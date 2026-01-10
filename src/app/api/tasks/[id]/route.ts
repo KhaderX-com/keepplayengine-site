@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
 import type { UpdateTaskRequest } from '@/types/tasks';
+import { logActivityWithRequest } from '@/lib/activity-logger';
 
 interface RouteParams {
     params: Promise<{ id: string }>;
@@ -172,6 +173,21 @@ export async function PATCH(request: Request, { params }: RouteParams) {
                 await supabaseAdmin.from('task_activity_log').insert(activityLogs);
             }
 
+            // Log to admin activity log (excludes admin@keepplayengine.com)
+            const changesDescription = activityLogs.map(log =>
+                `${log.field_changed}: ${log.old_value || 'empty'} → ${log.new_value || 'empty'}`
+            ).join(', ');
+
+            await logActivityWithRequest(request, {
+                action: 'UPDATE_TASK',
+                resourceType: 'task',
+                resourceId: id,
+                description: `Updated task: "${task.title}" (${changesDescription})`,
+                changes: Object.fromEntries(
+                    activityLogs.map(log => [log.field_changed, { old: log.old_value, new: log.new_value }])
+                ),
+            });
+
             // Update labels if provided
             if (body.label_ids !== undefined) {
                 // Remove existing labels
@@ -226,6 +242,15 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
         const { id } = await params;
 
+        // Get task title before deletion for logging
+        const { data: taskToDelete } = await supabaseAdmin
+            .from('tasks')
+            .select('title')
+            .eq('id', id)
+            .single();
+
+        const taskTitle = taskToDelete?.title || 'Unknown Task';
+
         const { error } = await supabaseAdmin
             .from('tasks')
             .delete()
@@ -235,6 +260,15 @@ export async function DELETE(request: Request, { params }: RouteParams) {
             console.error('Error deleting task:', error);
             return NextResponse.json({ error: 'Failed to delete task' }, { status: 500 });
         }
+
+        // Log to admin activity log (excludes admin@keepplayengine.com)
+        await logActivityWithRequest(request, {
+            action: 'DELETE_TASK',
+            resourceType: 'task',
+            resourceId: id,
+            description: `Deleted task: "${taskTitle}"`,
+            severity: 'warning',
+        });
 
         return NextResponse.json({ success: true });
     } catch (error) {

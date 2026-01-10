@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabase";
+import { logActivityWithRequest } from '@/lib/activity-logger';
 
 export async function GET() {
     try {
@@ -76,6 +77,24 @@ export async function DELETE(request: Request) {
             );
         }
 
+        // Get session info before deletion for logging
+        const { data: sessionToRevoke } = await supabaseAdmin
+            .from("admin_sessions")
+            .select(`
+                id,
+                admin_user:admin_users!inner(
+                    email,
+                    full_name
+                )
+            `)
+            .eq("id", sessionId)
+            .single();
+
+        // Type assertion since Supabase returns nested object, not array
+        const adminUser = sessionToRevoke?.admin_user as unknown as { email: string; full_name: string } | undefined;
+        const targetEmail = adminUser?.email || 'Unknown User';
+        const targetName = adminUser?.full_name || targetEmail;
+
         // Delete session from Supabase
         const { error } = await supabaseAdmin
             .from("admin_sessions")
@@ -85,6 +104,15 @@ export async function DELETE(request: Request) {
         if (error) {
             throw error;
         }
+
+        // Log to admin activity log (excludes admin@keepplayengine.com)
+        await logActivityWithRequest(request, {
+            action: 'REVOKE_SESSION',
+            resourceType: 'session',
+            resourceId: sessionId,
+            description: `Revoked session for: ${targetName} (${targetEmail})`,
+            severity: 'warning',
+        });
 
         return NextResponse.json({ success: true });
     } catch (error) {
