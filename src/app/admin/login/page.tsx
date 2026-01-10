@@ -39,7 +39,15 @@ export default function AdminLoginPage() {
   // Redirect authenticated users away from login page
   useEffect(() => {
     if (status === "authenticated") {
-      router.push(returnUrl);
+      // Use replace to avoid back button issues, with fallback to window.location
+      router.replace(returnUrl);
+
+      // Fallback: Force redirect if router doesn't navigate within 500ms
+      const timeoutId = setTimeout(() => {
+        window.location.href = returnUrl;
+      }, 500);
+
+      return () => clearTimeout(timeoutId);
     }
   }, [status, router, returnUrl]);
 
