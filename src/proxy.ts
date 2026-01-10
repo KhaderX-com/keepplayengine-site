@@ -14,9 +14,8 @@ export async function proxy(request: NextRequest) {
 
     // If on admin subdomain OR accessing /admin routes in development
     if (isAdminSubdomain) {
-        // Allow access to login page and auth API routes
+        // Allow auth API routes and static assets
         if (
-            pathname === "/admin/login" ||
             pathname.startsWith("/api/auth") ||
             pathname.startsWith("/api/webauthn") ||
             pathname.startsWith("/_next") ||
@@ -31,12 +30,27 @@ export async function proxy(request: NextRequest) {
             secret: process.env.NEXTAUTH_SECRET,
         });
 
+        const isAuthenticated = !!token;
+        const isLoginPage = pathname === "/admin/login";
+
+        // Security Layer: Redirect authenticated users away from login page
+        if (isAuthenticated && isLoginPage) {
+            const returnUrl = request.nextUrl.searchParams.get("returnUrl") ||
+                request.nextUrl.searchParams.get("callbackUrl") || "/admin";
+            return NextResponse.redirect(new URL(returnUrl, request.url));
+        }
+
+        // Allow unauthenticated users to access login page
+        if (!isAuthenticated && isLoginPage) {
+            return NextResponse.next();
+        }
+
         // If not authenticated, redirect to login
         if (!token) {
             const loginUrl = new URL("/admin/login", request.url);
-            // Only set callbackUrl if not on root path
-            if (pathname !== "/") {
-                loginUrl.searchParams.set("callbackUrl", pathname);
+            // Set returnUrl for deep linking (except root path)
+            if (pathname !== "/" && pathname !== "/admin") {
+                loginUrl.searchParams.set("returnUrl", pathname);
             }
             return NextResponse.redirect(loginUrl);
         }
@@ -56,6 +70,11 @@ export async function proxy(request: NextRequest) {
 
         // Add comprehensive security headers for admin panel
         const response = NextResponse.next();
+
+        // Prevent caching of sensitive admin pages
+        response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+        response.headers.set("Pragma", "no-cache");
+        response.headers.set("Expires", "0");
 
         // Content Security Policy (Enhanced)
         response.headers.set(
@@ -94,9 +113,8 @@ export async function proxy(request: NextRequest) {
 
     // In development (localhost), handle /admin routes without subdomain
     if (isLocalhost && pathname.startsWith("/admin")) {
-        // Allow access to login page and auth API routes
+        // Allow auth API routes and static assets
         if (
-            pathname === "/admin/login" ||
             pathname.startsWith("/api/auth") ||
             pathname.startsWith("/api/webauthn") ||
             pathname.startsWith("/_next") ||
@@ -111,11 +129,26 @@ export async function proxy(request: NextRequest) {
             secret: process.env.NEXTAUTH_SECRET,
         });
 
+        const isAuthenticated = !!token;
+        const isLoginPage = pathname === "/admin/login";
+
+        // Security Layer: Redirect authenticated users away from login page
+        if (isAuthenticated && isLoginPage) {
+            const returnUrl = request.nextUrl.searchParams.get("returnUrl") ||
+                request.nextUrl.searchParams.get("callbackUrl") || "/admin";
+            return NextResponse.redirect(new URL(returnUrl, request.url));
+        }
+
+        // Allow unauthenticated users to access login page
+        if (!isAuthenticated && isLoginPage) {
+            return NextResponse.next();
+        }
+
         // If not authenticated, redirect to login
         if (!token) {
             const loginUrl = new URL("/admin/login", request.url);
-            if (pathname !== "/admin/login") {
-                loginUrl.searchParams.set("callbackUrl", pathname);
+            if (pathname !== "/admin" && pathname !== "/admin/login") {
+                loginUrl.searchParams.set("returnUrl", pathname);
             }
             return NextResponse.redirect(loginUrl);
         }
@@ -129,6 +162,9 @@ export async function proxy(request: NextRequest) {
 
         // Add security headers for admin panel (even in dev)
         const response = NextResponse.next();
+        response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+        response.headers.set("Pragma", "no-cache");
+        response.headers.set("Expires", "0");
         response.headers.set("X-Frame-Options", "DENY");
         response.headers.set("X-Content-Type-Options", "nosniff");
         response.headers.set("X-XSS-Protection", "1; mode=block");

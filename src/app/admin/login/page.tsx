@@ -1,12 +1,17 @@
 "use client";
 
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { useState, FormEvent, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { isWebAuthnSupported, isPlatformAuthenticatorAvailable } from "@/lib/webauthn-client";
 
 export default function AdminLoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { data: session, status } = useSession();
+
+  // Get return URL from query params, default to /admin
+  const returnUrl = searchParams.get('returnUrl') || '/admin';
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,6 +35,13 @@ export default function AdminLoginPage() {
   const [pinLocked, setPinLocked] = useState(false);
   const [lockoutRemaining, setLockoutRemaining] = useState(0);
   const pinInputRefs = useRef<(HTMLInputElement | null)[]>([null, null, null]);
+
+  // Redirect authenticated users away from login page
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.push(returnUrl);
+    }
+  }, [status, router, returnUrl]);
 
   // Check biometric availability and config on mount
   useEffect(() => {
@@ -146,7 +158,7 @@ export default function AdminLoginPage() {
 
       if (result?.ok) {
         setTimeout(() => {
-          router.push("/admin");
+          router.push(returnUrl);
           router.refresh();
         }, 100);
       } else {
@@ -393,6 +405,66 @@ export default function AdminLoginPage() {
       setLoading(false);
     }
   };
+
+  // Show loading state while checking authentication
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen pt-6 sm:pt-8 bg-linear-to-br from-gray-50 via-white to-gray-100 flex items-center justify-center px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8">
+          <div className="text-center">
+            <div className="flex justify-center mb-6">
+              <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg animate-pulse">
+                <svg
+                  className="w-8 h-8 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                  />
+                </svg>
+              </div>
+            </div>
+            <p className="text-gray-600">Checking authentication...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect if already authenticated (handled by useEffect, but show loading during redirect)
+  if (status === "authenticated") {
+    return (
+      <div className="min-h-screen pt-6 sm:pt-8 bg-linear-to-br from-gray-50 via-white to-gray-100 flex items-center justify-center px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8">
+          <div className="text-center">
+            <div className="flex justify-center mb-6">
+              <div className="w-16 h-16 bg-green-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <svg
+                  className="w-8 h-8 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              </div>
+            </div>
+            <p className="text-gray-600">Already authenticated. Redirecting...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     // add a small space at the top for better mobile view
