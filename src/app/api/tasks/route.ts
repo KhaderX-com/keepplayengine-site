@@ -175,6 +175,13 @@ export async function POST(request: Request) {
 
         const newPosition = (maxPosResult?.position ?? -1) + 1;
 
+        // Auto-assign to creator if no assignee specified
+        // If Khader creates task -> defaults to Khader
+        // If Amro creates task -> defaults to Amro
+        const defaultAssigneeId = body.assignee_id !== undefined
+            ? body.assignee_id
+            : currentMember?.id || null;
+
         // Create task
         const { data: task, error } = await supabaseAdmin
             .from('tasks')
@@ -183,7 +190,7 @@ export async function POST(request: Request) {
                 description: body.description?.trim() || null,
                 status: body.status || 'todo',
                 priority: body.priority || 'medium',
-                assignee_id: body.assignee_id || null,
+                assignee_id: defaultAssigneeId,
                 created_by: currentMember?.id || null,
                 parent_task_id: body.parent_task_id || null,
                 position: newPosition,
@@ -213,13 +220,13 @@ export async function POST(request: Request) {
                         team_member_id: assigneeId,
                     }))
                 );
-        } else if (body.assignee_id) {
-            // Backwards compatibility: single assignee
+        } else if (defaultAssigneeId) {
+            // Auto-assign to creator or explicitly specified assignee
             await supabaseAdmin
                 .from('task_assignees')
                 .insert({
                     task_id: task.id,
-                    team_member_id: body.assignee_id,
+                    team_member_id: defaultAssigneeId,
                 });
         }
 
