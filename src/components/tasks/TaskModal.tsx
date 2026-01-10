@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import type { Task, TaskStatus, TaskPriority, TaskLabel, TeamMember } from '@/types/tasks';
 import { PRIORITY_CONFIG, STATUS_CONFIG } from '@/types/tasks';
 import { createTask, updateTask } from '@/lib/tasks';
+import ColorPicker from './ColorPicker';
 
 interface TaskModalProps {
     isOpen: boolean;
@@ -33,11 +34,12 @@ export default function TaskModal({
     const [assigneeId, setAssigneeId] = useState<string>('');
     const [dueDate, setDueDate] = useState<string>('');
     const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
+    const [color, setColor] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     // Subtasks state
-    const [subtasks, setSubtasks] = useState<{ title: string; priority: TaskPriority }[]>([]);
+    const [subtasks, setSubtasks] = useState<{ id?: string; title: string; priority: TaskPriority; isExisting?: boolean }[]>([]);
     const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
 
     // Reset form when modal opens/closes or task changes
@@ -51,6 +53,16 @@ export default function TaskModal({
                 setAssigneeId(task.assignee_id || '');
                 setDueDate(task.due_date ? task.due_date.split('T')[0] : '');
                 setSelectedLabels(task.labels?.map(l => l.id) || []);
+                setColor(task.color || null);
+                // Load existing subtasks when editing
+                setSubtasks(
+                    task.subtasks?.map(st => ({
+                        id: st.id,
+                        title: st.title,
+                        priority: st.priority,
+                        isExisting: true,
+                    })) || []
+                );
             } else {
                 setTitle('');
                 setDescription('');
@@ -59,6 +71,7 @@ export default function TaskModal({
                 setAssigneeId('');
                 setDueDate('');
                 setSelectedLabels([]);
+                setColor(null);
                 setSubtasks([]);
             }
             setError(null);
@@ -97,6 +110,7 @@ export default function TaskModal({
                 assignee_id: assigneeId && assigneeId !== 'both' ? assigneeId : undefined,
                 assignee_ids: assigneeIds,
                 due_date: dueDate || undefined,
+                color: color || undefined,
                 label_ids: selectedLabels,
                 parent_task_id: parentTaskId,
             };
@@ -111,9 +125,10 @@ export default function TaskModal({
                 taskId = createdTask.id;
             }
 
-            // Create subtasks if any
-            if (subtasks.length > 0 && taskId) {
-                for (const subtask of subtasks) {
+            // Create ONLY NEW subtasks (not existing ones) to prevent duplication
+            const newSubtasks = subtasks.filter(st => !st.isExisting);
+            if (newSubtasks.length > 0 && taskId) {
+                for (const subtask of newSubtasks) {
                     await createTask({
                         title: subtask.title,
                         priority: subtask.priority,
@@ -134,7 +149,7 @@ export default function TaskModal({
 
     const handleAddSubtask = () => {
         if (newSubtaskTitle.trim()) {
-            setSubtasks([...subtasks, { title: newSubtaskTitle.trim(), priority: 'medium' }]);
+            setSubtasks([...subtasks, { title: newSubtaskTitle.trim(), priority: 'medium', isExisting: false }]);
             setNewSubtaskTitle('');
         }
     };
@@ -331,6 +346,16 @@ export default function TaskModal({
                                 </div>
                             </div>
 
+                            {/* Task Color */}
+                            <div>
+                                <ColorPicker
+                                    value={color}
+                                    onChange={setColor}
+                                    label="Task Color"
+                                    showLabel={true}
+                                />
+                            </div>
+
                             {/* Subtasks Section - Only show when NOT editing a subtask */}
                             {!parentTaskId && (
                                 <div>
@@ -376,42 +401,61 @@ export default function TaskModal({
                                         <div className="space-y-2 max-h-48 overflow-y-auto">
                                             {subtasks.map((subtask, index) => (
                                                 <div
-                                                    key={index}
-                                                    className="flex items-center gap-2 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 
-                                                        border border-gray-200 dark:border-gray-700 group"
+                                                    key={subtask.id || index}
+                                                    className={`flex items-center gap-2 p-3 rounded-xl group
+                                                        ${subtask.isExisting
+                                                            ? 'bg-blue-50/50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800'
+                                                            : 'bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700'
+                                                        }`}
                                                 >
+                                                    {subtask.isExisting && (
+                                                        <div className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900/50 shrink-0" title="Existing subtask">
+                                                            <svg className="w-3 h-3 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                                                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                                            </svg>
+                                                        </div>
+                                                    )}
                                                     <div className="flex-1 min-w-0">
                                                         <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                                                             {subtask.title}
                                                         </p>
+                                                        {subtask.isExisting && (
+                                                            <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">
+                                                                Already exists - edit in task detail
+                                                            </p>
+                                                        )}
                                                     </div>
 
-                                                    <select
-                                                        value={subtask.priority}
-                                                        onChange={(e) => handleSubtaskPriorityChange(index, e.target.value as TaskPriority)}
-                                                        aria-label="Select subtask priority"
-                                                        className="px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 
-                                                            bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-xs
-                                                            focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                                    >
-                                                        {Object.entries(PRIORITY_CONFIG).map(([key, config]) => (
-                                                            <option key={key} value={key}>
-                                                                {config.label}
-                                                            </option>
-                                                        ))}
-                                                    </select>
+                                                    {!subtask.isExisting && (
+                                                        <>
+                                                            <select
+                                                                value={subtask.priority}
+                                                                onChange={(e) => handleSubtaskPriorityChange(index, e.target.value as TaskPriority)}
+                                                                aria-label="Select subtask priority"
+                                                                className="px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 
+                                                                    bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-xs
+                                                                    focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                            >
+                                                                {Object.entries(PRIORITY_CONFIG).map(([key, config]) => (
+                                                                    <option key={key} value={key}>
+                                                                        {config.label}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
 
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleRemoveSubtask(index)}
-                                                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 
-                                                            dark:hover:bg-red-900/20 transition-colors opacity-0 group-hover:opacity-100"
-                                                        title="Remove subtask"
-                                                    >
-                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                                        </svg>
-                                                    </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleRemoveSubtask(index)}
+                                                                className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 
+                                                                    dark:hover:bg-red-900/20 transition-colors opacity-0 group-hover:opacity-100"
+                                                                title="Remove subtask"
+                                                            >
+                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                                </svg>
+                                                            </button>
+                                                        </>
+                                                    )}
                                                 </div>
                                             ))}
                                         </div>

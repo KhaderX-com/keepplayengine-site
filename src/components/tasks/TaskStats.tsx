@@ -84,7 +84,7 @@ export default function TaskStatsCards({ stats, loading }: TaskStatsCardsProps) 
             {cards.map((card) => (
                 <div
                     key={card.title}
-                    className={`${card.bgColor} rounded-2xl p-4 sm:p-5 transition-all hover:shadow-lg hover:scale-[1.02] border border-gray-100 dark:border-gray-700`}
+                    className={`${card.bgColor} rounded-2xl p-4 sm:p-5 transition-all border border-gray-100 dark:border-gray-700`}
                 >
                     <div className="flex items-start justify-between mb-3">
                         <div className={`${card.iconBg} ${card.color} p-2.5 rounded-xl`}>
@@ -155,7 +155,7 @@ export function TeamProgress({ stats, loading }: TeamProgressProps) {
     }
 
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-gray-100 dark:border-gray-700 h-full hover:shadow-lg transition-all">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-gray-100 dark:border-gray-700 h-full transition-all">
             <div className="flex items-center gap-2 mb-5">
                 <div className="bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 p-2 rounded-lg">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

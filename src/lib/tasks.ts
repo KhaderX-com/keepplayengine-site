@@ -106,6 +106,7 @@ export async function createTask(data: {
     parent_task_id?: string;
     due_date?: string;
     label_ids?: string[];
+    color?: string | null;
 }): Promise<Task> {
     const res = await fetch('/api/tasks', {
         method: 'POST',
@@ -133,6 +134,7 @@ export async function updateTask(
         position?: number;
         due_date?: string | null;
         label_ids?: string[];
+        color?: string | null;
     }
 ): Promise<Task> {
     const res = await fetch(`/api/tasks/${id}`, {

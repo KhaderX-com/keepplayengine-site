@@ -43,6 +43,7 @@ export interface Task {
     completed_at?: string | null;
     estimated_hours?: number | null;
     actual_hours?: number | null;
+    color?: string | null;
     created_at: string;
     updated_at: string;
 
@@ -98,6 +99,7 @@ export interface CreateTaskRequest {
     priority?: TaskPriority;
     assignee_id?: string;
     assignee_ids?: string[]; // Multiple assignees support
+    color?: string | null;
     parent_task_id?: string;
     due_date?: string;
     estimated_hours?: number;
@@ -114,6 +116,7 @@ export interface UpdateTaskRequest {
     due_date?: string | null;
     estimated_hours?: number | null;
     actual_hours?: number | null;
+    color?: string | null;
     label_ids?: string[];
 }
 

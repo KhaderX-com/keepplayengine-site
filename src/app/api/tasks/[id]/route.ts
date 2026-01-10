@@ -132,7 +132,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
         }> = [];
 
         // Track changes
-        const fields = ['title', 'description', 'status', 'priority', 'assignee_id', 'position', 'due_date', 'estimated_hours', 'actual_hours'] as const;
+        const fields = ['title', 'description', 'status', 'priority', 'assignee_id', 'position', 'due_date', 'estimated_hours', 'actual_hours', 'color'] as const;
 
         for (const field of fields) {
             if (body[field] !== undefined && body[field] !== currentTask[field]) {

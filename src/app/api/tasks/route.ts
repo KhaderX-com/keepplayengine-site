@@ -189,6 +189,7 @@ export async function POST(request: Request) {
                 position: newPosition,
                 due_date: body.due_date || null,
                 estimated_hours: body.estimated_hours || null,
+                color: body.color || null,
             })
             .select(`
                 *,

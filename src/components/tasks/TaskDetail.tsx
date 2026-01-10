@@ -6,6 +6,7 @@ import { PRIORITY_CONFIG, STATUS_CONFIG } from '@/types/tasks';
 import { updateTask, deleteTask, addComment } from '@/lib/tasks';
 import { AlertDialog } from '@/components/ui/alert-dialog';
 import SubTaskList from './SubTaskList';
+import ColorPicker from './ColorPicker';
 
 interface TaskDetailProps {
     isOpen: boolean;
@@ -73,6 +74,54 @@ export default function TaskDetail({
             console.error('Failed to update status:', error);
         }
     };
+
+    const handleColorChange = async (newColor: string | null) => {
+        if (!task) return;
+
+        try {
+            await updateTask(task.id, { color: newColor });
+            setTask({ ...task, color: newColor });
+            onUpdate();
+        } catch (error) {
+            console.error('Failed to update color:', error);
+        }
+    };
+
+    const handleSubtaskUpdate = useCallback((updatedSubtask: Task) => {
+        // Update the subtask in the local task state
+        setTask((prevTask) => {
+            if (!prevTask || !prevTask.subtasks) return prevTask;
+
+            const updatedSubtasks = prevTask.subtasks.map((st) =>
+                st.id === updatedSubtask.id ? updatedSubtask : st
+            );
+
+            return {
+                ...prevTask,
+                subtasks: updatedSubtasks,
+            };
+        });
+
+        // Update the main task list
+        onUpdate();
+    }, [onUpdate]);
+
+    const handleSubtaskDelete = useCallback((deletedSubtaskId: string) => {
+        // Remove the subtask from local task state
+        setTask((prevTask) => {
+            if (!prevTask || !prevTask.subtasks) return prevTask;
+
+            const updatedSubtasks = prevTask.subtasks.filter((st) => st.id !== deletedSubtaskId);
+
+            return {
+                ...prevTask,
+                subtasks: updatedSubtasks,
+            };
+        });
+
+        // Update the main task list
+        onUpdate();
+    }, [onUpdate]);
 
     const handleAddComment = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -237,7 +286,19 @@ export default function TaskDetail({
                                     )}
 
                                     {/* Meta Info */}
-                                    <div className="px-3 sm:px-4 md:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700 space-y-3">
+                                    <div className="px-3 sm:px-4 md:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700 space-y-3 sm:space-y-4">
+                                        {/* Task Color */}
+                                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-between">
+                                            <span className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">Task Color</span>
+                                            <div className="w-full sm:w-60">
+                                                <ColorPicker
+                                                    value={task.color}
+                                                    onChange={handleColorChange}
+                                                    showLabel={false}
+                                                />
+                                            </div>
+                                        </div>
+
                                         {/* Assignee */}
                                         <div className="flex items-center justify-between">
                                             <span className="text-sm text-gray-500 dark:text-gray-400">Assignee</span>
@@ -339,18 +400,35 @@ export default function TaskDetail({
                                     {/* Tab Content */}
                                     <div className="px-4 sm:px-6 py-4">
                                         {activeTab === 'subtasks' && (
-                                            <div>
+                                            <div className="space-y-4">
                                                 {task.subtasks && task.subtasks.length > 0 ? (
-                                                    <SubTaskList
-                                                        subtasks={task.subtasks}
-                                                        members={members}
-                                                        onSubTaskClick={(subtask) => {
-                                                            // Open subtask detail or handle click
-                                                            console.log('Subtask clicked:', subtask);
-                                                        }}
-                                                        onUpdate={fetchTaskDetails}
-                                                        parentTaskId={task.id}
-                                                    />
+                                                    <>
+                                                        <SubTaskList
+                                                            subtasks={task.subtasks}
+                                                            members={members}
+                                                            onSubTaskClick={(subtask) => {
+                                                                // Open subtask detail or handle click
+                                                                console.log('Subtask clicked:', subtask);
+                                                            }}
+                                                            onSubtaskUpdate={handleSubtaskUpdate}
+                                                            onSubtaskDelete={handleSubtaskDelete}
+                                                            parentTaskId={task.id}
+                                                            allowDelete={true}
+                                                        />
+                                                        <button
+                                                            onClick={() => onAddSubtask(task.id)}
+                                                            className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl 
+                                                                border-2 border-dashed border-gray-300 dark:border-gray-600 
+                                                                text-gray-600 dark:text-gray-400 text-sm font-medium
+                                                                hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 
+                                                                hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
+                                                        >
+                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                                            </svg>
+                                                            Add Subtask
+                                                        </button>
+                                                    </>
                                                 ) : (
                                                     <div className="text-center py-12">
                                                         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">

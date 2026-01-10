@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { LayoutGrid, List as ListIcon, CheckSquare, Clock, CheckCircle2 } from 'lucide-react';
 import type { Task, TaskStatus, TeamMember, TaskLabel } from '@/types/tasks';
 import { useTasks, useTeamMembers, useLabels, useTaskStats } from '@/lib/tasks';
 import AdminSidebar from '@/components/admin/AdminSidebar';
@@ -12,6 +13,7 @@ import TaskModal from '@/components/tasks/TaskModal';
 import TaskDetail from '@/components/tasks/TaskDetail';
 import TaskStatsCards, { TeamProgress } from '@/components/tasks/TaskStats';
 import SubTaskList from '@/components/tasks/SubTaskList';
+import SingleColumnBoard from '@/components/tasks/SingleColumnBoard';
 
 export default function TaskManagerPage() {
     const { data: session, status } = useSession();
@@ -19,7 +21,7 @@ export default function TaskManagerPage() {
 
     // State
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const [view, setView] = useState<'board' | 'list'>('board');
+    const [view, setView] = useState<'board' | 'board-todo' | 'board-in-progress' | 'board-done' | 'list'>('board');
     const [filterAssignee, setFilterAssignee] = useState<string>('');
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -32,7 +34,7 @@ export default function TaskManagerPage() {
     const [isDetailOpen, setIsDetailOpen] = useState(false);
 
     // Data Hooks
-    const { tasks, loading: tasksLoading, refetch: refetchTasks } = useTasks();
+    const { tasks, loading: tasksLoading, refetch: refetchTasks, setTasks } = useTasks();
     const { members } = useTeamMembers();
     const { labels } = useLabels();
     const { stats, loading: statsLoading, refetch: refetchStats } = useTaskStats();
@@ -42,6 +44,41 @@ export default function TaskManagerPage() {
         refetchTasks();
         refetchStats();
     }, [refetchTasks, refetchStats]);
+
+    const handleSubtaskUpdateOptimistic = useCallback((parentTaskId: string, updatedSubtask: Task) => {
+        // Patch local task list without refetching (prevents mobile board remount & tab reset)
+        setTasks(prev =>
+            prev.map(t => {
+                if (t.id !== parentTaskId) return t;
+                const prevSubtasks = t.subtasks || [];
+                const subtasks = prevSubtasks.map(st => (st.id === updatedSubtask.id ? updatedSubtask : st));
+                const completedCount = subtasks.filter(st => st.status === 'done').length;
+                return {
+                    ...t,
+                    subtasks,
+                    subtask_count: subtasks.length,
+                    completed_subtask_count: completedCount,
+                };
+            })
+        );
+    }, [setTasks]);
+
+    const handleSubtaskDeleteOptimistic = useCallback((parentTaskId: string, deletedSubtaskId: string) => {
+        setTasks(prev =>
+            prev.map(t => {
+                if (t.id !== parentTaskId) return t;
+                const prevSubtasks = t.subtasks || [];
+                const subtasks = prevSubtasks.filter(st => st.id !== deletedSubtaskId);
+                const completedCount = subtasks.filter(st => st.status === 'done').length;
+                return {
+                    ...t,
+                    subtasks,
+                    subtask_count: subtasks.length,
+                    completed_subtask_count: completedCount,
+                };
+            })
+        );
+    }, [setTasks]);
 
     // Auth redirect
     useEffect(() => {
@@ -77,6 +114,7 @@ export default function TaskManagerPage() {
         setEditingTask(null);
         setParentTaskId(parentId);
         setInitialStatus('todo');
+        setIsDetailOpen(false); // Close the detail panel
         setIsTaskModalOpen(true);
     };
 
@@ -182,37 +220,36 @@ export default function TaskManagerPage() {
                                     </svg>
                                 </div>
 
-                                {/* View Toggle */}
-                                <div className="flex rounded-xl border border-gray-200 dark:border-gray-600 overflow-hidden shadow-sm shrink-0">
-                                    <button
-                                        onClick={() => setView('board')}
-                                        title="Board view"
-                                        className={`px-3 sm:px-4 py-2.5 sm:py-3 transition-all
-                                            ${view === 'board'
-                                                ? 'bg-blue-600 text-white shadow-inner'
-                                                : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
-                                            }`}
+                                {/* View Toggle - Dropdown */}
+                                <div className="relative shrink-0">
+                                    <select
+                                        value={view}
+                                        onChange={(e) => setView(e.target.value as typeof view)}
+                                        aria-label="Select view mode"
+                                        title="Select view mode"
+                                        className="pl-10 pr-8 py-2.5 sm:py-3 rounded-xl 
+                                            border border-gray-200 dark:border-gray-600 
+                                            bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm sm:text-base
+                                            focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                                            transition-all shadow-sm appearance-none cursor-pointer font-medium"
                                     >
-                                        <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
-                                                d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
-                                        </svg>
-                                    </button>
-                                    <div className="w-px bg-gray-200 dark:bg-gray-600"></div>
-                                    <button
-                                        onClick={() => setView('list')}
-                                        title="List view"
-                                        className={`px-3 sm:px-4 py-2.5 sm:py-3 transition-all
-                                            ${view === 'list'
-                                                ? 'bg-blue-600 text-white shadow-inner'
-                                                : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
-                                            }`}
-                                    >
-                                        <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
-                                                d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                                        </svg>
-                                    </button>
+                                        <option value="board">Board - All</option>
+                                        <option value="board-todo">Board - To Do</option>
+                                        <option value="board-in-progress">Board - In Progress</option>
+                                        <option value="board-done">Board - Done</option>
+                                        <option value="list">List</option>
+                                    </select>
+                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                                        {view === 'board' && <LayoutGrid className="w-4 h-4" />}
+                                        {view === 'board-todo' && <CheckSquare className="w-4 h-4" />}
+                                        {view === 'board-in-progress' && <Clock className="w-4 h-4" />}
+                                        {view === 'board-done' && <CheckCircle2 className="w-4 h-4" />}
+                                        {view === 'list' && <ListIcon className="w-4 h-4" />}
+                                    </div>
+                                    <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+                                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
                                 </div>
 
                                 {/* Refresh */}
@@ -245,6 +282,41 @@ export default function TaskManagerPage() {
                             onUpdate={handleRefresh}
                             onOpenDetail={handleOpenDetail}
                             onAddTask={handleAddTask}
+                            onSubtaskUpdate={handleSubtaskUpdateOptimistic}
+                            onSubtaskDelete={handleSubtaskDeleteOptimistic}
+                        />
+                    ) : view === 'board-todo' ? (
+                        <SingleColumnBoard
+                            tasks={filteredTasks}
+                            members={members}
+                            onUpdate={handleRefresh}
+                            onOpenDetail={handleOpenDetail}
+                            onAddTask={handleAddTask}
+                            onSubtaskUpdate={handleSubtaskUpdateOptimistic}
+                            onSubtaskDelete={handleSubtaskDeleteOptimistic}
+                            focusStatus="todo"
+                        />
+                    ) : view === 'board-in-progress' ? (
+                        <SingleColumnBoard
+                            tasks={filteredTasks}
+                            members={members}
+                            onUpdate={handleRefresh}
+                            onOpenDetail={handleOpenDetail}
+                            onAddTask={handleAddTask}
+                            onSubtaskUpdate={handleSubtaskUpdateOptimistic}
+                            onSubtaskDelete={handleSubtaskDeleteOptimistic}
+                            focusStatus="in_progress"
+                        />
+                    ) : view === 'board-done' ? (
+                        <SingleColumnBoard
+                            tasks={filteredTasks}
+                            members={members}
+                            onUpdate={handleRefresh}
+                            onOpenDetail={handleOpenDetail}
+                            onAddTask={handleAddTask}
+                            onSubtaskUpdate={handleSubtaskUpdateOptimistic}
+                            onSubtaskDelete={handleSubtaskDeleteOptimistic}
+                            focusStatus="done"
                         />
                     ) : (
                         <TaskListView
@@ -254,6 +326,8 @@ export default function TaskManagerPage() {
                             onUpdate={handleRefresh}
                             onOpenDetail={handleOpenDetail}
                             onAddTask={handleAddTask}
+                            onSubtaskUpdate={handleSubtaskUpdateOptimistic}
+                            onSubtaskDelete={handleSubtaskDeleteOptimistic}
                         />
                     )}
                 </main>
@@ -297,9 +371,11 @@ export default function TaskManagerPage() {
 function TaskListView({
     tasks,
     members,
-    onUpdate,
+    onUpdate: _onUpdate,
     onOpenDetail,
     onAddTask,
+    onSubtaskUpdate,
+    onSubtaskDelete,
 }: {
     tasks: Task[];
     members: TeamMember[];
@@ -307,7 +383,10 @@ function TaskListView({
     onUpdate: () => void;
     onOpenDetail: (task: Task) => void;
     onAddTask: (status: TaskStatus) => void;
+    onSubtaskUpdate: (parentTaskId: string, updatedSubtask: Task) => void;
+    onSubtaskDelete: (parentTaskId: string, deletedSubtaskId: string) => void;
 }) {
+    void _onUpdate;
     const groupedTasks = {
         todo: tasks.filter(t => t.status === 'todo'),
         in_progress: tasks.filter(t => t.status === 'in_progress'),
@@ -375,8 +454,10 @@ function TaskListView({
                                                         subtasks={task.subtasks}
                                                         members={members}
                                                         onSubTaskClick={onOpenDetail}
-                                                        onUpdate={onUpdate}
+                                                        onSubtaskUpdate={(updated) => onSubtaskUpdate(task.id, updated)}
+                                                        onSubtaskDelete={(deletedId) => onSubtaskDelete(task.id, deletedId)}
                                                         parentTaskId={task.id}
+                                                        allowDelete={false}
                                                     />
                                                 </div>
                                             )}

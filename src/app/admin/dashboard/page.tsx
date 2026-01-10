@@ -160,13 +160,13 @@ export default function AdminDashboardPage() {
 
     if (status === "loading" || isLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-gray-900 via-gray-800 to-gray-900">
+            <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-white via-gray-50 to-gray-100">
                 <div className="text-center">
                     <div className="relative w-20 h-20 mx-auto mb-6">
-                        <div className="absolute inset-0 border-4 border-blue-500/30 rounded-full"></div>
+                        <div className="absolute inset-0 border-4 border-gray-200 rounded-full"></div>
                         <div className="absolute inset-0 border-4 border-t-blue-500 rounded-full animate-spin"></div>
                     </div>
-                    <p className="text-gray-300 font-semibold text-lg">Loading...</p>
+                    <p className="text-gray-700 font-semibold text-lg">Loading...</p>
                 </div>
             </div>
         );

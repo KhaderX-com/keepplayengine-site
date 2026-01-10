@@ -6,7 +6,6 @@ import {
     DragOverlay,
     closestCenter,
     KeyboardSensor,
-    PointerSensor,
     TouchSensor,
     MouseSensor,
     useSensor,
@@ -33,6 +32,9 @@ interface TaskBoardProps {
     onUpdate: () => void;
     onOpenDetail: (task: Task) => void;
     onAddTask: (status: TaskStatus) => void;
+    onSubtaskUpdate?: (parentTaskId: string, updatedSubtask: Task) => void;
+    onSubtaskDelete?: (parentTaskId: string, deletedSubtaskId: string) => void;
+    singleColumn?: TaskStatus; // Optional: show only this status column
 }
 
 // Sortable wrapper for TaskCard
@@ -41,11 +43,15 @@ function SortableTaskCard({
     members,
     onUpdate,
     onOpenDetail,
+    onSubtaskUpdate,
+    onSubtaskDelete,
 }: {
     task: Task;
     members: TeamMember[];
     onUpdate: () => void;
     onOpenDetail: (task: Task) => void;
+    onSubtaskUpdate?: (parentTaskId: string, updatedSubtask: Task) => void;
+    onSubtaskDelete?: (parentTaskId: string, deletedSubtaskId: string) => void;
 }) {
     const {
         attributes,
@@ -63,13 +69,14 @@ function SortableTaskCard({
 
     return (
         // Inline styles required for @dnd-kit animations
-        // eslint-disable-next-line react/forbid-dom-props
         <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
             <TaskCard
                 task={task}
                 members={members}
                 onUpdate={onUpdate}
                 onOpenDetail={onOpenDetail}
+                onSubtaskUpdate={onSubtaskUpdate}
+                onSubtaskDelete={onSubtaskDelete}
                 isDragging={isDragging}
             />
         </div>
@@ -82,11 +89,35 @@ export default function TaskBoard({
     onUpdate,
     onOpenDetail,
     onAddTask,
+    onSubtaskUpdate,
+    onSubtaskDelete,
+    singleColumn,
 }: TaskBoardProps) {
     const [activeTask, setActiveTask] = useState<Task | null>(null);
     const [localTasks, setLocalTasks] = useState<Task[]>(tasks);
-    const [activeColumn, setActiveColumn] = useState<TaskStatus>('todo');
     const [isMobile, setIsMobile] = useState(false);
+
+    // Determine available columns based on singleColumn prop
+    const allColumns: { id: TaskStatus; title: string; color: string }[] = [
+        { id: 'todo', title: 'To Do', color: 'bg-gray-500' },
+        { id: 'in_progress', title: 'In Progress', color: 'bg-blue-500' },
+        { id: 'done', title: 'Done', color: 'bg-green-500' },
+    ];
+
+    // Filter columns based on singleColumn prop
+    const columns = singleColumn
+        ? allColumns.filter(col => col.id === singleColumn)
+        : allColumns;
+
+    // Initialize activeColumn to the first available column (or singleColumn if provided)
+    const [activeColumn, setActiveColumn] = useState<TaskStatus>(singleColumn || 'todo');
+
+    // Update activeColumn when singleColumn prop changes
+    useEffect(() => {
+        if (singleColumn) {
+            setActiveColumn(singleColumn);
+        }
+    }, [singleColumn]);
 
     // Detect mobile viewport
     useEffect(() => {
@@ -118,12 +149,6 @@ export default function TaskBoard({
             coordinateGetter: sortableKeyboardCoordinates,
         })
     );
-
-    const columns: { id: TaskStatus; title: string; color: string }[] = [
-        { id: 'todo', title: 'To Do', color: 'bg-gray-500' },
-        { id: 'in_progress', title: 'In Progress', color: 'bg-blue-500' },
-        { id: 'done', title: 'Done', color: 'bg-green-500' },
-    ];
 
     const getTasksByStatus = (status: TaskStatus) => {
         return localTasks
@@ -309,6 +334,8 @@ export default function TaskBoard({
                                                         members={members}
                                                         onUpdate={onUpdate}
                                                         onOpenDetail={onOpenDetail}
+                                                        onSubtaskUpdate={onSubtaskUpdate}
+                                                        onSubtaskDelete={onSubtaskDelete}
                                                     />
                                                 ))}
 
@@ -387,6 +414,8 @@ export default function TaskBoard({
                                                             members={members}
                                                             onUpdate={onUpdate}
                                                             onOpenDetail={onOpenDetail}
+                                                            onSubtaskUpdate={onSubtaskUpdate}
+                                                            onSubtaskDelete={onSubtaskDelete}
                                                         />
                                                     ))}
 
@@ -429,6 +458,8 @@ export default function TaskBoard({
                             members={members}
                             onUpdate={onUpdate}
                             onOpenDetail={onOpenDetail}
+                            onSubtaskUpdate={onSubtaskUpdate}
+                            onSubtaskDelete={onSubtaskDelete}
                             isDragging={true}
                         />
                     </div>

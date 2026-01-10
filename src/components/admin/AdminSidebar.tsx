@@ -115,26 +115,7 @@ export default function AdminSidebar({ activeSessions = 0, isMobileMenuOpen, onC
                         </svg>
                     ),
                 },
-                {
-                    name: "My Tasks",
-                    href: "/admin/tasks?filter=mine",
-                    icon: (
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                    ),
-                },
-                {
-                    name: "All Tasks",
-                    href: "/admin/tasks?filter=all",
-                    icon: (
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                        </svg>
-                    ),
-                },
+                // Removed 'My Tasks' and 'All Tasks' entries per UI change request
                 // Only show Label Management for SUPER_ADMIN
                 ...(userRole === 'SUPER_ADMIN' ? [{
                     name: "Label Management",

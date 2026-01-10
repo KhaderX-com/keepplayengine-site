@@ -135,32 +135,7 @@ export default function AdminPage() {
             stat: stats?.totalTasks || 0,
             statLabel: "Total Tasks",
         },
-        {
-            title: "My Tasks",
-            description: "View and manage tasks assigned to you",
-            href: "/admin/tasks?filter=mine",
-            gradient: "from-orange-500 to-orange-700",
-            icon: (
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-            ),
-            stat: stats?.pendingTasks || 0,
-            statLabel: "Pending Tasks",
-        },
-        {
-            title: "All Tasks",
-            description: "Complete overview of all system tasks",
-            href: "/admin/tasks?filter=all",
-            gradient: "from-indigo-500 to-indigo-700",
-            icon: (
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                </svg>
-            ),
-            stat: stats?.completedTasks || 0,
-            statLabel: "Completed",
-        },
+        // 'My Tasks' and 'All Tasks' cards removed from quick navigation per UI change request
         {
             title: "Notifications",
             description: "Send and manage system notifications",
@@ -201,14 +176,14 @@ export default function AdminPage() {
 
     if (status === "loading" || isLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-gray-900 via-gray-800 to-gray-900">
+            <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-white via-gray-50 to-gray-100">
                 <div className="text-center">
                     <div className="relative w-20 h-20 mx-auto mb-6">
-                        <div className="absolute inset-0 border-4 border-blue-500/30 rounded-full"></div>
+                        <div className="absolute inset-0 border-4 border-gray-200 rounded-full"></div>
                         <div className="absolute inset-0 border-4 border-t-blue-500 rounded-full animate-spin"></div>
                     </div>
-                    <p className="text-gray-300 font-semibold text-lg">Loading Dashboard...</p>
-                    <p className="text-gray-500 text-sm mt-2">Preparing your admin panel</p>
+                    <p className="text-gray-700 font-semibold text-lg">Loading Dashboard...</p>
+                    <p className="text-gray-600 text-sm mt-2">Preparing your admin panel</p>
                 </div>
             </div>
         );

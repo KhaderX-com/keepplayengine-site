@@ -893,6 +893,7 @@ export type Database = {
                 Row: {
                     actual_hours: number | null
                     assignee_id: string | null
+                    color: string | null
                     completed_at: string | null
                     created_at: string | null
                     created_by: string | null
@@ -910,6 +911,7 @@ export type Database = {
                 Insert: {
                     actual_hours?: number | null
                     assignee_id?: string | null
+                    color?: string | null
                     completed_at?: string | null
                     created_at?: string | null
                     created_by?: string | null
@@ -927,6 +929,7 @@ export type Database = {
                 Update: {
                     actual_hours?: number | null
                     assignee_id?: string | null
+                    color?: string | null
                     completed_at?: string | null
                     created_at?: string | null
                     created_by?: string | null
