@@ -14,34 +14,37 @@ export async function GET() {
             );
         }
 
-        // Fetch active sessions from Supabase
+        // Fetch active sessions from Supabase (exclude admin@keepplayengine.com - dev account)
         const { data: sessions, error } = await supabaseAdmin
             .from("admin_sessions")
-            .select("*")
+            .select(`
+                *,
+                admin_users!admin_sessions_admin_user_id_fkey (
+                    id,
+                    email,
+                    full_name,
+                    role
+                )
+            `)
             .gte("expires_at", new Date().toISOString())
-            .order("created_at", { ascending: false })
-            .limit(20);
+            .eq("is_revoked", false)
+            .order("last_activity_at", { ascending: false })
+            .limit(50);
 
         if (error) {
             throw error;
         }
 
-        // Fetch user details for sessions
-        const userIds = [...new Set(sessions?.map((s: { admin_user_id: string }) => s.admin_user_id).filter(Boolean))];
-
-        const { data: users } = await supabaseAdmin
-            .from("admin_users")
-            .select("id, email, full_name")
-            .in("id", userIds);
-
-        // Map user details to sessions
-        const sessionsWithUsers = sessions?.map(session => ({
-            ...session,
-            user: users?.find(u => u.id === session.admin_user_id),
-        }));
+        // Filter out admin@keepplayengine.com (dev account) and format response
+        const filteredSessions = sessions
+            ?.filter((s: any) => s.admin_users?.email !== 'admin@keepplayengine.com')
+            .map((session: any) => ({
+                ...session,
+                user: session.admin_users
+            })) || [];
 
         return NextResponse.json({
-            sessions: sessionsWithUsers || [],
+            sessions: filteredSessions,
         });
     } catch (error) {
         console.error("Error fetching sessions:", error);

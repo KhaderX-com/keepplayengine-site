@@ -42,12 +42,22 @@ export async function GET() {
                 .from("admin_users")
                 .select("*", { count: "exact", head: true }),
 
-            // Active sessions (not expired and not revoked)
+            // Active sessions (not expired and not revoked, exclude admin@keepplayengine.com)
             supabaseAdmin
                 .from("admin_sessions")
-                .select("*", { count: "exact", head: true })
+                .select(`
+                    *,
+                    admin_users!admin_sessions_admin_user_id_fkey (email)
+                `)
                 .gte("expires_at", now.toISOString())
-                .eq("is_revoked", false),
+                .eq("is_revoked", false)
+                .then(result => {
+                    // Filter out admin@keepplayengine.com sessions
+                    const filteredCount = result.data?.filter((s: any) =>
+                        s.admin_users?.email !== 'admin@keepplayengine.com'
+                    ).length || 0;
+                    return { ...result, count: filteredCount };
+                }),
 
             // Successful logins in last 24 hours
             supabaseAdmin

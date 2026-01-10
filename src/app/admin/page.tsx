@@ -7,6 +7,7 @@ import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminHeader from "@/components/admin/AdminHeader";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useSessionActivity } from "@/hooks/useSessionActivity";
 
 interface Stats {
     totalUsers: number;
@@ -37,6 +38,9 @@ export default function AdminPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [userRole, setUserRole] = useState<string>('ADMIN');
+
+    // Track session activity (excludes admin@keepplayengine.com)
+    useSessionActivity();
 
     const handleToggleMobileMenu = useCallback(() => {
         setIsMobileMenuOpen(!isMobileMenuOpen);

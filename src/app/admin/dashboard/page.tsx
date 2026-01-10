@@ -6,6 +6,7 @@ import { useEffect, useState, useCallback } from "react";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminHeader from "@/components/admin/AdminHeader";
 import AuditManagement from "@/components/admin/AuditManagement";
+import { useSessionActivity } from "@/hooks/useSessionActivity";
 
 interface ActivityLog {
     id: string;
@@ -61,6 +62,9 @@ export default function AdminDashboardPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+    // Track session activity (excludes admin@keepplayengine.com)
+    useSessionActivity();
+
     const handleToggleMobileMenu = useCallback(() => {
         setIsMobileMenuOpen(!isMobileMenuOpen);
     }, [isMobileMenuOpen]);
@@ -89,6 +93,17 @@ export default function AdminDashboardPage() {
             fetchDashboardData();
         }
     }, [session]);
+
+    // Auto-refresh sessions every 30 seconds when on sessions tab
+    useEffect(() => {
+        if (activeTab !== 'sessions' || !session) return;
+
+        const interval = setInterval(() => {
+            fetchDashboardData();
+        }, 30000); // 30 seconds
+
+        return () => clearInterval(interval);
+    }, [activeTab, session]);
 
     const fetchDashboardData = async () => {
         setIsLoading(true);
@@ -326,31 +341,102 @@ export default function AdminDashboardPage() {
 
                     {activeTab === "sessions" && (
                         <div className="space-y-6 max-w-7xl mx-auto">
+                            {/* Session Stats Banner */}
+                            <div className="bg-gradient-to-r from-blue-500 to-blue-700 rounded-lg p-6 text-white">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h2 className="text-2xl font-bold">{sessions.length} Active Session{sessions.length !== 1 ? 's' : ''}</h2>
+                                        <p className="text-blue-100 mt-1">Tracking Khader & Amro activity (excluding dev account)</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <button
+                                            onClick={fetchDashboardData}
+                                            className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors"
+                                        >
+                                            <svg className="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                            </svg>
+                                            Refresh
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div className="grid gap-4">
                                 {sessions.length === 0 ? (
-                                    <div className="bg-white rounded-lg border border-gray-200 p-12 text-center text-gray-500">No active sessions</div>
+                                    <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
+                                        <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                                        </svg>
+                                        <p className="text-gray-500 font-medium">No active sessions</p>
+                                        <p className="text-gray-400 text-sm mt-2">Khader and Amro sessions will appear here when they log in</p>
+                                    </div>
                                 ) : (
                                     sessions.map((sess) => (
-                                        <div key={sess.id} className="bg-white rounded-lg border border-gray-200 p-6 hover:border-gray-300">
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center space-x-4">
-                                                    <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
-                                                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                                        </svg>
+                                        <div key={sess.id} className="bg-white rounded-lg border border-gray-200 p-6 hover:border-blue-300 hover:shadow-md transition-all">
+                                            <div className="flex items-start justify-between gap-4">
+                                                <div className="flex items-start space-x-4 flex-1">
+                                                    {/* User Avatar */}
+                                                    <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center shrink-0 shadow-lg">
+                                                        <span className="text-white text-xl font-bold">
+                                                            {sess.user?.full_name?.charAt(0).toUpperCase() || sess.user?.email?.charAt(0).toUpperCase() || '?'}
+                                                        </span>
                                                     </div>
-                                                    <div>
-                                                        <p className="font-bold text-gray-900">{sess.user?.full_name || sess.user?.email || 'Unknown'}</p>
-                                                        <p className="text-xs text-gray-500 font-mono">{formatIP(sess.ip_address)}</p>
+
+                                                    <div className="flex-1 min-w-0">
+                                                        {/* User Info */}
+                                                        <div className="mb-3">
+                                                            <p className="font-bold text-gray-900 text-lg">{sess.user?.full_name || 'Unknown User'}</p>
+                                                            <p className="text-sm text-gray-600">{sess.user?.email || 'No email'}</p>
+                                                        </div>
+
+                                                        {/* Session Details */}
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                            {/* IP Address */}
+                                                            <div className="flex items-center text-sm">
+                                                                <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                                                                </svg>
+                                                                <span className="text-gray-700 font-mono">{formatIP(sess.ip_address)}</span>
+                                                            </div>
+
+                                                            {/* Last Activity */}
+                                                            <div className="flex items-center text-sm">
+                                                                <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                </svg>
+                                                                <span className="text-gray-700">{formatDate(sess.last_activity_at || sess.created_at)}</span>
+                                                            </div>
+
+                                                            {/* Session Start */}
+                                                            <div className="flex items-center text-sm">
+                                                                <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                                </svg>
+                                                                <span className="text-gray-700">Started: {formatDate(sess.created_at)}</span>
+                                                            </div>
+
+                                                            {/* Expires */}
+                                                            <div className="flex items-center text-sm">
+                                                                <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                </svg>
+                                                                <span className="text-gray-700">Expires: {formatDate(sess.expires_at)}</span>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <div className="text-right">
-                                                    <p className="text-xs text-gray-500 mb-2">Last: {formatDate(sess.last_activity_at || sess.created_at)}</p>
+
+                                                {/* Revoke Button */}
+                                                <div className="shrink-0">
                                                     <button
                                                         onClick={() => handleRevokeSession(sess.id)}
-                                                        className="px-3 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-xs font-semibold text-white"
+                                                        className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-semibold text-white transition-colors shadow-sm hover:shadow-md"
+                                                        title="Revoke this session"
                                                     >
-                                                        Revoke
+                                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                        </svg>
                                                     </button>
                                                 </div>
                                             </div>

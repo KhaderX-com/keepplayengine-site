@@ -184,6 +184,30 @@ export const authOptions: NextAuthOptions = {
                     'Admin user logged in successfully'
                 );
 
+                // Create session record for tracking (exclude admin@keepplayengine.com - dev account)
+                if (admin.email !== 'admin@keepplayengine.com') {
+                    try {
+                        const sessionToken = `${admin.id}-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+                        const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000); // 2 hours
+
+                        await supabaseAdmin
+                            .from('admin_sessions')
+                            .insert({
+                                admin_user_id: admin.id,
+                                session_token: sessionToken,
+                                ip_address: ipAddress,
+                                user_agent: userAgent,
+                                device_info: {},
+                                expires_at: expiresAt.toISOString(),
+                                last_activity_at: new Date().toISOString(),
+                                is_revoked: false
+                            });
+                    } catch (sessionError) {
+                        console.error('Error creating session record:', sessionError);
+                        // Don't fail login if session creation fails
+                    }
+                }
+
                 return {
                     id: admin.id,
                     email: admin.email,
