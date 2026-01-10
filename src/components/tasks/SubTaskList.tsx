@@ -5,6 +5,23 @@ import Image from 'next/image';
 import type { Task, TeamMember } from '@/types/tasks';
 import { PRIORITY_CONFIG, STATUS_CONFIG } from '@/types/tasks';
 import { Check, Clock, User } from 'lucide-react';
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent,
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    useSortable,
+    verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface SubTaskListProps {
     subtasks: Task[];
@@ -15,6 +32,200 @@ interface SubTaskListProps {
     onSubtaskDelete?: (deletedSubtaskId: string) => void;
     parentTaskId: string;
     allowDelete?: boolean;
+}
+
+// Sortable item component
+function SortableSubtaskItem({
+    subtask,
+    members,
+    isCompleted,
+    deletingId,
+    onCheckboxClick,
+    onSubTaskClick,
+    onDeleteSubtask,
+    allowDelete,
+}: {
+    subtask: Task;
+    members: TeamMember[];
+    isCompleted: boolean;
+    deletingId: string | null;
+    onCheckboxClick: (e: React.MouseEvent, subtask: Task) => void;
+    onSubTaskClick: (task: Task) => void;
+    onDeleteSubtask: (e: React.MouseEvent, subtask: Task) => void;
+    allowDelete: boolean;
+}) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: subtask.id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+    };
+
+    const assignee = subtask.assignee || members.find(m => m.id === subtask.assignee_id);
+    const priorityConfig = PRIORITY_CONFIG[subtask.priority];
+    const statusConfig = STATUS_CONFIG[subtask.status];
+    const isOverdue = subtask.due_date &&
+        new Date(subtask.due_date) < new Date() &&
+        !isCompleted;
+
+    return (
+        /* @ts-expect-error - DndKit requires inline styles for drag positioning */
+        <div
+            ref={setNodeRef}
+            style={style}
+            {...attributes}
+            {...listeners}
+            className={`
+                group p-3 rounded-lg border transition-colors duration-200 cursor-grab active:cursor-grabbing
+                ${isCompleted
+                    ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800'
+                    : 'bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700'
+                }
+                ${deletingId === subtask.id ? 'opacity-50 pointer-events-none' : ''}
+                ${isDragging ? 'z-50' : ''}
+            `}
+        >
+            <div className="flex items-start gap-3">
+                {/* Green checkbox */}
+                <div
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onCheckboxClick(e, subtask);
+                    }}
+                    className={`
+                        shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors duration-200 cursor-pointer
+                        ${isCompleted
+                            ? 'bg-green-100 border-green-500 dark:bg-green-500/30 dark:border-green-500'
+                            : 'bg-white border-gray-300 dark:bg-gray-700 dark:border-gray-600'
+                        }
+                    `}
+                >
+                    {isCompleted && (
+                        <Check className="w-4 h-4 text-green-600 dark:text-green-400" />
+                    )}
+                </div>
+
+                {/* Content - Clickable for editing */}
+                <div
+                    className="flex-1 min-w-0 cursor-pointer"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onSubTaskClick(subtask);
+                    }}
+                >
+                    <div className="flex items-start gap-2 mb-2 min-w-0">
+                        <h4 className={`
+                            flex-1 min-w-0 font-medium text-sm leading-snug wrap-break-word
+                            ${isCompleted
+                                ? 'text-gray-500 dark:text-gray-400 line-through'
+                                : 'text-gray-900 dark:text-gray-100'
+                            }
+                        `}>
+                            {subtask.title}
+                        </h4>
+
+                        {/* Priority badge */}
+                        <span
+                            className={`
+                                ml-auto shrink-0 px-2 py-0.5 rounded text-xs font-semibold uppercase whitespace-nowrap
+                                ${priorityConfig.className}
+                            `}
+                        >
+                            {priorityConfig.label}
+                        </span>
+                    </div>
+
+                    {/* Description - Full text without line-clamp */}
+                    {subtask.description && (
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mb-2 whitespace-pre-wrap wrap-break-word">
+                            {subtask.description}
+                        </p>
+                    )}
+
+                    {/* Meta information */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                        {/* Status badge */}
+                        <div className={`
+                            flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium
+                            ${statusConfig.className}
+                        `}>
+                            {statusConfig.label}
+                        </div>
+
+                        {/* Assignee */}
+                        {assignee && (
+                            <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700">
+                                {assignee.avatar_url ? (
+                                    <Image
+                                        src={assignee.avatar_url}
+                                        alt={assignee.name}
+                                        width={14}
+                                        height={14}
+                                        className="w-3.5 h-3.5 rounded-full object-cover"
+                                    />
+                                ) : (
+                                    <User className="w-3 h-3 text-gray-500" />
+                                )}
+                                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                                    {assignee.name}
+                                </span>
+                            </div>
+                        )}
+
+                        {/* Due date */}
+                        {subtask.due_date && (
+                            <div className={`
+                                flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium
+                                ${isOverdue
+                                    ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                    : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                                }
+                            `}>
+                                <Clock className="w-3 h-3" />
+                                {new Date(subtask.due_date).toLocaleDateString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric'
+                                })}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Delete Button - Only show if allowed and on hover */}
+                {allowDelete && (
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onDeleteSubtask(e, subtask);
+                        }}
+                        disabled={deletingId === subtask.id}
+                        className="shrink-0 p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 
+                            dark:hover:bg-red-900/20 transition-colors opacity-0 group-hover:opacity-100
+                            disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Delete subtask"
+                        aria-label="Delete subtask"
+                    >
+                        {deletingId === subtask.id ? (
+                            <div className="animate-spin w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full" />
+                        ) : (
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        )}
+                    </button>
+                )}
+            </div>
+        </div>
+    );
 }
 
 export default function SubTaskList({
@@ -35,12 +246,83 @@ export default function SubTaskList({
 
     // Update local state when props change
     useEffect(() => {
-        setLocalSubtasks(subtasks);
+        // Sort by position when subtasks change
+        const sorted = [...subtasks].sort((a, b) => (a.position || 0) - (b.position || 0));
+        setLocalSubtasks(sorted);
     }, [subtasks]);
+
+    // Set up drag and drop sensors
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8, // Require 8px movement before drag starts
+            },
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
 
     if (!localSubtasks || localSubtasks.length === 0) {
         return null;
     }
+
+    const handleDragEnd = async (event: DragEndEvent) => {
+        const { active, over } = event;
+
+        if (!over || active.id === over.id) {
+            return;
+        }
+
+        const oldIndex = localSubtasks.findIndex(st => st.id === active.id);
+        const newIndex = localSubtasks.findIndex(st => st.id === over.id);
+
+        if (oldIndex === -1 || newIndex === -1) {
+            return;
+        }
+
+        // Reorder subtasks
+        const reorderedSubtasks = arrayMove(localSubtasks, oldIndex, newIndex);
+
+        // Update positions
+        const updatedSubtasks = reorderedSubtasks.map((st, index) => ({
+            ...st,
+            position: index,
+        }));
+
+        // Optimistic update
+        setLocalSubtasks(updatedSubtasks);
+
+        // Update positions in the backend
+        try {
+            await Promise.all(
+                updatedSubtasks.map(async (st) => {
+                    const response = await fetch(`/api/tasks/${st.id}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            position: st.position,
+                        }),
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Failed to update position for subtask ${st.id}`);
+                    }
+                })
+            );
+
+            // Notify parent to refresh
+            if (onUpdate) {
+                onUpdate();
+            }
+        } catch (error) {
+            console.error('Error updating subtask positions:', error);
+            // Revert on error
+            setLocalSubtasks(subtasks);
+        }
+    };
 
     const handleCheckboxClick = async (e: React.MouseEvent, subtask: Task) => {
         e.stopPropagation(); // Prevent opening detail panel
@@ -145,7 +427,7 @@ export default function SubTaskList({
                         {completedCount}
                     </div>
                     <span className="text-gray-500 dark:text-gray-400">/</span>
-                    <span className="text-gray-600 dark:text-gray-300">{subtasks.length}</span>
+                    <span className="text-gray-600 dark:text-gray-300">{localSubtasks.length}</span>
                     <span className="text-gray-500 dark:text-gray-400 text-xs">subtasks</span>
                 </div>
 
@@ -165,152 +447,37 @@ export default function SubTaskList({
                 </span>
             </div>
 
-            {/* Subtask list */}
-            <div className="space-y-2">
-                {localSubtasks.map((subtask) => {
-                    const assignee = subtask.assignee || members.find(m => m.id === subtask.assignee_id);
-                    const priorityConfig = PRIORITY_CONFIG[subtask.priority];
-                    const statusConfig = STATUS_CONFIG[subtask.status];
-                    const isCompleted = subtask.status === 'done';
-                    const isOverdue = subtask.due_date &&
-                        new Date(subtask.due_date) < new Date() &&
-                        !isCompleted;
+            {/* Subtask list with drag and drop */}
+            <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+            >
+                <SortableContext
+                    items={localSubtasks.map(st => st.id)}
+                    strategy={verticalListSortingStrategy}
+                >
+                    <div className="space-y-2">
+                        {localSubtasks.map((subtask) => {
+                            const isCompleted = subtask.status === 'done';
 
-                    return (
-                        <div
-                            key={subtask.id}
-                            className={`
-                                group p-3 rounded-lg border transition-colors duration-200
-                                ${isCompleted
-                                    ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800'
-                                    : 'bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700'
-                                }
-                                ${deletingId === subtask.id ? 'opacity-50 pointer-events-none' : ''}
-                            `}
-                        >
-                            <div className="flex items-start gap-3">
-                                {/* Green checkbox */}
-                                <div
-                                    onClick={(e) => handleCheckboxClick(e, subtask)}
-                                    className={`
-                                        shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors duration-200 cursor-pointer
-                                        ${isCompleted
-                                            ? 'bg-green-100 border-green-500 dark:bg-green-500/30 dark:border-green-500'
-                                            : 'bg-white border-gray-300 dark:bg-gray-700 dark:border-gray-600'
-                                        }
-                                    `}
-                                >
-                                    {isCompleted && (
-                                        <Check className="w-4 h-4 text-green-600 dark:text-green-400" />
-                                    )}
-                                </div>
-
-                                {/* Content */}
-                                <div className="flex-1 min-w-0 cursor-pointer" onClick={() => onSubTaskClick(subtask)}>
-                                    <div className="flex items-start gap-2 mb-2 min-w-0">
-                                        <h4 className={`
-                                            flex-1 min-w-0 font-medium text-sm leading-snug wrap-break-word
-                                            ${isCompleted
-                                                ? 'text-gray-500 dark:text-gray-400 line-through'
-                                                : 'text-gray-900 dark:text-gray-100'
-                                            }
-                                        `}>
-                                            {subtask.title}
-                                        </h4>
-
-                                        {/* Priority badge */}
-                                        <span
-                                            className={`
-                                                ml-auto shrink-0 px-2 py-0.5 rounded text-xs font-semibold uppercase whitespace-nowrap
-                                                ${priorityConfig.className}
-                                            `}
-                                        >
-                                            {priorityConfig.label}
-                                        </span>
-                                    </div>
-
-                                    {/* Description */}
-                                    {subtask.description && (
-                                        <p className="text-xs text-gray-600 dark:text-gray-400 mb-2 line-clamp-2">
-                                            {subtask.description}
-                                        </p>
-                                    )}
-
-                                    {/* Meta information */}
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                        {/* Status badge */}
-                                        <div className={`
-                                            flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium
-                                            ${statusConfig.className}
-                                        `}>
-                                            {statusConfig.label}
-                                        </div>
-
-                                        {/* Assignee */}
-                                        {assignee && (
-                                            <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700">
-                                                {assignee.avatar_url ? (
-                                                    <Image
-                                                        src={assignee.avatar_url}
-                                                        alt={assignee.name}
-                                                        width={14}
-                                                        height={14}
-                                                        className="w-3.5 h-3.5 rounded-full object-cover"
-                                                    />
-                                                ) : (
-                                                    <User className="w-3 h-3 text-gray-500" />
-                                                )}
-                                                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                                                    {assignee.name}
-                                                </span>
-                                            </div>
-                                        )}
-
-                                        {/* Due date */}
-                                        {subtask.due_date && (
-                                            <div className={`
-                                                flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium
-                                                ${isOverdue
-                                                    ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                                                    : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                                                }
-                                            `}>
-                                                <Clock className="w-3 h-3" />
-                                                {new Date(subtask.due_date).toLocaleDateString('en-US', {
-                                                    month: 'short',
-                                                    day: 'numeric'
-                                                })}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Delete Button - Only show if allowed and on hover */}
-                                {allowDelete && (
-                                    <button
-                                        onClick={(e) => handleDeleteSubtask(e, subtask)}
-                                        disabled={deletingId === subtask.id}
-                                        className="shrink-0 p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 
-                                            dark:hover:bg-red-900/20 transition-colors opacity-0 group-hover:opacity-100
-                                            disabled:opacity-50 disabled:cursor-not-allowed"
-                                        title="Delete subtask"
-                                        aria-label="Delete subtask"
-                                    >
-                                        {deletingId === subtask.id ? (
-                                            <div className="animate-spin w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full" />
-                                        ) : (
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
-                                        )}
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
+                            return (
+                                <SortableSubtaskItem
+                                    key={subtask.id}
+                                    subtask={subtask}
+                                    members={members}
+                                    isCompleted={isCompleted}
+                                    deletingId={deletingId}
+                                    onCheckboxClick={handleCheckboxClick}
+                                    onSubTaskClick={onSubTaskClick}
+                                    onDeleteSubtask={handleDeleteSubtask}
+                                    allowDelete={allowDelete}
+                                />
+                            );
+                        })}
+                    </div>
+                </SortableContext>
+            </DndContext>
         </div>
     );
 }
