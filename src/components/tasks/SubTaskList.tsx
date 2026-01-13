@@ -77,7 +77,6 @@ function SortableSubtaskItem({
         !isCompleted;
 
     return (
-        /* @ts-expect-error - DndKit requires inline styles for drag positioning */
         <div
             ref={setNodeRef}
             style={style}
