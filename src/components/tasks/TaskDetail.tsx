@@ -37,6 +37,13 @@ export default function TaskDetail({
     const [newComment, setNewComment] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [milestoneInfo, setMilestoneInfo] = useState<{
+        hasMilestones: boolean;
+        milestoneCount: number;
+        subMilestoneCount: number;
+        taskTitle: string;
+    } | null>(null);
+    const [checkingMilestones, setCheckingMilestones] = useState(false);
 
     const fetchTaskDetails = useCallback(async () => {
         if (!taskId) return;
@@ -139,8 +146,26 @@ export default function TaskDetail({
         }
     };
 
-    const handleDeleteClick = () => {
-        setShowDeleteDialog(true);
+    const handleDeleteClick = async () => {
+        if (!task) return;
+
+        // Check if task has milestones before showing delete dialog
+        setCheckingMilestones(true);
+        try {
+            const res = await fetch(`/api/tasks/${task.id}/milestone-check`);
+            if (!res.ok) throw new Error('Failed to check milestones');
+
+            const data = await res.json();
+            setMilestoneInfo(data);
+            setShowDeleteDialog(true);
+        } catch (error) {
+            console.error('Failed to check milestones:', error);
+            // Show delete dialog anyway, but without milestone info
+            setMilestoneInfo(null);
+            setShowDeleteDialog(true);
+        } finally {
+            setCheckingMilestones(false);
+        }
     };
 
     const handleDeleteConfirm = async () => {
@@ -262,8 +287,10 @@ export default function TaskDetail({
                                         </select>
                                         <button
                                             onClick={handleDeleteClick}
+                                            disabled={checkingMilestones}
                                             className="p-2 sm:p-2.5 rounded-xl text-red-500 hover:bg-red-50 
-                                                dark:hover:bg-red-900/20 transition-colors touch-manipulation active:scale-95"
+                                                dark:hover:bg-red-900/20 transition-colors touch-manipulation active:scale-95
+                                                disabled:opacity-50 disabled:cursor-not-allowed"
                                             title="Delete task"
                                             aria-label="Delete task"
                                         >
@@ -527,7 +554,7 @@ export default function TaskDetail({
                                                             <div className="flex-1">
                                                                 <p className="text-sm text-gray-700 dark:text-gray-300">
                                                                     <span className="font-medium text-gray-900 dark:text-white">
-                                                                        {activity.actor?.name || 'Someone'}
+                                                                        {activity.admin_user?.full_name || activity.actor?.name || 'Someone'}
                                                                     </span>
                                                                     {' '}
                                                                     {activity.action === 'created' && 'created this task'}
@@ -567,10 +594,24 @@ export default function TaskDetail({
             <AlertDialog
                 open={showDeleteDialog}
                 onOpenChange={setShowDeleteDialog}
-                title="Delete Task"
-                description={task ? `Are you sure you want to delete "${task.title}"? This action cannot be undone and will permanently remove the task and all its associated data including comments, subtasks, and activity history.` : "Are you sure you want to delete this task?"}
+                title={milestoneInfo?.hasMilestones ? "Delete Milestone Task" : "Delete Task"}
+                description={
+                    task
+                        ? milestoneInfo?.hasMilestones
+                            ? `⚠️ WARNING: You are about to delete the milestone task "${task.title}".
+
+This will permanently delete:
+• The milestone task itself
+• ${milestoneInfo.milestoneCount} milestone record${milestoneInfo.milestoneCount !== 1 ? 's' : ''}
+• ${milestoneInfo.subMilestoneCount} sub-milestone${milestoneInfo.subMilestoneCount !== 1 ? 's' : ''}
+• All associated comments, subtasks, and activity history
+
+This action CANNOT be undone. Are you absolutely sure?`
+                            : `Are you sure you want to delete "${task.title}"? This action cannot be undone and will permanently remove the task and all its associated data including comments, subtasks, and activity history.`
+                        : "Are you sure you want to delete this task?"
+                }
                 onConfirm={handleDeleteConfirm}
-                confirmText="Delete Task"
+                confirmText={milestoneInfo?.hasMilestones ? "Yes, Delete Milestone & All Data" : "Delete Task"}
                 cancelText="Cancel"
                 variant="danger"
             />

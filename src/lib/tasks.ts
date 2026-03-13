@@ -175,3 +175,242 @@ export async function addComment(taskId: string, content: string): Promise<void>
         throw new Error(error.error || 'Failed to add comment');
     }
 }
+
+// =====================================================
+// MILESTONE HOOKS AND FUNCTIONS
+// =====================================================
+
+import type { Milestone, SubMilestone, MilestoneStatus, SubMilestonePriority } from '@/types/tasks';
+
+export function useMilestones(filters?: { status?: string }) {
+    const [milestones, setMilestones] = useState<(Task & { milestone?: Milestone })[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    const fetchMilestones = useCallback(async () => {
+        try {
+            setLoading(true);
+            const params = new URLSearchParams();
+            if (filters?.status) params.set('status', filters.status);
+
+            const res = await fetch(`/api/milestones?${params.toString()}`);
+            if (!res.ok) throw new Error('Failed to fetch milestones');
+
+            const data = await res.json();
+            setMilestones(data.milestones || []);
+            setError(null);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Unknown error');
+        } finally {
+            setLoading(false);
+        }
+    }, [filters?.status]);
+
+    useEffect(() => {
+        fetchMilestones();
+    }, [fetchMilestones]);
+
+    return { milestones, loading, error, refetch: fetchMilestones };
+}
+
+export function useMilestone(milestoneId: string | null) {
+    const [milestone, setMilestone] = useState<Milestone | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    const fetchMilestone = useCallback(async () => {
+        if (!milestoneId) {
+            setMilestone(null);
+            setLoading(false);
+            return;
+        }
+
+        try {
+            setLoading(true);
+            const res = await fetch(`/api/milestones/${milestoneId}`);
+            if (!res.ok) throw new Error('Failed to fetch milestone');
+
+            const data = await res.json();
+            setMilestone(data.milestone);
+            setError(null);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Unknown error');
+        } finally {
+            setLoading(false);
+        }
+    }, [milestoneId]);
+
+    useEffect(() => {
+        fetchMilestone();
+    }, [fetchMilestone]);
+
+    return { milestone, loading, error, refetch: fetchMilestone };
+}
+
+export function useMilestoneByTask(taskId: string | null) {
+    const [milestone, setMilestone] = useState<Milestone | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    const fetchMilestone = useCallback(async () => {
+        if (!taskId) {
+            setMilestone(null);
+            setLoading(false);
+            return;
+        }
+
+        try {
+            setLoading(true);
+            const res = await fetch(`/api/milestones/by-task/${taskId}`);
+            if (!res.ok) {
+                if (res.status === 404) {
+                    setMilestone(null);
+                    setError(null);
+                    return;
+                }
+                throw new Error('Failed to fetch milestone');
+            }
+
+            const data = await res.json();
+            setMilestone(data.milestone);
+            setError(null);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Unknown error');
+        } finally {
+            setLoading(false);
+        }
+    }, [taskId]);
+
+    useEffect(() => {
+        fetchMilestone();
+    }, [fetchMilestone]);
+
+    return { milestone, loading, error, refetch: fetchMilestone };
+}
+
+// Milestone API Functions
+export async function createMilestone(data: {
+    task_id: string;
+    description?: string;
+    target_date?: string;
+}): Promise<Milestone> {
+    const res = await fetch('/api/milestones', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+    });
+
+    if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to create milestone');
+    }
+
+    const result = await res.json();
+    return result.milestone;
+}
+
+export async function updateMilestone(
+    id: string,
+    data: {
+        description?: string;
+        target_date?: string | null;
+        status?: MilestoneStatus;
+    }
+): Promise<Milestone> {
+    const res = await fetch(`/api/milestones/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+    });
+
+    if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to update milestone');
+    }
+
+    const result = await res.json();
+    return result.milestone;
+}
+
+export async function deleteMilestone(id: string): Promise<void> {
+    const res = await fetch(`/api/milestones/${id}`, {
+        method: 'DELETE',
+    });
+
+    if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to delete milestone');
+    }
+}
+
+// Sub-Milestone API Functions
+export async function createSubMilestone(
+    milestoneId: string,
+    data: {
+        title: string;
+        major_number?: number;
+        minor_number?: number;
+        description?: string;
+        target_date?: string;
+        assignee_id?: string;
+        priority?: SubMilestonePriority;
+        notes?: string;
+    }
+): Promise<SubMilestone> {
+    const res = await fetch(`/api/milestones/${milestoneId}/sub-milestones`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+    });
+
+    if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to create sub-milestone');
+    }
+
+    const result = await res.json();
+    return result.subMilestone;
+}
+
+export async function updateSubMilestone(
+    milestoneId: string,
+    subMilestoneId: string,
+    data: {
+        title?: string;
+        description?: string | null;
+        status?: MilestoneStatus;
+        target_date?: string | null;
+        assignee_id?: string | null;
+        priority?: SubMilestonePriority;
+        notes?: string | null;
+        position?: number;
+    }
+): Promise<SubMilestone> {
+    const res = await fetch(`/api/milestones/${milestoneId}/sub-milestones/${subMilestoneId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+    });
+
+    if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to update sub-milestone');
+    }
+
+    const result = await res.json();
+    return result.subMilestone;
+}
+
+export async function deleteSubMilestone(
+    milestoneId: string,
+    subMilestoneId: string
+): Promise<void> {
+    const res = await fetch(`/api/milestones/${milestoneId}/sub-milestones/${subMilestoneId}`, {
+        method: 'DELETE',
+    });
+
+    if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to delete sub-milestone');
+    }
+}

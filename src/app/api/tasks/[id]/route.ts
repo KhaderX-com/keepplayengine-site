@@ -67,7 +67,8 @@ export async function GET(request: Request, { params }: RouteParams) {
             .from('task_activity_log')
             .select(`
                 *,
-                actor:team_members(*)
+                actor:team_members(*),
+                admin_user:admin_users(id, full_name, email, avatar_url)
             `)
             .eq('task_id', id)
             .order('created_at', { ascending: false })
@@ -117,15 +118,27 @@ export async function PATCH(request: Request, { params }: RouteParams) {
         // Get current user
         const { data: currentMember } = await supabaseAdmin
             .from('team_members')
-            .select('id')
+            .select('id, admin_user_id')
             .eq('email', session.user?.email)
             .single();
+
+        // Get admin user ID if not in team_members
+        let adminUserId = currentMember?.admin_user_id;
+        if (!adminUserId) {
+            const { data: adminUser } = await supabaseAdmin
+                .from('admin_users')
+                .select('id')
+                .eq('email', session.user?.email)
+                .single();
+            adminUserId = adminUser?.id;
+        }
 
         // Prepare update object
         const updateData: Record<string, unknown> = {};
         const activityLogs: Array<{
             task_id: string;
             actor_id: string | null;
+            admin_user_id: string | null;
             action: string;
             field_changed: string;
             old_value: string | null;
@@ -133,7 +146,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
         }> = [];
 
         // Track changes
-        const fields = ['title', 'description', 'status', 'priority', 'assignee_id', 'position', 'due_date', 'estimated_hours', 'actual_hours', 'color'] as const;
+        const fields = ['title', 'description', 'status', 'priority', 'assignee_id', 'position', 'due_date', 'estimated_hours', 'actual_hours', 'color', 'is_milestone'] as const;
 
         for (const field of fields) {
             if (body[field] !== undefined && body[field] !== currentTask[field]) {
@@ -142,6 +155,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
                 activityLogs.push({
                     task_id: id,
                     actor_id: currentMember?.id || null,
+                    admin_user_id: adminUserId || null,
                     action: field === 'status' ? 'status_changed' : 'updated',
                     field_changed: field,
                     old_value: currentTask[field]?.toString() || null,
@@ -231,7 +245,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 }
 
 // =====================================================
-// DELETE - Delete a task
+// DELETE - Delete a task (and associated milestones/sub-milestones if it's a milestone)
 // =====================================================
 export async function DELETE(request: Request, { params }: RouteParams) {
     try {
@@ -242,15 +256,64 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
         const { id } = await params;
 
-        // Get task title before deletion for logging
+        // Get task details before deletion for logging
         const { data: taskToDelete } = await supabaseAdmin
             .from('tasks')
-            .select('title')
+            .select('title, is_milestone')
             .eq('id', id)
             .single();
 
         const taskTitle = taskToDelete?.title || 'Unknown Task';
+        const isMilestone = taskToDelete?.is_milestone || false;
 
+        let deletedSubMilestones = 0;
+        let deletedMilestones = 0;
+
+        // If it's a milestone task, delete associated milestone and sub-milestones first
+        if (isMilestone) {
+            // Get the milestone record
+            const { data: milestone } = await supabaseAdmin
+                .from('milestones')
+                .select('id')
+                .eq('task_id', id)
+                .single();
+
+            if (milestone) {
+                // Count sub-milestones before deletion
+                const { count: subMilestoneCount } = await supabaseAdmin
+                    .from('sub_milestones')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('milestone_id', milestone.id);
+
+                deletedSubMilestones = subMilestoneCount || 0;
+
+                // Delete sub-milestones (will cascade via FK)
+                const { error: subMilestoneError } = await supabaseAdmin
+                    .from('sub_milestones')
+                    .delete()
+                    .eq('milestone_id', milestone.id);
+
+                if (subMilestoneError) {
+                    console.error('Error deleting sub-milestones:', subMilestoneError);
+                    return NextResponse.json({ error: 'Failed to delete sub-milestones' }, { status: 500 });
+                }
+
+                // Delete the milestone record (will cascade via FK)
+                const { error: milestoneError } = await supabaseAdmin
+                    .from('milestones')
+                    .delete()
+                    .eq('id', milestone.id);
+
+                if (milestoneError) {
+                    console.error('Error deleting milestone:', milestoneError);
+                    return NextResponse.json({ error: 'Failed to delete milestone' }, { status: 500 });
+                }
+
+                deletedMilestones = 1;
+            }
+        }
+
+        // Now delete the task itself
         const { error } = await supabaseAdmin
             .from('tasks')
             .delete()
@@ -262,15 +325,23 @@ export async function DELETE(request: Request, { params }: RouteParams) {
         }
 
         // Log to admin activity log (excludes admin@keepplayengine.com)
+        const logDescription = isMilestone
+            ? `Deleted milestone task: "${taskTitle}" (including ${deletedMilestones} milestone and ${deletedSubMilestones} sub-milestones)`
+            : `Deleted task: "${taskTitle}"`;
+
         await logActivityWithRequest(request, {
             action: 'DELETE_TASK',
             resourceType: 'task',
             resourceId: id,
-            description: `Deleted task: "${taskTitle}"`,
+            description: logDescription,
             severity: 'warning',
         });
 
-        return NextResponse.json({ success: true });
+        return NextResponse.json({
+            success: true,
+            deletedMilestones,
+            deletedSubMilestones,
+        });
     } catch (error) {
         console.error('Task DELETE error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

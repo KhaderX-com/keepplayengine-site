@@ -44,6 +44,7 @@ export interface Task {
     estimated_hours?: number | null;
     actual_hours?: number | null;
     color?: string | null;
+    is_milestone?: boolean;
     created_at: string;
     updated_at: string;
 
@@ -55,6 +56,7 @@ export interface Task {
     subtasks?: Task[];
     subtask_count?: number;
     completed_subtask_count?: number;
+    milestone?: Milestone | null;
 
     // Hierarchical display properties
     depth?: number;
@@ -77,6 +79,7 @@ export interface TaskActivityLog {
     id: string;
     task_id: string;
     actor_id?: string | null;
+    admin_user_id?: string | null;
     action: string;
     field_changed?: string | null;
     old_value?: string | null;
@@ -86,6 +89,12 @@ export interface TaskActivityLog {
 
     // Joined relations
     actor?: TeamMember | null;
+    admin_user?: {
+        id: string;
+        full_name: string | null;
+        email: string;
+        avatar_url?: string | null;
+    } | null;
 }
 
 // =====================================================
@@ -104,6 +113,7 @@ export interface CreateTaskRequest {
     due_date?: string;
     estimated_hours?: number;
     label_ids?: string[];
+    is_milestone?: boolean;
 }
 
 export interface UpdateTaskRequest {
@@ -118,6 +128,7 @@ export interface UpdateTaskRequest {
     actual_hours?: number | null;
     color?: string | null;
     label_ids?: string[];
+    is_milestone?: boolean;
 }
 
 export interface TaskFilters {
@@ -214,4 +225,120 @@ export const STATUS_CONFIG: Record<TaskStatus, { label: string; color: string; b
         icon: '●',
         className: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
     },
+};
+
+// =====================================================
+// MILESTONE SYSTEM TYPES
+// =====================================================
+
+export type MilestoneStatus = 'not_started' | 'in_progress' | 'completed' | 'delayed' | 'cancelled';
+export type SubMilestonePriority = 'low' | 'medium' | 'high' | 'urgent';
+
+export interface Milestone {
+    id: string;
+    task_id: string;
+    description?: string | null;
+    target_date?: string | null;
+    status: MilestoneStatus;
+    progress_percentage: number;
+    metadata: Record<string, unknown>;
+    created_at: string;
+    updated_at: string;
+
+    // Joined relations
+    task?: Task;
+    sub_milestones?: SubMilestone[];
+}
+
+export interface SubMilestone {
+    id: string;
+    milestone_id: string;
+    major_number: number;
+    minor_number: number;
+    title: string;
+    description?: string | null;
+    status: MilestoneStatus;
+    target_date?: string | null;
+    completed_at?: string | null;
+    progress_percentage: number;
+    assignee_id?: string | null;
+    priority: SubMilestonePriority;
+    notes?: string | null;
+    metadata: Record<string, unknown>;
+    position: number;
+    created_at: string;
+    updated_at: string;
+
+    // Joined relations
+    assignee?: TeamMember | null;
+}
+
+// Request types for Milestone API
+export interface CreateMilestoneRequest {
+    task_id: string;
+    description?: string;
+    target_date?: string;
+}
+
+export interface UpdateMilestoneRequest {
+    description?: string;
+    target_date?: string | null;
+    status?: MilestoneStatus;
+}
+
+export interface CreateSubMilestoneRequest {
+    milestone_id: string;
+    major_number: number;
+    minor_number: number;
+    title: string;
+    description?: string;
+    target_date?: string;
+    assignee_id?: string;
+    priority?: SubMilestonePriority;
+    notes?: string;
+}
+
+export interface UpdateSubMilestoneRequest {
+    title?: string;
+    description?: string | null;
+    status?: MilestoneStatus;
+    target_date?: string | null;
+    assignee_id?: string | null;
+    priority?: SubMilestonePriority;
+    notes?: string | null;
+    position?: number;
+}
+
+// Milestone status configuration for UI
+export const MILESTONE_STATUS_CONFIG: Record<MilestoneStatus, { label: string; color: string; bgColor: string; icon: string }> = {
+    not_started: {
+        label: 'Not Started',
+        color: 'text-gray-500',
+        bgColor: 'bg-gray-100 dark:bg-gray-800',
+        icon: '○'
+    },
+    in_progress: {
+        label: 'In Progress',
+        color: 'text-blue-500',
+        bgColor: 'bg-blue-100 dark:bg-blue-900/30',
+        icon: '◐'
+    },
+    completed: {
+        label: 'Completed',
+        color: 'text-green-500',
+        bgColor: 'bg-green-100 dark:bg-green-900/30',
+        icon: '●'
+    },
+    delayed: {
+        label: 'Delayed',
+        color: 'text-orange-500',
+        bgColor: 'bg-orange-100 dark:bg-orange-900/30',
+        icon: '⚠'
+    },
+    cancelled: {
+        label: 'Cancelled',
+        color: 'text-red-500',
+        bgColor: 'bg-red-100 dark:bg-red-900/30',
+        icon: '✕'
+    }
 };

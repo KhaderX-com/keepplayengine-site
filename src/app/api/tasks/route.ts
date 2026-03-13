@@ -160,9 +160,20 @@ export async function POST(request: Request) {
         // Get the current user's team member ID
         const { data: currentMember } = await supabaseAdmin
             .from('team_members')
-            .select('id')
+            .select('id, admin_user_id')
             .eq('email', session.user?.email)
             .single();
+
+        // Get admin user ID if not in team_members
+        let adminUserId = currentMember?.admin_user_id;
+        if (!adminUserId) {
+            const { data: adminUser } = await supabaseAdmin
+                .from('admin_users')
+                .select('id')
+                .eq('email', session.user?.email)
+                .single();
+            adminUserId = adminUser?.id;
+        }
 
         // Get max position for the status
         const { data: maxPosResult } = await supabaseAdmin
@@ -198,6 +209,7 @@ export async function POST(request: Request) {
                 due_date: body.due_date || null,
                 estimated_hours: body.estimated_hours || null,
                 color: body.color || null,
+                is_milestone: body.is_milestone || false,
             })
             .select(`
                 *,
@@ -247,6 +259,7 @@ export async function POST(request: Request) {
         await supabaseAdmin.from('task_activity_log').insert({
             task_id: task.id,
             actor_id: currentMember?.id || null,
+            admin_user_id: adminUserId || null,
             action: 'created',
             metadata: { title: body.title },
         });

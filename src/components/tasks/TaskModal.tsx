@@ -35,6 +35,7 @@ export default function TaskModal({
     const [dueDate, setDueDate] = useState<string>('');
     const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
     const [color, setColor] = useState<string | null>(null);
+    const [isMilestone, setIsMilestone] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -54,6 +55,7 @@ export default function TaskModal({
                 setDueDate(task.due_date ? task.due_date.split('T')[0] : '');
                 setSelectedLabels(task.labels?.map(l => l.id) || []);
                 setColor(task.color || null);
+                setIsMilestone(task.is_milestone || false);
                 // Load existing subtasks when editing
                 setSubtasks(
                     task.subtasks?.map(st => ({
@@ -72,6 +74,7 @@ export default function TaskModal({
                 setDueDate('');
                 setSelectedLabels([]);
                 setColor(null);
+                setIsMilestone(false);
                 setSubtasks([]);
             }
             setError(null);
@@ -113,6 +116,7 @@ export default function TaskModal({
                 color: color || undefined,
                 label_ids: selectedLabels,
                 parent_task_id: parentTaskId,
+                is_milestone: isMilestone,
             };
 
             let taskId: string;
@@ -355,6 +359,35 @@ export default function TaskModal({
                                     showLabel={true}
                                 />
                             </div>
+
+                            {/* Milestone Toggle - Only show for main tasks */}
+                            {!parentTaskId && (
+                                <div className="flex items-center gap-3 p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/10 dark:to-blue-900/10">
+                                    <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-white dark:bg-gray-800 shadow-sm">
+                                        <svg className="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
+                                        </svg>
+                                    </div>
+                                    <div className="flex-1">
+                                        <label htmlFor="milestone-toggle" className="block text-sm font-semibold text-gray-900 dark:text-white cursor-pointer">
+                                            Mark as Milestone
+                                        </label>
+                                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                                            Track this task with sub-milestones (M1.1, M1.2, etc.)
+                                        </p>
+                                    </div>
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input
+                                            id="milestone-toggle"
+                                            type="checkbox"
+                                            checked={isMilestone}
+                                            onChange={(e) => setIsMilestone(e.target.checked)}
+                                            className="sr-only peer"
+                                        />
+                                        <div className="w-12 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:start-[3px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-gradient-to-r peer-checked:from-purple-600 peer-checked:to-blue-600"></div>
+                                    </label>
+                                </div>
+                            )}
 
                             {/* Subtasks Section - Only show when NOT editing a subtask */}
                             {!parentTaskId && (

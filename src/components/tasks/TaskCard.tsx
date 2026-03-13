@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import type { Task, TaskStatus, TeamMember } from '@/types/tasks';
 import { PRIORITY_CONFIG } from '@/types/tasks';
 import { updateTask } from '@/lib/tasks';
 import SubTaskList from './SubTaskList';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, Flag } from 'lucide-react';
 
 interface TaskCardProps {
     task: Task;
@@ -27,6 +28,7 @@ export default function TaskCard({
     onSubtaskDelete,
     isDragging = false
 }: TaskCardProps) {
+    const router = useRouter();
     const [isUpdating, setIsUpdating] = useState(false);
     const [showQuickActions, setShowQuickActions] = useState(false);
     const [showSubtasks, setShowSubtasks] = useState(true);
@@ -116,10 +118,29 @@ export default function TaskCard({
 
             {/* Header: Priority & Quick Actions */}
             <div className="flex items-center justify-between gap-2 mb-2 w-full">
-                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium max-w-15 truncate shrink-0
-                    ${priorityConfig.bgColor} ${priorityConfig.color}`}>
-                    {priorityConfig.label}
-                </span>
+                <div className="flex items-center gap-2">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium max-w-15 truncate shrink-0
+                        ${priorityConfig.bgColor} ${priorityConfig.color}`}>
+                        {priorityConfig.label}
+                    </span>
+
+                    {/* Milestone Badge */}
+                    {task.is_milestone && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                router.push(`/admin/milestones/${task.id}`);
+                            }}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium
+                                bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400
+                                hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
+                            title="View Milestone"
+                        >
+                            <Flag className="w-3 h-3" />
+                            <span className="hidden sm:inline">Milestone</span>
+                        </button>
+                    )}
+                </div>
 
 
 
