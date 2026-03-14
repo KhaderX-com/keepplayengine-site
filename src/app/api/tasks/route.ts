@@ -1,125 +1,42 @@
-import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { supabaseAdmin } from '@/lib/supabase';
-import type { CreateTaskRequest, TaskFilters } from '@/types/tasks';
-import { logActivityWithRequest } from '@/lib/activity-logger';
+import { NextResponse } from "next/server";
+import { createApiHandler } from "@/lib/api-gateway";
+import { TasksDAL, TeamMembersDAL, AdminDAL, getUserClient } from "@/lib/dal";
+import type { TaskFilters } from "@/types/tasks";
+import { createTaskSchema } from "@/lib/schemas";
 
-// =====================================================
-// GET - Fetch tasks with filters
-// =====================================================
-export async function GET(request: Request) {
-    try {
-        const session = await getServerSession(authOptions);
-        if (!session) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
+export const GET = createApiHandler(
+    { skipContentType: true },
+    async (request, { session }) => {
+        const client = await getUserClient(session.user.id, session.user.role);
         const { searchParams } = new URL(request.url);
 
-        // Parse filters
         const filters: TaskFilters = {
-            status: searchParams.get('status') as TaskFilters['status'] || undefined,
-            priority: searchParams.get('priority') as TaskFilters['priority'] || undefined,
-            assignee_id: searchParams.get('assignee_id') || undefined,
-            label_id: searchParams.get('label_id') || undefined,
-            parent_task_id: searchParams.get('parent_task_id') || undefined,
-            search: searchParams.get('search') || undefined,
+            status: (searchParams.get("status") as TaskFilters["status"]) || undefined,
+            priority: (searchParams.get("priority") as TaskFilters["priority"]) || undefined,
+            assignee_id: searchParams.get("assignee_id") || undefined,
+            label_id: searchParams.get("label_id") || undefined,
+            parent_task_id: searchParams.get("parent_task_id") || undefined,
+            search: searchParams.get("search") || undefined,
         };
+        const onlyTopLevel = searchParams.get("only_top_level") !== "false";
 
-        const onlyTopLevel = searchParams.get('only_top_level') !== 'false'; // Default true
+        const { data: tasks, error } = await TasksDAL.list(client, { ...filters, onlyTopLevel });
+        if (error) throw error;
 
-        // Build query
-        let query = supabaseAdmin
-            .from('tasks')
-            .select(`
-                *,
-                assignee:team_members!tasks_assignee_id_fkey(*),
-                creator:team_members!tasks_created_by_fkey(*)
-            `)
-            .order('position', { ascending: true })
-            .order('created_at', { ascending: false });
-
-        // Apply filters
-        if (filters.status) {
-            if (Array.isArray(filters.status)) {
-                query = query.in('status', filters.status);
-            } else {
-                query = query.eq('status', filters.status);
-            }
-        }
-
-        if (filters.priority) {
-            if (Array.isArray(filters.priority)) {
-                query = query.in('priority', filters.priority);
-            } else {
-                query = query.eq('priority', filters.priority);
-            }
-        }
-
-        if (filters.assignee_id) {
-            query = query.eq('assignee_id', filters.assignee_id);
-        }
-
-        if (filters.search) {
-            query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
-        }
-
-        if (onlyTopLevel && !filters.parent_task_id) {
-            query = query.is('parent_task_id', null);
-        } else if (filters.parent_task_id) {
-            query = query.eq('parent_task_id', filters.parent_task_id);
-        }
-
-        const { data: tasks, error } = await query;
-
-        if (error) {
-            console.error('Error fetching tasks:', error);
-            return NextResponse.json({ error: 'Failed to fetch tasks' }, { status: 500 });
-        }
-
-        // Fetch labels and assignees for each task
-        const taskIds = tasks?.map(t => t.id) || [];
+        const taskIds = tasks?.map((t) => t.id) || [];
         if (taskIds.length > 0) {
-            const { data: labelAssignments } = await supabaseAdmin
-                .from('task_label_assignments')
-                .select(`
-                    task_id,
-                    label:task_labels(*)
-                `)
-                .in('task_id', taskIds);
+            const [labels, assignees, subtasks] = await Promise.all([
+                TasksDAL.getLabels(client, taskIds),
+                TasksDAL.getAssignees(client, taskIds),
+                TasksDAL.getSubtasks(client, taskIds),
+            ]);
 
-            // Fetch multiple assignees
-            const { data: assigneeData } = await supabaseAdmin
-                .from('task_assignees')
-                .select(`
-                    task_id,
-                    team_member:team_members(*)
-                `)
-                .in('task_id', taskIds);
-
-            // Fetch subtasks with full details
-            const { data: subtasksData } = await supabaseAdmin
-                .from('tasks')
-                .select(`
-                    *,
-                    assignee:team_members!tasks_assignee_id_fkey(*)
-                `)
-                .in('parent_task_id', taskIds)
-                .order('position', { ascending: true });
-
-            // Attach labels, assignees, and subtasks to tasks
-            const tasksWithLabels = tasks?.map(task => {
-                const taskLabels = labelAssignments
-                    ?.filter(la => la.task_id === task.id)
-                    .map(la => la.label) || [];
-
-                const taskAssignees = assigneeData
-                    ?.filter(a => a.task_id === task.id)
-                    .map(a => a.team_member) || [];
-
-                const taskSubtasks = subtasksData?.filter(s => s.parent_task_id === task.id) || [];
-                const completedSubtasks = taskSubtasks.filter(s => s.status === 'done');
+            const tasksWithRelations = tasks?.map((task) => {
+                const taskLabels =
+                    labels.data?.filter((la) => la.task_id === task.id).map((la) => la.label) || [];
+                const taskAssignees =
+                    assignees.data?.filter((a) => a.task_id === task.id).map((a) => a.team_member) || [];
+                const taskSubtasks = subtasks.data?.filter((s) => s.parent_task_id === task.id) || [];
 
                 return {
                     ...task,
@@ -127,160 +44,86 @@ export async function GET(request: Request) {
                     assignees: taskAssignees,
                     subtasks: taskSubtasks,
                     subtask_count: taskSubtasks.length,
-                    completed_subtask_count: completedSubtasks.length,
+                    completed_subtask_count: taskSubtasks.filter((s) => s.status === "done").length,
                 };
             });
 
-            return NextResponse.json({ tasks: tasksWithLabels });
+            return NextResponse.json({ tasks: tasksWithRelations });
         }
 
         return NextResponse.json({ tasks: tasks || [] });
-    } catch (error) {
-        console.error('Tasks GET error:', error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-    }
-}
+    },
+);
 
-// =====================================================
-// POST - Create a new task
-// =====================================================
-export async function POST(request: Request) {
-    try {
-        const session = await getServerSession(authOptions);
-        if (!session) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+export const POST = createApiHandler(
+    { bodySchema: createTaskSchema },
+    async (_request, { session, body, ip, userAgent }) => {
+        const client = await getUserClient(session.user.id, session.user.role);
 
-        const body: CreateTaskRequest = await request.json();
+        // Get the current user's team member record
+        const { data: currentMember } = await TeamMembersDAL.getByEmail(client, session.user.email);
+        const adminUserId = currentMember?.admin_user_id || session.user.id;
 
-        if (!body.title?.trim()) {
-            return NextResponse.json({ error: 'Title is required' }, { status: 400 });
-        }
-
-        // Get the current user's team member ID
-        const { data: currentMember } = await supabaseAdmin
-            .from('team_members')
-            .select('id, admin_user_id')
-            .eq('email', session.user?.email)
-            .single();
-
-        // Get admin user ID if not in team_members
-        let adminUserId = currentMember?.admin_user_id;
-        if (!adminUserId) {
-            const { data: adminUser } = await supabaseAdmin
-                .from('admin_users')
-                .select('id')
-                .eq('email', session.user?.email)
-                .single();
-            adminUserId = adminUser?.id;
-        }
-
-        // Get max position for the status
-        const { data: maxPosResult } = await supabaseAdmin
-            .from('tasks')
-            .select('position')
-            .eq('status', body.status || 'todo')
-            .is('parent_task_id', body.parent_task_id || null)
-            .order('position', { ascending: false })
-            .limit(1)
-            .single();
-
+        // Get max position
+        const { data: maxPosResult } = await TasksDAL.getMaxPosition(
+            client,
+            body.status || "todo",
+            body.parent_task_id || null,
+        );
         const newPosition = (maxPosResult?.position ?? -1) + 1;
 
-        // Auto-assign to creator if no assignee specified
-        // If Khader creates task -> defaults to Khader
-        // If Amro creates task -> defaults to Amro
-        const defaultAssigneeId = body.assignee_id !== undefined
-            ? body.assignee_id
-            : currentMember?.id || null;
+        const defaultAssigneeId =
+            body.assignee_id !== undefined ? body.assignee_id : currentMember?.id || null;
 
-        // Create task
-        const { data: task, error } = await supabaseAdmin
-            .from('tasks')
-            .insert({
-                title: body.title.trim(),
-                description: body.description?.trim() || null,
-                status: body.status || 'todo',
-                priority: body.priority || 'medium',
-                assignee_id: defaultAssigneeId,
-                created_by: currentMember?.id || null,
-                parent_task_id: body.parent_task_id || null,
-                position: newPosition,
-                due_date: body.due_date || null,
-                estimated_hours: body.estimated_hours || null,
-                color: body.color || null,
-                is_milestone: body.is_milestone || false,
-            })
-            .select(`
-                *,
-                assignee:team_members!tasks_assignee_id_fkey(*),
-                creator:team_members!tasks_created_by_fkey(*)
-            `)
-            .single();
+        const { data: task, error } = await TasksDAL.create(client, {
+            title: body.title.trim(),
+            description: body.description?.trim() || null,
+            status: body.status || "todo",
+            priority: body.priority || "medium",
+            assignee_id: defaultAssigneeId,
+            created_by: currentMember?.id || null,
+            parent_task_id: body.parent_task_id || null,
+            position: newPosition,
+            due_date: body.due_date || null,
+            estimated_hours: body.estimated_hours || null,
+            color: body.color || null,
+            is_milestone: body.is_milestone || false,
+        });
+        if (error) throw error;
 
-        if (error) {
-            console.error('Error creating task:', error);
-            return NextResponse.json({ error: 'Failed to create task' }, { status: 500 });
-        }
-
-        // Assign multiple assignees if provided via assignee_ids
+        // Assign multiple assignees or default
         if (body.assignee_ids?.length) {
-            await supabaseAdmin
-                .from('task_assignees')
-                .insert(
-                    body.assignee_ids.map(assigneeId => ({
-                        task_id: task.id,
-                        team_member_id: assigneeId,
-                    }))
-                );
+            await TasksDAL.setAssignees(client, task.id, body.assignee_ids);
         } else if (defaultAssigneeId) {
-            // Auto-assign to creator or explicitly specified assignee
-            await supabaseAdmin
-                .from('task_assignees')
-                .insert({
-                    task_id: task.id,
-                    team_member_id: defaultAssigneeId,
-                });
+            await TasksDAL.setAssignees(client, task.id, [defaultAssigneeId]);
         }
 
-        // Assign labels if provided
+        // Assign labels
         if (body.label_ids?.length) {
-            await supabaseAdmin
-                .from('task_label_assignments')
-                .insert(
-                    body.label_ids.map(labelId => ({
-                        task_id: task.id,
-                        label_id: labelId,
-                    }))
-                );
+            await TasksDAL.assignLabels(client, task.id, body.label_ids);
         }
 
-        // Log activity
-        await supabaseAdmin.from('task_activity_log').insert({
+        // Log task activity
+        await TasksDAL.logActivity(client, {
             task_id: task.id,
             actor_id: currentMember?.id || null,
-            admin_user_id: adminUserId || null,
-            action: 'created',
+            admin_user_id: adminUserId,
+            action: "created",
             metadata: { title: body.title },
         });
 
-        // Log to admin activity log (excludes admin@keepplayengine.com)
-        await logActivityWithRequest(request, {
-            action: 'CREATE_TASK',
-            resourceType: 'task',
-            resourceId: task.id,
+        // Log admin activity
+        await AdminDAL.logActivity(client, {
+            admin_user_id: session.user.id,
+            action: "CREATE_TASK",
+            resource_type: "task",
+            resource_id: task.id,
             description: `Created task: "${task.title}"`,
-            changes: {
-                title: task.title,
-                status: task.status,
-                priority: task.priority,
-                assignee: task.assignee?.name || 'Unassigned',
-            },
+            ip_address: ip,
+            user_agent: userAgent,
+            changes: { title: task.title, status: task.status, priority: task.priority },
         });
 
         return NextResponse.json({ task }, { status: 201 });
-    } catch (error) {
-        console.error('Tasks POST error:', error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-    }
-}
+    },
+);

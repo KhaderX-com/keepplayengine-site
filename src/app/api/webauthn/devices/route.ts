@@ -1,69 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { createApiHandler } from "@/lib/api-gateway";
 import { getUserBiometricDevices, removeBiometricDevice } from "@/lib/webauthn";
+import { deleteDeviceSchema } from "@/lib/schemas";
 
 /**
- * GET /api/webauthn/devices
- * Get user's registered biometric devices
+ * GET /api/webauthn/devices — list registered biometric devices
  */
-export async function GET() {
-    try {
-        const session = await getServerSession(authOptions);
-
-        if (!session?.user?.id) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
-        const devices = await getUserBiometricDevices(session.user.id);
-
-        return NextResponse.json({
-            success: true,
-            devices,
-        });
-    } catch (error) {
-        const err = error as Error;
-        console.error("Error fetching devices:", err);
-        return NextResponse.json(
-            { error: "Failed to fetch devices", details: err.message },
-            { status: 500 }
-        );
-    }
-}
+export const GET = createApiHandler(
+    { skipContentType: true },
+    async (_req, ctx) => {
+        const devices = await getUserBiometricDevices(ctx.session.user.id);
+        return NextResponse.json({ success: true, devices });
+    },
+);
 
 /**
- * DELETE /api/webauthn/devices
- * Remove a biometric device
+ * DELETE /api/webauthn/devices — remove a biometric device
  */
-export async function DELETE(request: NextRequest) {
-    try {
-        const session = await getServerSession(authOptions);
-
-        if (!session?.user?.id) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
-        const { credentialId } = await request.json();
-
-        if (!credentialId) {
-            return NextResponse.json(
-                { error: "Credential ID required" },
-                { status: 400 }
-            );
-        }
-
-        await removeBiometricDevice(session.user.id, credentialId);
-
-        return NextResponse.json({
-            success: true,
-            message: "Device removed successfully",
-        });
-    } catch (error) {
-        const err = error as Error;
-        console.error("Error removing device:", err);
-        return NextResponse.json(
-            { error: "Failed to remove device", details: err.message },
-            { status: 500 }
-        );
-    }
-}
+export const DELETE = createApiHandler(
+    { bodySchema: deleteDeviceSchema },
+    async (_req: NextRequest, ctx) => {
+        await removeBiometricDevice(ctx.session.user.id, ctx.body.credentialId);
+        return NextResponse.json({ success: true, message: "Device removed successfully" });
+    },
+);

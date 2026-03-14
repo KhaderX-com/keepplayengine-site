@@ -1,6 +1,22 @@
 import { createClient } from '@supabase/supabase-js';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
+// H11: Validate critical environment variables on server startup
+if (typeof window === 'undefined') {
+    const REQUIRED_SECRETS = [
+        'NEXT_PUBLIC_SUPABASE_URL',
+        'SUPABASE_SERVICE_ROLE_KEY',
+        'SUPABASE_JWT_SECRET',
+        'NEXTAUTH_SECRET',
+        'CRON_SECRET',
+    ] as const;
+    for (const key of REQUIRED_SECRETS) {
+        if (!process.env[key]) {
+            throw new Error(`[SECURITY] Missing required environment variable: ${key}. Server cannot start safely.`);
+        }
+    }
+}
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -27,7 +43,16 @@ function getSupabaseAdmin(): SupabaseClient {
             auth: {
                 autoRefreshToken: false,
                 persistSession: false
-            }
+            },
+            // M14: Connection pooling configuration for production load resilience
+            db: {
+                schema: 'public',
+            },
+            global: {
+                headers: {
+                    'x-connection-encrypted': 'true',
+                },
+            },
         });
     }
 

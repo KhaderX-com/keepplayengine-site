@@ -1,160 +1,79 @@
-import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { supabaseAdmin } from '@/lib/supabase';
-import { logActivityWithRequest } from '@/lib/activity-logger';
+import { NextResponse } from "next/server";
+import { createApiHandler } from "@/lib/api-gateway";
+import { LabelsDAL, AdminDAL, getUserClient } from "@/lib/dal";
+import { updateLabelSchema } from "@/lib/schemas";
 
-// =====================================================
-// PATCH - Update a label (SUPER_ADMIN only)
-// =====================================================
-export async function PATCH(
-    request: Request,
-    { params }: { params: Promise<{ id: string }> }
-) {
-    try {
-        const { id } = await params;
-        const session = await getServerSession(authOptions);
-        if (!session) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+export const PATCH = createApiHandler(
+    { requiredRoles: ["SUPER_ADMIN"], bodySchema: updateLabelSchema },
+    async (_request, { session, body, ip, userAgent }, routeContext) => {
+        const { id } = await (routeContext as { params: Promise<{ id: string }> }).params;
+        const client = await getUserClient(session.user.id, session.user.role);
 
-        // Check if user is SUPER_ADMIN
-        if (session.user.role !== 'SUPER_ADMIN') {
-            return NextResponse.json({ error: 'Only Super Admins can update labels' }, { status: 403 });
-        }
+        const updates: Record<string, unknown> = {};
+        if (body.name !== undefined) updates.name = body.name.trim();
+        if (body.color !== undefined) updates.color = body.color;
+        if (body.description !== undefined) updates.description = body.description?.trim() || null;
 
-        const body = await request.json();
-        const updates: {
-            name?: string;
-            color?: string;
-            description?: string | null;
-        } = {};
-
-        if (body.name !== undefined) {
-            if (!body.name?.trim()) {
-                return NextResponse.json({ error: 'Name cannot be empty' }, { status: 400 });
-            }
-            updates.name = body.name.trim();
-        }
-
-        if (body.color !== undefined) {
-            if (!/^#[0-9A-Fa-f]{6}$/.test(body.color)) {
-                return NextResponse.json({ error: 'Invalid color format. Use hex format like #FF5733' }, { status: 400 });
-            }
-            updates.color = body.color;
-        }
-
-        if (body.description !== undefined) {
-            updates.description = body.description?.trim() || null;
-        }
-
-        if (Object.keys(updates).length === 0) {
-            return NextResponse.json({ error: 'No updates provided' }, { status: 400 });
-        }
-
-        const { data: label, error } = await supabaseAdmin
-            .from('task_labels')
-            .update(updates)
-            .eq('id', id)
-            .select()
-            .single();
-
+        const { data: label, error } = await LabelsDAL.update(client, id, updates);
         if (error) {
-            console.error('Error updating label:', error);
-            if (error.code === '23505') {
-                return NextResponse.json({ error: 'A label with this name already exists' }, { status: 409 });
+            if (error.code === "23505") {
+                return NextResponse.json({ error: "A label with this name already exists" }, { status: 409 });
             }
-            return NextResponse.json({ error: 'Failed to update label' }, { status: 500 });
+            throw error;
         }
+        if (!label) return NextResponse.json({ error: "Label not found" }, { status: 404 });
 
-        if (!label) {
-            return NextResponse.json({ error: 'Label not found' }, { status: 404 });
-        }
-
-        // Log to admin activity log (excludes admin@keepplayengine.com)
-        const changesDescription = Object.entries(updates)
-            .map(([key, value]) => `${key}: ${value}`)
-            .join(', ');
-
-        await logActivityWithRequest(request, {
-            action: 'UPDATE_LABEL',
-            resourceType: 'label',
-            resourceId: id,
-            description: `Updated label: "${label.name}" (${changesDescription})`,
+        await AdminDAL.logActivity(client, {
+            admin_user_id: session.user.id,
+            action: "UPDATE_LABEL",
+            resource_type: "label",
+            resource_id: id,
+            description: `Updated label: "${label.name}"`,
+            ip_address: ip,
+            user_agent: userAgent,
             changes: updates,
         });
 
         return NextResponse.json({ label });
-    } catch (error) {
-        console.error('Label PATCH error:', error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-    }
-}
+    },
+);
 
-// =====================================================
-// DELETE - Delete a label (SUPER_ADMIN only)
-// =====================================================
-export async function DELETE(
-    request: Request,
-    { params }: { params: Promise<{ id: string }> }
-) {
-    try {
-        const { id } = await params;
-        const session = await getServerSession(authOptions);
-        if (!session) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
-        // Check if user is SUPER_ADMIN
-        if (session.user.role !== 'SUPER_ADMIN') {
-            return NextResponse.json({ error: 'Only Super Admins can delete labels' }, { status: 403 });
-        }
+export const DELETE = createApiHandler(
+    { requiredRoles: ["SUPER_ADMIN"], skipContentType: true },
+    async (_request, { session, ip, userAgent }, routeContext) => {
+        const { id } = await (routeContext as { params: Promise<{ id: string }> }).params;
+        const client = await getUserClient(session.user.id, session.user.role);
 
         // Check if label is in use
-        const { count: assignmentCount } = await supabaseAdmin
-            .from('task_label_assignments')
-            .select('*', { count: 'exact', head: true })
-            .eq('label_id', id);
-
-        if (assignmentCount && assignmentCount > 0) {
+        const { count } = await LabelsDAL.getAssignmentCount(client, id);
+        if (count && count > 0) {
             return NextResponse.json(
-                { error: `Cannot delete label. It is currently used by ${assignmentCount} task(s)` },
-                { status: 409 }
+                { error: `Cannot delete label. It is currently used by ${count} task(s)` },
+                { status: 409 },
             );
         }
 
-        // Get label info before deletion for logging
-        const { data: labelToDelete } = await supabaseAdmin
-            .from('task_labels')
-            .select('name, color')
-            .eq('id', id)
+        // Get label info for logging
+        const { data: labelToDelete } = await client
+            .from("task_labels")
+            .select("name, color")
+            .eq("id", id)
             .single();
 
-        const labelName = labelToDelete?.name || 'Unknown Label';
-        const labelColor = labelToDelete?.color || '#6B7280';
+        const { error } = await LabelsDAL.delete(client, id);
+        if (error) throw error;
 
-        const { error } = await supabaseAdmin
-            .from('task_labels')
-            .delete()
-            .eq('id', id);
-
-        if (error) {
-            console.error('Error deleting label:', error);
-            return NextResponse.json({ error: 'Failed to delete label' }, { status: 500 });
-        }
-
-        // Log to admin activity log (excludes admin@keepplayengine.com)
-        await logActivityWithRequest(request, {
-            action: 'DELETE_LABEL',
-            resourceType: 'label',
-            resourceId: id,
-            description: `Deleted label: "${labelName}" (${labelColor})`,
-            severity: 'warning',
+        await AdminDAL.logActivity(client, {
+            admin_user_id: session.user.id,
+            action: "DELETE_LABEL",
+            resource_type: "label",
+            resource_id: id,
+            description: `Deleted label: "${labelToDelete?.name || "Unknown"}"`,
+            ip_address: ip,
+            user_agent: userAgent,
+            severity: "warning",
         });
 
-        return NextResponse.json({ success: true, message: 'Label deleted successfully' });
-    } catch (error) {
-        console.error('Label DELETE error:', error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-    }
-}
+        return NextResponse.json({ success: true, message: "Label deleted successfully" });
+    },
+);

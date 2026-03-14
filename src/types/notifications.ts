@@ -51,6 +51,11 @@ export interface AdminUserBasic {
     role: string;
 }
 
+// Notification as seen by the sender (includes joined recipient info)
+export interface SentNotification extends Notification {
+    recipient?: AdminUserBasic;
+}
+
 export interface NotificationPreferences {
     id: string;
     admin_user_id: string;

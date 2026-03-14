@@ -11,7 +11,12 @@ export default function SessionProvider({
     session: Session | null;
 }) {
     return (
-        <NextAuthSessionProvider session={session}>
+        <NextAuthSessionProvider
+            session={session}
+            // M01: Re-validate session every 5 minutes to detect idle/expired sessions
+            refetchInterval={5 * 60}
+            refetchOnWindowFocus={true}
+        >
             {children}
         </NextAuthSessionProvider>
     );

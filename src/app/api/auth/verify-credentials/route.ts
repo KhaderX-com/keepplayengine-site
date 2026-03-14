@@ -1,65 +1,60 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase";
+import { createApiHandler } from "@/lib/api-gateway";
+import { AdminDAL } from "@/lib/dal";
 import { getClientIP, getDeviceInfo } from "@/lib/request-utils";
 import bcrypt from "bcryptjs";
+import { credentialsSchema } from "@/lib/schemas";
 
 /**
  * POST /api/auth/verify-credentials
- * Verify user credentials WITHOUT creating a session
- * Used for 2FA flow where we need to check biometric before session creation
+ * Verify credentials WITHOUT creating a session (2FA pre-check) — PUBLIC
  */
-export async function POST(request: NextRequest) {
-    try {
-        const body = await request.json();
+export const POST = createApiHandler(
+    {
+        skipAuth: true,
+        bodySchema: credentialsSchema,
+        rateLimit: { limit: 10, windowMs: 60_000 },
+    },
+    async (req: NextRequest, ctx) => {
+        const startTime = Date.now();
+        const { email, password } = ctx.body;
 
-        const { email, password } = body;
-
-        if (!email || !password) {
-            console.error("Missing email or password");
-            return NextResponse.json(
-                { error: "Email and password required", valid: false },
-                { status: 400 }
-            );
-        }
-
-        // Get admin user
-        const { data: admin, error: adminError } = await supabaseAdmin
-            .from("admin_users")
-            .select("*")
-            .eq("email", email)
-            .eq("is_active", true)
-            .single();
-
-        if (adminError || !admin || !admin.password_hash) {
-            console.error("Admin not found:", email, adminError);
-            return NextResponse.json(
-                { error: "Invalid credentials", valid: false },
-                { status: 401 }
-            );
-        }
-
-        // Check if admin account is locked
-        if (admin.is_locked) {
-            if (admin.locked_until && new Date(admin.locked_until) > new Date()) {
-                return NextResponse.json(
-                    { error: `Account is locked until ${new Date(admin.locked_until).toLocaleString()}`, valid: false },
-                    { status: 403 }
-                );
+        // M13: Helper to ensure constant-time response (prevents timing-based enumeration)
+        async function respond(body: object, status: number) {
+            const elapsed = Date.now() - startTime;
+            const minDelay = 200; // milliseconds
+            if (elapsed < minDelay) {
+                await new Promise((r) => setTimeout(r, minDelay - elapsed));
             }
+            return NextResponse.json(body, { status });
         }
 
-        // Verify password
+        const { data: admin, error: adminError } = await AdminDAL.getAdminUserByEmail(email);
+        if (adminError || !admin || !admin.is_active || !admin.password_hash) {
+            // Perform a dummy bcrypt compare to consume similar time as a real compare
+            await bcrypt.compare(password, "$2a$14$0000000000000000000000uT3a.Gh/N1SDdHOb5OQzQGlLCk6EqIO");
+            return respond(
+                { error: "Invalid credentials", valid: false },
+                401,
+            );
+        }
+
+        // Check if account is locked — return generic error to prevent info disclosure
+        if (admin.is_locked && admin.locked_until && new Date(admin.locked_until) > new Date()) {
+            return respond(
+                { error: "Invalid credentials", valid: false },
+                401,
+            );
+        }
+
         const passwordValid = await bcrypt.compare(password, admin.password_hash);
 
         if (!passwordValid) {
-            console.error("Invalid password for:", email);
-
-            // Log failed attempt with proper IP extraction
-            const ipAddress = getClientIP(request);
-            const userAgent = request.headers.get("user-agent") || null;
+            const ipAddress = getClientIP(req);
+            const userAgent = req.headers.get("user-agent") || null;
             const deviceInfo = getDeviceInfo(userAgent);
 
-            await supabaseAdmin.from("admin_login_attempts").insert({
+            await AdminDAL.recordLoginAttempt({
                 email,
                 ip_address: ipAddress,
                 user_agent: userAgent,
@@ -68,27 +63,19 @@ export async function POST(request: NextRequest) {
                 attempt_type: "password",
                 failure_reason: "Invalid password",
                 device_info: deviceInfo,
-                geo_location: {},
             });
 
-            return NextResponse.json(
+            return respond(
                 { error: "Invalid credentials", valid: false },
-                { status: 401 }
+                401,
             );
         }
 
-        return NextResponse.json({
+        return respond({
             valid: true,
             userId: admin.id,
             email: admin.email,
             name: admin.name,
-        });
-    } catch (error) {
-        console.error("Error verifying credentials:", error);
-        console.error("Error details:", error instanceof Error ? error.message : String(error));
-        return NextResponse.json(
-            { error: "Authentication failed", valid: false },
-            { status: 500 }
-        );
-    }
-}
+        }, 200);
+    },
+);

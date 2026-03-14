@@ -1,45 +1,29 @@
-import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase";
+import { NextResponse } from "next/server";
+import { createApiHandler } from "@/lib/api-gateway";
+import { WebAuthnDAL } from "@/lib/dal";
+import { webauthnEmailSchema } from "@/lib/schemas";
 
 /**
  * POST /api/webauthn/check-enrollment
- * Check if a user has biometric authentication enrolled
+ * Check if a user has biometric authentication enrolled — PUBLIC (pre-login)
  */
-export async function POST(request: NextRequest) {
-    try {
-        const { email } = await request.json();
+export const POST = createApiHandler(
+    {
+        skipAuth: true,
+        bodySchema: webauthnEmailSchema,
+        rateLimit: { limit: 30, windowMs: 60_000 },
+    },
+    async (_req, ctx) => {
+        // Always delay to prevent timing-based enumeration
+        const start = Date.now();
+        const result = await WebAuthnDAL.checkEnrollment(ctx.body.email);
+        const elapsed = Date.now() - start;
+        if (elapsed < 200) await new Promise(r => setTimeout(r, 200 - elapsed));
 
-        if (!email) {
-            return NextResponse.json({ error: "Email required" }, { status: 400 });
-        }
-
-        // Get user by email
-        const { data: user, error: userError } = await supabaseAdmin
-            .from("admin_users")
-            .select("id, biometric_enabled")
-            .eq("email", email)
-            .eq("is_active", true)
-            .single();
-
-        if (userError || !user) {
-            return NextResponse.json({ enrolled: false });
-        }
-
-        // Check if user has any credentials
-        const { data: credentials } = await supabaseAdmin
-            .from("webauthn_credentials")
-            .select("id")
-            .eq("user_id", user.id)
-            .limit(1);
-
-        const enrolled = user.biometric_enabled && credentials && credentials.length > 0;
-
+        // Return biometricEnabled from global config only; never reveal per-user enrollment
         return NextResponse.json({
-            enrolled,
-            biometricEnabled: user.biometric_enabled,
+            enrolled: false,
+            biometricEnabled: result.biometricEnabled,
         });
-    } catch (error: unknown) {
-        console.error("Error checking enrollment:", error);
-        return NextResponse.json({ enrolled: false });
-    }
-}
+    },
+);

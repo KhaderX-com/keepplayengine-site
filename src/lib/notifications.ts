@@ -1,6 +1,8 @@
 import { supabaseAdmin } from './supabase';
+import { encryptPII, decryptPII } from './encryption';
 import type {
     Notification,
+    SentNotification,
     NotificationPreferences,
     Conversation,
     Message,
@@ -129,6 +131,30 @@ export async function getUserNotifications(
         total: count || 0,
         unread_count: unreadCount || 0
     };
+}
+
+/**
+ * Get notifications sent by a user
+ */
+export async function getSentNotifications(
+    userId: string,
+    options: { limit?: number; offset?: number } = {}
+): Promise<{ notifications: SentNotification[]; total: number }> {
+    const { limit = 50, offset = 0 } = options;
+
+    const { data, error, count } = await supabaseAdmin
+        .from('notifications')
+        .select('*, recipient:admin_users!notifications_recipient_id_fkey(id, email, full_name, avatar_url, role)', { count: 'exact' })
+        .eq('sender_id', userId)
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1);
+
+    if (error) {
+        console.error('Error fetching sent notifications:', error);
+        return { notifications: [], total: 0 };
+    }
+
+    return { notifications: (data || []) as SentNotification[], total: count || 0 };
 }
 
 /**
@@ -552,7 +578,7 @@ export async function savePushSubscription(
         .from('push_subscriptions')
         .upsert({
             admin_user_id: userId,
-            endpoint: subscription.endpoint,
+            endpoint: encryptPII(subscription.endpoint),
             p256dh_key: subscription.keys.p256dh,
             auth_key: subscription.keys.auth,
             device_name: deviceInfo?.deviceName,
@@ -588,7 +614,11 @@ export async function getUserPushSubscriptions(userId: string) {
         return [];
     }
 
-    return data || [];
+    // M08: Decrypt PII endpoint at read time
+    return (data || []).map((sub: Record<string, unknown>) => ({
+        ...sub,
+        endpoint: typeof sub.endpoint === "string" ? decryptPII(sub.endpoint) : sub.endpoint,
+    }));
 }
 
 /**

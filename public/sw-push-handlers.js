@@ -4,12 +4,22 @@
 
 // Handle incoming push notifications
 self.addEventListener('push', function (event) {
-    console.log('[Service Worker] Push notification received:', event);
-
     if (event.data) {
         try {
             const data = event.data.json();
-            console.log('[Service Worker] Push data:', data);
+
+            // M09: Validate push data schema before using
+            if (!data || typeof data !== 'object') return;
+            const title = (typeof data.title === 'string' ? data.title : 'New Notification').substring(0, 100);
+            const body = (typeof data.body === 'string' ? data.body : typeof data.message === 'string' ? data.message : '').substring(0, 500);
+            const priority = ['urgent', 'high', 'normal', 'low'].includes(data.priority) ? data.priority : 'normal';
+            const tag = (typeof data.tag === 'string' ? data.tag : 'notification-' + Date.now()).substring(0, 100);
+            const notificationId = typeof data.notificationId === 'string' ? data.notificationId.substring(0, 50) : undefined;
+            // Validate URL — only allow relative paths or same-origin
+            let url = '/admin/notifications';
+            if (typeof data.url === 'string' && data.url.startsWith('/')) {
+                url = data.url.substring(0, 200);
+            }
 
             // Map notification priority to visual style
             const priorityConfig = {
@@ -39,15 +49,15 @@ self.addEventListener('push', function (event) {
             const config = priorityConfig[priority];
 
             const options = {
-                body: data.body || data.message,
+                body: body,
                 icon: '/admin-icon-192.png',
                 badge: '/admin-icon-192.png',
                 vibrate: config.vibrate,
-                tag: data.tag || 'notification-' + Date.now(),
+                tag: tag,
                 requireInteraction: config.requireInteraction,
                 data: {
-                    url: data.url || '/admin/notifications',
-                    notificationId: data.notificationId,
+                    url: url,
+                    notificationId: notificationId,
                     priority: priority,
                     timestamp: Date.now()
                 },
@@ -66,13 +76,14 @@ self.addEventListener('push', function (event) {
 
             event.waitUntil(
                 self.registration.showNotification(
-                    `${config.badge} ${data.title || 'New Notification'}`,
+                    `${config.badge} ${title}`,
                     options
                 )
             );
 
         } catch (error) {
-            console.error('[Service Worker] Error parsing push data:', error);
+            // L05: Don't log error details that may contain URLs or PII
+            console.error('[Service Worker] Error parsing push data');
 
             // Fallback notification if parsing fails
             event.waitUntil(
@@ -89,18 +100,23 @@ self.addEventListener('push', function (event) {
 
 // Handle notification clicks
 self.addEventListener('notificationclick', function (event) {
-    console.log('[Service Worker] Notification click received:', event);
-
     event.notification.close();
 
     // Handle action buttons
     if (event.action === 'dismiss') {
-        console.log('[Service Worker] Notification dismissed');
         return;
     }
 
-    // Open or focus the app
-    const urlToOpen = event.notification.data?.url || '/admin/notifications';
+    // Open or focus the app — validate URL stays within /admin/ scope
+    let urlToOpen = event.notification.data?.url || '/admin/notifications';
+    try {
+        const parsed = new URL(urlToOpen, self.location.origin);
+        if (parsed.origin !== self.location.origin || !parsed.pathname.startsWith('/admin/')) {
+            urlToOpen = '/admin/notifications';
+        }
+    } catch {
+        urlToOpen = '/admin/notifications';
+    }
     const fullUrl = new URL(urlToOpen, self.location.origin).href;
 
     event.waitUntil(
@@ -108,12 +124,9 @@ self.addEventListener('notificationclick', function (event) {
             type: 'window',
             includeUncontrolled: true
         }).then(function (windowClients) {
-            console.log('[Service Worker] Looking for existing windows...');
-
             // Check if there's already a window open to the admin panel
             for (const client of windowClients) {
                 if (client.url.includes('/admin') && 'focus' in client) {
-                    console.log('[Service Worker] Focusing existing window:', client.url);
                     return client.focus().then(function () {
                         // Navigate to the notification URL
                         if ('navigate' in client) {
@@ -125,7 +138,6 @@ self.addEventListener('notificationclick', function (event) {
 
             // If no window is open, open a new one
             if (clients.openWindow) {
-                console.log('[Service Worker] Opening new window:', fullUrl);
                 return clients.openWindow(fullUrl);
             }
         })
@@ -134,8 +146,6 @@ self.addEventListener('notificationclick', function (event) {
 
 // Handle notification close events (for analytics)
 self.addEventListener('notificationclose', function (event) {
-    console.log('[Service Worker] Notification closed:', event.notification.tag);
-
     // Optional: Send analytics about notification dismissal
     // You could track which notifications users dismiss without opening
 });
@@ -143,20 +153,14 @@ self.addEventListener('notificationclose', function (event) {
 // Background sync for offline notifications (optional enhancement)
 self.addEventListener('sync', function (event) {
     if (event.tag === 'sync-notifications') {
-        console.log('[Service Worker] Syncing notifications...');
-
         event.waitUntil(
             // Fetch any missed notifications while offline
             fetch('/api/notifications?limit=10')
                 .then(response => response.json())
-                .then(data => {
-                    console.log('[Service Worker] Synced notifications:', data);
-                })
+                .then(() => {})
                 .catch(error => {
                     console.error('[Service Worker] Failed to sync notifications:', error);
                 })
         );
     }
 });
-
-console.log('[Service Worker] Push notification handlers loaded');

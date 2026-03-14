@@ -1,87 +1,47 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { createApiHandler } from "@/lib/api-gateway";
+import { AdminDAL, WebAuthnDAL } from "@/lib/dal";
 import { generateAuthenticationOptions } from "@/lib/webauthn";
-import { supabaseAdmin } from "@/lib/supabase";
+import { webauthnEmailSchema } from "@/lib/schemas";
 
 /**
  * POST /api/webauthn/authenticate/options
- * Generate authentication options for biometric login
+ * Generate authentication options for biometric login — PUBLIC (pre-login)
+ * Returns JSON-serializable options with base64url-encoded values.
  */
-export async function POST(request: NextRequest) {
-    try {
-        const { email } = await request.json();
-
-        if (!email) {
-            return NextResponse.json({ error: "Email required" }, { status: 400 });
+export const POST = createApiHandler(
+    {
+        skipAuth: true,
+        bodySchema: webauthnEmailSchema,
+        rateLimit: { limit: 10, windowMs: 60_000 },
+    },
+    async (_req, ctx) => {
+        const { data: user, error: userError } = await AdminDAL.getAdminUserByEmail(ctx.body.email);
+        if (userError || !user || !user.is_active) {
+            return NextResponse.json({ error: "User not found" }, { status: 404 });
         }
 
-        // Get user by email
-        const { data: user, error: userError } = await supabaseAdmin
-            .from("admin_users")
-            .select("id")
-            .eq("email", email)
-            .eq("is_active", true)
-            .single();
-
-        if (userError || !user) {
-            return NextResponse.json(
-                { error: "User not found" },
-                { status: 404 }
-            );
-        }
-
-        // Check if user has any enrolled credentials
-        const { data: credentials } = await supabaseAdmin
-            .from("webauthn_credentials")
-            .select("id")
-            .eq("user_id", user.id)
-            .limit(1);
-
-        if (!credentials || credentials.length === 0) {
+        // Check if user has enrolled credentials
+        const enrollment = await WebAuthnDAL.checkEnrollment(ctx.body.email);
+        if (!enrollment.enrolled) {
             return NextResponse.json(
                 { error: "No biometric credentials enrolled" },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
         const { options, challenge } = await generateAuthenticationOptions(user.id);
 
-        // Store challenge for verification
+        // Options are already JSON-serializable (base64url strings from @simplewebauthn/server)
         const response = NextResponse.json({
             success: true,
-            options: {
-                ...options,
-                challenge: Array.from(new Uint8Array(options.challenge as ArrayBuffer)),
-                allowCredentials: options.allowCredentials?.map((cred) => ({
-                    ...cred,
-                    id: Array.from(new Uint8Array(cred.id as ArrayBuffer)),
-                })),
-            },
+            options,
             challenge,
         });
 
-        // Store challenge in cookie
-        response.cookies.set("webauthn_auth_challenge", challenge, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            maxAge: 300, // 5 minutes
-        });
-
-        // Also store email for verification
-        response.cookies.set("webauthn_auth_email", email, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            maxAge: 300,
-        });
+        // Store challenge and email server-side (DB) instead of cookies
+        await WebAuthnDAL.storeChallenge(ctx.body.email, challenge, "authentication");
 
         return response;
-    } catch (error) {
-        const err = error as Error;
-        console.error("Error generating authentication options:", err);
-        return NextResponse.json(
-            { error: "Failed to generate authentication options", details: err.message },
-            { status: 500 }
-        );
-    }
-}
+    },
+);

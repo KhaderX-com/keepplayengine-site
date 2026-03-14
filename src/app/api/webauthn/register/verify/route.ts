@@ -1,76 +1,62 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createApiHandler } from "@/lib/api-gateway";
+import { AdminDAL, WebAuthnDAL } from "@/lib/dal";
 import { verifyRegistrationResponse } from "@/lib/webauthn";
-import { supabaseAdmin } from "@/lib/supabase";
 import { getClientIP, getDeviceInfo } from "@/lib/request-utils";
+import { webauthnRegisterVerifySchema } from "@/lib/schemas";
+import type { RegistrationResponseJSON } from "@simplewebauthn/server";
 
 /**
  * POST /api/webauthn/register/verify
- * Verify and store a biometric credential registration
- * Works BEFORE session is created (during login flow)
+ * Verify and store a biometric credential — PUBLIC (pre-login enrollment)
+ * Uses @simplewebauthn/server for full cryptographic attestation verification.
  */
-export async function POST(request: NextRequest) {
-    try {
-        const { email, credential, deviceName } = await request.json();
+export const POST = createApiHandler(
+    {
 
-        if (!email) {
-            return NextResponse.json({ error: "Email required" }, { status: 400 });
-        }
+        skipAuth: true,
+        bodySchema: webauthnRegisterVerifySchema,
+        rateLimit: { limit: 10, windowMs: 60_000 },
+    },
+    async (req: NextRequest, ctx) => {
+        const { email, credential, deviceName } = ctx.body;
 
-        // Get user by email
-        const { data: user, error: userError } = await supabaseAdmin
-            .from("admin_users")
-            .select("id")
-            .eq("email", email)
-            .eq("is_active", true)
-            .single();
-
-        if (userError || !user) {
+        const { data: user, error: userError } = await AdminDAL.getAdminUserByEmail(email);
+        if (userError || !user || !user.is_active) {
             return NextResponse.json({ error: "User not found" }, { status: 404 });
         }
 
-        const challenge = request.cookies.get("webauthn_challenge")?.value;
-
+        const challenge = await WebAuthnDAL.getChallenge(email, "registration");
         if (!challenge) {
-            return NextResponse.json(
-                { error: "Challenge expired or not found" },
-                { status: 400 }
-            );
+            return NextResponse.json({ error: "Challenge expired or not found" }, { status: 400 });
         }
 
-        // Convert credential arrays back to ArrayBuffers
-        const processedCredential = {
-            ...credential,
-            rawId: new Uint8Array(credential.rawId).buffer,
-            response: {
-                ...credential.response,
-                clientDataJSON: new Uint8Array(credential.response.clientDataJSON).buffer,
-                attestationObject: new Uint8Array(credential.response.attestationObject).buffer,
-            },
-        };
-
-        // Verify and store the credential
+        // Pass the credential directly as RegistrationResponseJSON (base64url format)
+        // @simplewebauthn/server handles all cryptographic verification:
+        // - Challenge match, origin validation, RP ID check
+        // - Attestation verification, public key extraction
         const result = await verifyRegistrationResponse(
             user.id,
-            processedCredential,
+            credential as RegistrationResponseJSON,
             challenge,
-            deviceName
+            deviceName,
         );
 
-        // Clear challenge cookie
         const response = NextResponse.json({
             success: true,
             credentialId: result.credentialId,
             message: "Biometric authentication enabled successfully",
         });
 
-        response.cookies.delete("webauthn_challenge");
+        // Clean up server-side challenge
+        await WebAuthnDAL.deleteChallenge(email, "registration");
 
-        // Log the activity with proper IP extraction
-        const ipAddress = getClientIP(request);
-        const userAgent = request.headers.get("user-agent") || null;
+        // Log activity (service-role — pre-login context)
+        const ipAddress = getClientIP(req);
+        const userAgent = req.headers.get("user-agent") || null;
         const deviceInfo = getDeviceInfo(userAgent);
 
-        await supabaseAdmin.from("admin_activity_log").insert({
+        await AdminDAL.logActivityServiceRole({
             admin_user_id: user.id,
             action: "biometric_enrolled",
             resource_type: "authentication",
@@ -82,12 +68,5 @@ export async function POST(request: NextRequest) {
         });
 
         return response;
-    } catch (error) {
-        const err = error as Error;
-        console.error("Error verifying registration:", err);
-        return NextResponse.json(
-            { error: "Failed to verify registration", details: err.message },
-            { status: 500 }
-        );
-    }
-}
+    },
+);

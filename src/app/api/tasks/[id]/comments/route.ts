@@ -1,99 +1,41 @@
-import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { supabaseAdmin } from '@/lib/supabase';
+import { NextResponse } from "next/server";
+import { createApiHandler } from "@/lib/api-gateway";
+import { TasksDAL, TeamMembersDAL, getUserClient } from "@/lib/dal";
+import { commentSchema } from "@/lib/schemas";
 
-interface RouteParams {
-    params: Promise<{ id: string }>;
-}
-
-// =====================================================
-// GET - Fetch comments for a task
-// =====================================================
-export async function GET(request: Request, { params }: RouteParams) {
-    try {
-        const session = await getServerSession(authOptions);
-        if (!session) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
-        const { id } = await params;
-
-        const { data: comments, error } = await supabaseAdmin
-            .from('task_comments')
-            .select(`
-                *,
-                author:team_members(*)
-            `)
-            .eq('task_id', id)
-            .order('created_at', { ascending: true });
-
-        if (error) {
-            console.error('Error fetching comments:', error);
-            return NextResponse.json({ error: 'Failed to fetch comments' }, { status: 500 });
-        }
-
+export const GET = createApiHandler(
+    { skipContentType: true },
+    async (_request, { session }, routeContext) => {
+        const { id } = await (routeContext as { params: Promise<{ id: string }> }).params;
+        const client = await getUserClient(session.user.id, session.user.role);
+        const { data: comments, error } = await TasksDAL.getComments(client, id);
+        if (error) throw error;
         return NextResponse.json({ comments: comments || [] });
-    } catch (error) {
-        console.error('Comments GET error:', error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-    }
-}
+    },
+);
 
-// =====================================================
-// POST - Add a comment to a task
-// =====================================================
-export async function POST(request: Request, { params }: RouteParams) {
-    try {
-        const session = await getServerSession(authOptions);
-        if (!session) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+export const POST = createApiHandler(
+    { bodySchema: commentSchema },
+    async (_request, { session, body }, routeContext) => {
+        const { id } = await (routeContext as { params: Promise<{ id: string }> }).params;
+        const client = await getUserClient(session.user.id, session.user.role);
 
-        const { id } = await params;
-        const { content } = await request.json();
+        const { data: currentMember } = await TeamMembersDAL.getByEmail(client, session.user.email);
 
-        if (!content?.trim()) {
-            return NextResponse.json({ error: 'Content is required' }, { status: 400 });
-        }
+        const { data: comment, error } = await TasksDAL.addComment(client, {
+            task_id: id,
+            content: body.content.trim(),
+            author_id: currentMember?.id || null,
+        });
+        if (error) throw error;
 
-        // Get current user
-        const { data: currentMember } = await supabaseAdmin
-            .from('team_members')
-            .select('id')
-            .eq('email', session.user?.email)
-            .single();
-
-        // Create comment
-        const { data: comment, error } = await supabaseAdmin
-            .from('task_comments')
-            .insert({
-                task_id: id,
-                author_id: currentMember?.id || null,
-                content: content.trim(),
-            })
-            .select(`
-                *,
-                author:team_members(*)
-            `)
-            .single();
-
-        if (error) {
-            console.error('Error creating comment:', error);
-            return NextResponse.json({ error: 'Failed to create comment' }, { status: 500 });
-        }
-
-        // Log activity
-        await supabaseAdmin.from('task_activity_log').insert({
+        await TasksDAL.logActivity(client, {
             task_id: id,
             actor_id: currentMember?.id || null,
-            action: 'commented',
+            action: "commented",
             metadata: { comment_id: comment.id },
         });
 
         return NextResponse.json({ comment }, { status: 201 });
-    } catch (error) {
-        console.error('Comments POST error:', error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-    }
-}
+    },
+);

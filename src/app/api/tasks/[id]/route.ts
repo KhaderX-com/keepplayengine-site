@@ -1,139 +1,66 @@
-import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { supabaseAdmin } from '@/lib/supabase';
-import type { UpdateTaskRequest } from '@/types/tasks';
-import { logActivityWithRequest } from '@/lib/activity-logger';
-
-interface RouteParams {
-    params: Promise<{ id: string }>;
-}
+import { NextResponse } from "next/server";
+import { createApiHandler } from "@/lib/api-gateway";
+import { getUserClient, TasksDAL, TeamMembersDAL, MilestonesDAL, AdminDAL } from "@/lib/dal";
+import { updateTaskSchema } from "@/lib/schemas";
 
 // =====================================================
 // GET - Fetch single task with details
 // =====================================================
-export async function GET(request: Request, { params }: RouteParams) {
-    try {
-        const session = await getServerSession(authOptions);
-        if (!session) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+export const GET = createApiHandler({}, async (_req, ctx, routeContext) => {
+    const { id } = await routeContext.params;
+    const client = await getUserClient(ctx.session.user.id, ctx.session.user.role);
 
-        const { id } = await params;
-
-        // Fetch task with relations
-        const { data: task, error } = await supabaseAdmin
-            .from('tasks')
-            .select(`
-                *,
-                assignee:team_members!tasks_assignee_id_fkey(*),
-                creator:team_members!tasks_created_by_fkey(*)
-            `)
-            .eq('id', id)
-            .single();
-
-        if (error || !task) {
-            return NextResponse.json({ error: 'Task not found' }, { status: 404 });
-        }
-
-        // Fetch labels
-        const { data: labelAssignments } = await supabaseAdmin
-            .from('task_label_assignments')
-            .select(`label:task_labels(*)`)
-            .eq('task_id', id);
-
-        // Fetch subtasks
-        const { data: subtasks } = await supabaseAdmin
-            .from('tasks')
-            .select(`
-                *,
-                assignee:team_members!tasks_assignee_id_fkey(*)
-            `)
-            .eq('parent_task_id', id)
-            .order('position', { ascending: true });
-
-        // Fetch comments
-        const { data: comments } = await supabaseAdmin
-            .from('task_comments')
-            .select(`
-                *,
-                author:team_members(*)
-            `)
-            .eq('task_id', id)
-            .order('created_at', { ascending: true });
-
-        // Fetch activity log
-        const { data: activities } = await supabaseAdmin
-            .from('task_activity_log')
-            .select(`
-                *,
-                actor:team_members(*),
-                admin_user:admin_users(id, full_name, email, avatar_url)
-            `)
-            .eq('task_id', id)
-            .order('created_at', { ascending: false })
-            .limit(20);
-
-        return NextResponse.json({
-            task: {
-                ...task,
-                labels: labelAssignments?.map(la => la.label) || [],
-                subtasks: subtasks || [],
-                subtask_count: subtasks?.length || 0,
-                completed_subtask_count: subtasks?.filter(s => s.status === 'done').length || 0,
-            },
-            comments: comments || [],
-            activities: activities || [],
-        });
-    } catch (error) {
-        console.error('Task GET error:', error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const { data: task, error } = await TasksDAL.getById(client, id);
+    if (error || !task) {
+        return NextResponse.json({ error: "Task not found" }, { status: 404 });
     }
-}
+
+    const [
+        { data: labelAssignments },
+        { data: subtasks },
+        { data: comments },
+        { data: activities },
+    ] = await Promise.all([
+        TasksDAL.getLabels(client, [id]),
+        TasksDAL.getSubtasks(client, [id]),
+        TasksDAL.getComments(client, id),
+        TasksDAL.getActivityLog(client, id),
+    ]);
+
+    return NextResponse.json({
+        task: {
+            ...task,
+            labels: labelAssignments?.map((la: { label: unknown }) => la.label) || [],
+            subtasks: subtasks || [],
+            subtask_count: subtasks?.length || 0,
+            completed_subtask_count: subtasks?.filter((s: { status: string }) => s.status === "done").length || 0,
+        },
+        comments: comments || [],
+        activities: activities || [],
+    });
+});
 
 // =====================================================
 // PATCH - Update a task
 // =====================================================
-export async function PATCH(request: Request, { params }: RouteParams) {
-    try {
-        const session = await getServerSession(authOptions);
-        if (!session) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
-        const { id } = await params;
-        const body: UpdateTaskRequest = await request.json();
+export const PATCH = createApiHandler(
+    { bodySchema: updateTaskSchema, requiredRoles: ["SUPER_ADMIN", "ADMIN"] },
+    async (_req, ctx, routeContext) => {
+        const { id } = await routeContext.params;
+        const client = await getUserClient(ctx.session.user.id, ctx.session.user.role);
+        const body = ctx.body!;
 
         // Get current task for comparison
-        const { data: currentTask } = await supabaseAdmin
-            .from('tasks')
-            .select('*')
-            .eq('id', id)
-            .single();
-
+        const { data: currentTask } = await TasksDAL.getById(client, id);
         if (!currentTask) {
-            return NextResponse.json({ error: 'Task not found' }, { status: 404 });
+            return NextResponse.json({ error: "Task not found" }, { status: 404 });
         }
 
-        // Get current user
-        const { data: currentMember } = await supabaseAdmin
-            .from('team_members')
-            .select('id, admin_user_id')
-            .eq('email', session.user?.email)
-            .single();
+        // Get current team member for actor_id
+        const { data: currentMember } = await TeamMembersDAL.getByEmail(client, ctx.session.user.email!);
+        const adminUserId = ctx.session.user.id;
 
-        // Get admin user ID if not in team_members
-        let adminUserId = currentMember?.admin_user_id;
-        if (!adminUserId) {
-            const { data: adminUser } = await supabaseAdmin
-                .from('admin_users')
-                .select('id')
-                .eq('email', session.user?.email)
-                .single();
-            adminUserId = adminUser?.id;
-        }
-
-        // Prepare update object
+        // Track changes
         const updateData: Record<string, unknown> = {};
         const activityLogs: Array<{
             task_id: string;
@@ -145,18 +72,16 @@ export async function PATCH(request: Request, { params }: RouteParams) {
             new_value: string | null;
         }> = [];
 
-        // Track changes
-        const fields = ['title', 'description', 'status', 'priority', 'assignee_id', 'position', 'due_date', 'estimated_hours', 'actual_hours', 'color', 'is_milestone'] as const;
+        const fields = ["title", "description", "status", "priority", "assignee_id", "position", "due_date", "estimated_hours", "actual_hours", "color", "is_milestone"] as const;
 
         for (const field of fields) {
             if (body[field] !== undefined && body[field] !== currentTask[field]) {
                 updateData[field] = body[field];
-
                 activityLogs.push({
                     task_id: id,
                     actor_id: currentMember?.id || null,
                     admin_user_id: adminUserId || null,
-                    action: field === 'status' ? 'status_changed' : 'updated',
+                    action: field === "status" ? "status_changed" : "updated",
                     field_changed: field,
                     old_value: currentTask[field]?.toString() || null,
                     new_value: body[field]?.toString() || null,
@@ -164,186 +89,116 @@ export async function PATCH(request: Request, { params }: RouteParams) {
             }
         }
 
-        // Update task
         if (Object.keys(updateData).length > 0) {
-            const { data: task, error } = await supabaseAdmin
-                .from('tasks')
-                .update(updateData)
-                .eq('id', id)
-                .select(`
-                    *,
-                    assignee:team_members!tasks_assignee_id_fkey(*),
-                    creator:team_members!tasks_created_by_fkey(*)
-                `)
-                .single();
-
+            const { data: task, error } = await TasksDAL.update(client, id, updateData);
             if (error) {
-                console.error('Error updating task:', error);
-                return NextResponse.json({ error: 'Failed to update task' }, { status: 500 });
+                return NextResponse.json({ error: "Failed to update task" }, { status: 500 });
             }
 
-            // Log activities
             if (activityLogs.length > 0) {
-                await supabaseAdmin.from('task_activity_log').insert(activityLogs);
+                await TasksDAL.logActivityBatch(client, activityLogs);
             }
 
-            // Log to admin activity log (excludes admin@keepplayengine.com)
-            const changesDescription = activityLogs.map(log =>
-                `${log.field_changed}: ${log.old_value || 'empty'} → ${log.new_value || 'empty'}`
-            ).join(', ');
+            const changesDescription = activityLogs
+                .map((l) => `${l.field_changed}: ${l.old_value || "empty"} → ${l.new_value || "empty"}`)
+                .join(", ");
 
-            await logActivityWithRequest(request, {
-                action: 'UPDATE_TASK',
-                resourceType: 'task',
-                resourceId: id,
-                description: `Updated task: "${task.title}" (${changesDescription})`,
+            await AdminDAL.logActivity(client, {
+                admin_user_id: adminUserId,
+                action: "UPDATE_TASK",
+                resource_type: "task",
+                resource_id: id,
+                description: `Updated task: "${task!.title}" (${changesDescription})`,
                 changes: Object.fromEntries(
-                    activityLogs.map(log => [log.field_changed, { old: log.old_value, new: log.new_value }])
+                    activityLogs.map((l) => [l.field_changed, { old: l.old_value, new: l.new_value }])
                 ),
+                ip_address: ctx.ip,
+                user_agent: ctx.userAgent,
             });
 
             // Update labels if provided
             if (body.label_ids !== undefined) {
-                // Remove existing labels
-                await supabaseAdmin
-                    .from('task_label_assignments')
-                    .delete()
-                    .eq('task_id', id);
-
-                // Add new labels
-                if (body.label_ids.length > 0) {
-                    await supabaseAdmin
-                        .from('task_label_assignments')
-                        .insert(
-                            body.label_ids.map(labelId => ({
-                                task_id: id,
-                                label_id: labelId,
-                            }))
-                        );
-                }
+                await TasksDAL.setLabels(client, id, body.label_ids);
             }
 
-            // Fetch labels for response
-            const { data: labelAssignments } = await supabaseAdmin
-                .from('task_label_assignments')
-                .select(`label:task_labels(*)`)
-                .eq('task_id', id);
-
+            const { data: labelAssignments } = await TasksDAL.getLabels(client, [id]);
             return NextResponse.json({
                 task: {
                     ...task,
-                    labels: labelAssignments?.map(la => la.label) || [],
+                    labels: labelAssignments?.map((la: { label: unknown }) => la.label) || [],
                 },
             });
         }
 
         return NextResponse.json({ task: currentTask });
-    } catch (error) {
-        console.error('Task PATCH error:', error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
-}
+);
 
 // =====================================================
 // DELETE - Delete a task (and associated milestones/sub-milestones if it's a milestone)
 // =====================================================
-export async function DELETE(request: Request, { params }: RouteParams) {
-    try {
-        const session = await getServerSession(authOptions);
-        if (!session) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+export const DELETE = createApiHandler({ requiredRoles: ["SUPER_ADMIN", "ADMIN"] }, async (_req, ctx, routeContext) => {
+    const { id } = await routeContext.params;
+    const client = await getUserClient(ctx.session.user.id, ctx.session.user.role);
 
-        const { id } = await params;
+    // Get task details before deletion for logging
+    const { data: taskToDelete } = await client
+        .from("tasks")
+        .select("title, is_milestone")
+        .eq("id", id)
+        .single();
 
-        // Get task details before deletion for logging
-        const { data: taskToDelete } = await supabaseAdmin
-            .from('tasks')
-            .select('title, is_milestone')
-            .eq('id', id)
-            .single();
+    const taskTitle = taskToDelete?.title || "Unknown Task";
+    const isMilestone = taskToDelete?.is_milestone || false;
 
-        const taskTitle = taskToDelete?.title || 'Unknown Task';
-        const isMilestone = taskToDelete?.is_milestone || false;
+    let deletedSubMilestones = 0;
+    let deletedMilestones = 0;
 
-        let deletedSubMilestones = 0;
-        let deletedMilestones = 0;
+    if (isMilestone) {
+        const { data: milestone } = await MilestonesDAL.getByTaskId(client, id);
+        if (milestone) {
+            const { count } = await client
+                .from("sub_milestones")
+                .select("*", { count: "exact", head: true })
+                .eq("milestone_id", milestone.id);
 
-        // If it's a milestone task, delete associated milestone and sub-milestones first
-        if (isMilestone) {
-            // Get the milestone record
-            const { data: milestone } = await supabaseAdmin
-                .from('milestones')
-                .select('id')
-                .eq('task_id', id)
-                .single();
+            deletedSubMilestones = count || 0;
 
-            if (milestone) {
-                // Count sub-milestones before deletion
-                const { count: subMilestoneCount } = await supabaseAdmin
-                    .from('sub_milestones')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('milestone_id', milestone.id);
-
-                deletedSubMilestones = subMilestoneCount || 0;
-
-                // Delete sub-milestones (will cascade via FK)
-                const { error: subMilestoneError } = await supabaseAdmin
-                    .from('sub_milestones')
-                    .delete()
-                    .eq('milestone_id', milestone.id);
-
-                if (subMilestoneError) {
-                    console.error('Error deleting sub-milestones:', subMilestoneError);
-                    return NextResponse.json({ error: 'Failed to delete sub-milestones' }, { status: 500 });
-                }
-
-                // Delete the milestone record (will cascade via FK)
-                const { error: milestoneError } = await supabaseAdmin
-                    .from('milestones')
-                    .delete()
-                    .eq('id', milestone.id);
-
-                if (milestoneError) {
-                    console.error('Error deleting milestone:', milestoneError);
-                    return NextResponse.json({ error: 'Failed to delete milestone' }, { status: 500 });
-                }
-
-                deletedMilestones = 1;
+            const { error: subErr } = await client
+                .from("sub_milestones")
+                .delete()
+                .eq("milestone_id", milestone.id);
+            if (subErr) {
+                return NextResponse.json({ error: "Failed to delete sub-milestones" }, { status: 500 });
             }
+
+            const { error: msErr } = await MilestonesDAL.delete(client, milestone.id);
+            if (msErr) {
+                return NextResponse.json({ error: "Failed to delete milestone" }, { status: 500 });
+            }
+            deletedMilestones = 1;
         }
-
-        // Now delete the task itself
-        const { error } = await supabaseAdmin
-            .from('tasks')
-            .delete()
-            .eq('id', id);
-
-        if (error) {
-            console.error('Error deleting task:', error);
-            return NextResponse.json({ error: 'Failed to delete task' }, { status: 500 });
-        }
-
-        // Log to admin activity log (excludes admin@keepplayengine.com)
-        const logDescription = isMilestone
-            ? `Deleted milestone task: "${taskTitle}" (including ${deletedMilestones} milestone and ${deletedSubMilestones} sub-milestones)`
-            : `Deleted task: "${taskTitle}"`;
-
-        await logActivityWithRequest(request, {
-            action: 'DELETE_TASK',
-            resourceType: 'task',
-            resourceId: id,
-            description: logDescription,
-            severity: 'warning',
-        });
-
-        return NextResponse.json({
-            success: true,
-            deletedMilestones,
-            deletedSubMilestones,
-        });
-    } catch (error) {
-        console.error('Task DELETE error:', error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
-}
+
+    const { error } = await TasksDAL.delete(client, id);
+    if (error) {
+        return NextResponse.json({ error: "Failed to delete task" }, { status: 500 });
+    }
+
+    const logDescription = isMilestone
+        ? `Deleted milestone task: "${taskTitle}" (including ${deletedMilestones} milestone and ${deletedSubMilestones} sub-milestones)`
+        : `Deleted task: "${taskTitle}"`;
+
+    await AdminDAL.logActivity(client, {
+        admin_user_id: ctx.session.user.id,
+        action: "DELETE_TASK",
+        resource_type: "task",
+        resource_id: id,
+        description: logDescription,
+        severity: "warning",
+        ip_address: ctx.ip,
+        user_agent: ctx.userAgent,
+    });
+
+    return NextResponse.json({ success: true, deletedMilestones, deletedSubMilestones });
+});

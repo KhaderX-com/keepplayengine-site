@@ -4,14 +4,23 @@ import { signIn, useSession } from "next-auth/react";
 import { useState, FormEvent, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { isWebAuthnSupported, isPlatformAuthenticatorAvailable } from "@/lib/webauthn-client";
+import { startRegistration, startAuthentication } from "@simplewebauthn/browser";
 
 export default function AdminLoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session, status } = useSession();
 
-  // Get return URL from query params, default to /admin
-  const returnUrl = searchParams.get('returnUrl') || '/admin';
+  // Get return URL from query params, sanitized to prevent open redirects (C-04)
+  const returnUrl = (() => {
+    const raw = searchParams.get('returnUrl');
+    if (!raw) return '/admin';
+    if (raw.startsWith('//')) return '/admin';
+    if (raw.includes('://') || raw.includes(':')) return '/admin';
+    if (!raw.startsWith('/admin')) return '/admin';
+    if (raw.includes('%') || raw.includes('\\')) return '/admin';
+    return raw;
+  })();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,11 +39,11 @@ export default function AdminLoginPage() {
 
   // 4th Security Layer: Vault PIN
   const [biometricVerified, setBiometricVerified] = useState(false);
-  const [vaultPin, setVaultPin] = useState(["", "", ""]);
+  const [vaultPin, setVaultPin] = useState(["", "", "", "", "", ""]);
   const [pinLoading, setPinLoading] = useState(false);
   const [pinLocked, setPinLocked] = useState(false);
   const [lockoutRemaining, setLockoutRemaining] = useState(0);
-  const pinInputRefs = useRef<(HTMLInputElement | null)[]>([null, null, null]);
+  const pinInputRefs = useRef<(HTMLInputElement | null)[]>([null, null, null, null, null, null]);
 
   // Redirect authenticated users away from login page
   useEffect(() => {
@@ -109,12 +118,12 @@ export default function AdminLoginPage() {
     setError("");
 
     // Auto-advance to next input
-    if (value && index < 2) {
+    if (value && index < 5) {
       pinInputRefs.current[index + 1]?.focus();
     }
 
     // Auto-submit when all digits entered
-    if (value && index === 2 && newPin.every(d => d !== "")) {
+    if (value && index === 5 && newPin.every(d => d !== "")) {
       handleVaultPinSubmit(newPin.join(""));
     }
   };
@@ -143,14 +152,14 @@ export default function AdminLoginPage() {
       if (data.locked) {
         setPinLocked(true);
         setLockoutRemaining(data.remainingSeconds || 300);
-        setVaultPin(["", "", ""]);
+        setVaultPin(["", "", "", "", "", ""]);
         setError(data.error || "Too many attempts. Please wait.");
         setPinLoading(false);
         return;
       }
 
       if (!verifyRes.ok || !data.valid) {
-        setVaultPin(["", "", ""]);
+        setVaultPin(["", "", "", "", "", ""]);
         setError(data.error || "Invalid vault PIN");
         setPinLoading(false);
         pinInputRefs.current[0]?.focus();
@@ -175,7 +184,7 @@ export default function AdminLoginPage() {
     } catch (err) {
       const error = err as Error;
       setError(error.message || "Verification failed");
-      setVaultPin(["", "", ""]);
+      setVaultPin(["", "", "", "", "", ""]);
       setPinLoading(false);
     }
   };
@@ -186,7 +195,7 @@ export default function AdminLoginPage() {
     setError("");
 
     try {
-      // Get registration options
+      // Get registration options from server (already JSON-serializable base64url format)
       const optionsRes = await fetch("/api/webauthn/register/options", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -200,50 +209,17 @@ export default function AdminLoginPage() {
 
       const { options } = await optionsRes.json();
 
-      // Convert arrays back to Uint8Arrays
-      const publicKeyOptions = {
-        ...options,
-        challenge: new Uint8Array(options.challenge),
-        user: {
-          ...options.user,
-          id: new Uint8Array(options.user.id),
-        },
-        excludeCredentials: options.excludeCredentials?.map((cred: { id: number[]; type: string }) => ({
-          ...cred,
-          id: new Uint8Array(cred.id),
-        })),
-      };
+      // Use @simplewebauthn/browser for proper WebAuthn ceremony handling
+      // Handles ArrayBuffer conversion, encoding, and error cases automatically
+      const credential = await startRegistration({ optionsJSON: options });
 
-      // Trigger biometric enrollment
-      const credential = await navigator.credentials.create({
-        publicKey: publicKeyOptions,
-      });
-
-      if (!credential) {
-        throw new Error("Enrollment cancelled");
-      }
-
-      // Prepare credential for verification
-      const publicKeyCredential = credential as PublicKeyCredential;
-      const response = publicKeyCredential.response as AuthenticatorAttestationResponse;
-
-      const credentialData = {
-        id: publicKeyCredential.id,
-        rawId: Array.from(new Uint8Array(publicKeyCredential.rawId)),
-        type: publicKeyCredential.type,
-        response: {
-          clientDataJSON: Array.from(new Uint8Array(response.clientDataJSON)),
-          attestationObject: Array.from(new Uint8Array(response.attestationObject)),
-        },
-      };
-
-      // Verify and save the credential
+      // Send the credential response directly — already in base64url JSON format
       const verifyRes = await fetch("/api/webauthn/register/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email,
-          credential: credentialData,
+          credential,
           deviceName: navigator.userAgent.includes("Mobile") ? "Mobile Device" : "Desktop Browser"
         }),
       });
@@ -271,7 +247,7 @@ export default function AdminLoginPage() {
     setError("");
 
     try {
-      // Get authentication options
+      // Get authentication options from server (already JSON-serializable base64url format)
       const optionsRes = await fetch("/api/webauthn/authenticate/options", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -292,48 +268,15 @@ export default function AdminLoginPage() {
 
       const { options } = await optionsRes.json();
 
-      // Convert arrays back to Uint8Arrays
-      const publicKeyOptions = {
-        ...options,
-        challenge: new Uint8Array(options.challenge),
-        allowCredentials: options.allowCredentials?.map((cred: { id: number[]; type: string; transports?: string[] }) => ({
-          ...cred,
-          id: new Uint8Array(cred.id),
-        })),
-      };
+      // Use @simplewebauthn/browser for proper WebAuthn ceremony handling
+      // Handles ArrayBuffer conversion, encoding, and error cases automatically
+      const credential = await startAuthentication({ optionsJSON: options });
 
-      // Trigger biometric authentication
-      const credential = await navigator.credentials.get({
-        publicKey: publicKeyOptions,
-      });
-
-      if (!credential) {
-        throw new Error("Authentication cancelled");
-      }
-
-      // Prepare credential for verification
-      const publicKeyCredential = credential as PublicKeyCredential;
-      const response = publicKeyCredential.response as AuthenticatorAssertionResponse;
-
-      const credentialData = {
-        id: publicKeyCredential.id,
-        rawId: Array.from(new Uint8Array(publicKeyCredential.rawId)),
-        type: publicKeyCredential.type,
-        response: {
-          clientDataJSON: Array.from(new Uint8Array(response.clientDataJSON)),
-          authenticatorData: Array.from(new Uint8Array(response.authenticatorData)),
-          signature: Array.from(new Uint8Array(response.signature)),
-          userHandle: response.userHandle
-            ? Array.from(new Uint8Array(response.userHandle))
-            : null,
-        },
-      };
-
-      // Verify authentication
+      // Send the credential response directly — already in base64url JSON format
       const verifyRes = await fetch("/api/webauthn/authenticate/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ credential: credentialData }),
+        body: JSON.stringify({ credential, email }),
       });
 
       if (!verifyRes.ok) {
@@ -843,8 +786,8 @@ export default function AdminLoginPage() {
               </div>
 
               {/* PIN Input */}
-              <div className="flex justify-center space-x-4" role="group" aria-label="Vault PIN input">
-                {[0, 1, 2].map((index) => (
+              <div className="flex justify-center space-x-3" role="group" aria-label="Vault PIN input">
+                {[0, 1, 2, 3, 4, 5].map((index) => (
                   <input
                     key={index}
                     ref={(el) => { pinInputRefs.current[index] = el; }}
@@ -855,7 +798,7 @@ export default function AdminLoginPage() {
                     onChange={(e) => handlePinChange(index, e.target.value)}
                     onKeyDown={(e) => handlePinKeyDown(index, e)}
                     disabled={pinLoading || pinLocked}
-                    className="w-14 h-16 text-center text-2xl font-bold border-2 border-gray-300 rounded-xl bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    className="w-12 h-14 text-center text-2xl font-bold border-2 border-gray-300 rounded-xl bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     autoComplete="off"
                     aria-label={`PIN digit ${index + 1}`}
                     title={`PIN digit ${index + 1}`}

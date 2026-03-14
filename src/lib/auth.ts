@@ -1,7 +1,9 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { supabaseAdmin } from "@/lib/supabase";
+import { sendSecurityAlert } from "@/lib/security-alerts";
 import bcrypt from "bcryptjs";
+import { randomBytes } from "crypto";
 
 // Maximum login attempts before lockout
 const MAX_LOGIN_ATTEMPTS = 5;
@@ -120,7 +122,15 @@ export const authOptions: NextAuthOptions = {
                 const lockedOut = await isAdminLockedOut(credentials.email, ipAddress);
                 if (lockedOut) {
                     await recordAdminLoginAttempt(credentials.email, ipAddress, userAgent, false, undefined, "Too many failed attempts");
-                    throw new Error("Too many failed login attempts. Please try again in 15 minutes.");
+                    // Alert SUPER_ADMINs about lockout (non-blocking)
+                    sendSecurityAlert({
+                        event: "lockout_triggered",
+                        email: credentials.email,
+                        ipAddress,
+                        description: `Account locked out after ${MAX_LOGIN_ATTEMPTS} failed login attempts within ${LOCKOUT_DURATION / 60000} minutes.`,
+                        severity: "critical",
+                    });
+                    throw new Error("Invalid credentials");
                 }
 
                 // Find admin user
@@ -138,14 +148,14 @@ export const authOptions: NextAuthOptions = {
                 // Check if admin account is active
                 if (!admin.is_active) {
                     await recordAdminLoginAttempt(credentials.email, ipAddress, userAgent, false, admin.id, "Account disabled");
-                    throw new Error("Account is disabled");
+                    throw new Error("Invalid credentials");
                 }
 
                 // Check if admin account is locked
                 if (admin.is_locked) {
                     if (admin.locked_until && new Date(admin.locked_until) > new Date()) {
                         await recordAdminLoginAttempt(credentials.email, ipAddress, userAgent, false, admin.id, "Account locked");
-                        throw new Error(`Account is locked until ${new Date(admin.locked_until).toLocaleString()}`);
+                        throw new Error("Invalid credentials");
                     }
                 }
 
@@ -153,13 +163,21 @@ export const authOptions: NextAuthOptions = {
                 const isValidPassword = await bcrypt.compare(credentials.password, admin.password_hash);
                 if (!isValidPassword) {
                     await recordAdminLoginAttempt(credentials.email, ipAddress, userAgent, false, admin.id, "Invalid password");
+                    // Alert SUPER_ADMINs about repeated failures (non-blocking)
+                    sendSecurityAlert({
+                        event: "repeated_failures",
+                        email: credentials.email,
+                        ipAddress,
+                        description: "Failed login attempt — invalid password.",
+                        severity: "warning",
+                    });
                     throw new Error("Invalid credentials");
                 }
 
-                // Check if admin has proper role (ADMIN or SUPER_ADMIN)
-                if (admin.role !== "ADMIN" && admin.role !== "SUPER_ADMIN") {
+                // Check if admin has proper role (ADMIN, SUPER_ADMIN, or MODERATOR)
+                if (admin.role !== "ADMIN" && admin.role !== "SUPER_ADMIN" && admin.role !== "MODERATOR") {
                     await recordAdminLoginAttempt(credentials.email, ipAddress, userAgent, false, admin.id, "Insufficient permissions");
-                    throw new Error("Insufficient permissions to access admin panel");
+                    throw new Error("Invalid credentials");
                 }
 
                 // Record successful login
@@ -184,11 +202,10 @@ export const authOptions: NextAuthOptions = {
                     'Admin user logged in successfully'
                 );
 
-                // Create session record for tracking (exclude admin@keepplayengine.com - dev account)
-                if (admin.email !== 'admin@keepplayengine.com') {
-                    try {
-                        const sessionToken = `${admin.id}-${Date.now()}-${Math.random().toString(36).substring(7)}`;
-                        const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000); // 2 hours
+                // Create session record for tracking
+                try {
+                    const sessionToken = randomBytes(48).toString("hex");
+                    const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000); // 2 hours
 
                         await supabaseAdmin
                             .from('admin_sessions')
@@ -202,10 +219,9 @@ export const authOptions: NextAuthOptions = {
                                 last_activity_at: new Date().toISOString(),
                                 is_revoked: false
                             });
-                    } catch (sessionError) {
-                        console.error('Error creating session record:', sessionError);
-                        // Don't fail login if session creation fails
-                    }
+                } catch (sessionError) {
+                    console.error('Error creating session record:', sessionError);
+                    // Don't fail login if session creation fails
                 }
 
                 return {
@@ -252,16 +268,35 @@ export const authOptions: NextAuthOptions = {
             return `${baseUrl}/admin`;
         },
     },
+    events: {
+        async signOut({ token }) {
+            // H03: Invalidate all active sessions for this user on logout
+            if (token?.id) {
+                try {
+                    await supabaseAdmin
+                        .from('admin_sessions')
+                        .update({ is_revoked: true })
+                        .eq('admin_user_id', token.id as string)
+                        .eq('is_revoked', false);
+                } catch (err) {
+                    console.error('Failed to revoke sessions on signOut:', err);
+                }
+            }
+        },
+    },
     secret: process.env.NEXTAUTH_SECRET,
-    // Security options
+    // M11: Cookie security verified — httpOnly + sameSite strict + secure in production
+    // This matches bank-level standards: no JS access, no cross-origin sending, HTTPS only
     cookies: {
         sessionToken: {
-            name: `__Secure-next-auth.session-token`,
+            name: process.env.NODE_ENV === "production"
+                ? `__Secure-next-auth.session-token`
+                : `next-auth.session-token`,
             options: {
                 httpOnly: true,
-                sameSite: "lax",
+                sameSite: "strict",
                 path: "/",
-                secure: true, // Always use secure in production
+                secure: process.env.NODE_ENV === "production",
             },
         },
     },

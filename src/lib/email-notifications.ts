@@ -3,6 +3,15 @@ import type { Notification } from '@/types/notifications';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+function escapeHtml(str: string): string {
+    return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
 interface EmailNotificationOptions {
     recipientEmail: string;
     recipientName: string;
@@ -45,7 +54,13 @@ export async function sendEmailNotification({
         };
 
         const style = priorityStyles[notification.priority];
-        const actionUrl = notification.action_url || 'https://keepplayengine.com/admin/notifications';
+        const rawUrl = notification.action_url || 'https://keepplayengine.com/admin/notifications';
+        const ALLOWED_ORIGIN = 'https://keepplayengine.com';
+        let actionUrl = ALLOWED_ORIGIN + '/admin/notifications';
+        try {
+            const parsed = new URL(rawUrl);
+            if (parsed.origin === ALLOWED_ORIGIN) actionUrl = parsed.href;
+        } catch { /* invalid URL — use default */ }
 
         const { data, error } = await resend.emails.send({
             from: 'KeepPlay Engine <notifications@keepplayengine.com>',
@@ -77,24 +92,24 @@ export async function sendEmailNotification({
 
             <!-- Greeting -->
             <p style="margin: 0 0 16px 0; color: #374151; font-size: 15px;">
-                Hi ${recipientName},
+                Hi ${escapeHtml(recipientName)},
             </p>
 
             <!-- Title -->
             <h2 style="margin: 0 0 12px 0; color: #111827; font-size: 20px; font-weight: 600; line-height: 1.4;">
-                ${notification.title}
+                ${escapeHtml(notification.title)}
             </h2>
 
             <!-- Message -->
             <div style="margin: 0 0 24px 0; color: #4b5563; font-size: 15px; line-height: 1.6; white-space: pre-wrap;">
-                ${notification.message}
+                ${escapeHtml(notification.message)}
             </div>
 
             <!-- Sender Info -->
             ${senderName && notification.sender_id ? `
             <div style="padding: 16px; background-color: #f3f4f6; border-radius: 8px; margin-bottom: 24px;">
                 <p style="margin: 0; color: #6b7280; font-size: 13px;">
-                    <strong style="color: #374151;">From:</strong> ${senderName}
+                    <strong style="color: #374151;">From:</strong> ${escapeHtml(senderName)}
                 </p>
             </div>
             ` : ''}
@@ -102,8 +117,8 @@ export async function sendEmailNotification({
             <!-- Action Button -->
             ${notification.action_url ? `
             <div style="text-align: center; margin: 24px 0;">
-                <a href="${actionUrl}" style="display: inline-block; padding: 12px 32px; background-color: ${style.color}; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px; transition: opacity 0.2s;">
-                    ${notification.action_label || 'View Notification'}
+                <a href="${escapeHtml(actionUrl)}" style="display: inline-block; padding: 12px 32px; background-color: ${style.color}; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px; transition: opacity 0.2s;">
+                    ${escapeHtml(notification.action_label || 'View Notification')}
                 </a>
             </div>
             ` : ''}
@@ -165,6 +180,21 @@ View all notifications: https://keepplayengine.com/admin/notifications
  */
 export async function sendTestEmail(toEmail: string) {
     try {
+        // H09: Validate recipient is a registered admin user (prevent email spam abuse)
+        const { createClient } = await import('@supabase/supabase-js');
+        const adminClient = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
+        const { data: adminUser } = await adminClient
+            .from('admin_users')
+            .select('email')
+            .eq('email', toEmail)
+            .single();
+        if (!adminUser) {
+            return { success: false, error: 'Recipient is not a registered admin user' };
+        }
+
         const { data, error } = await resend.emails.send({
             from: 'KeepPlay Engine <notifications@keepplayengine.com>',
             to: [toEmail],

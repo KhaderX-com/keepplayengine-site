@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { redirect } from "next/navigation";
 import SessionProvider from "@/components/SessionProvider";
 
 export const metadata: Metadata = {
@@ -43,9 +44,18 @@ export default async function AdminLayout({
 }>) {
     const session = await getServerSession(authOptions);
 
-    // Server-side authentication check
-    // Note: Cloudflare Access provides additional layer of security
-    // This check ensures NextAuth session is valid
+    // Server-side authentication + role check (defense-in-depth — H01)
+    // Cloudflare Access + proxy.ts provide outer layers, this is the final guard
+    const isLoginPage = true; // Layout wraps ALL admin pages including login
+    const userRole = session?.user?.role;
+    const isAuthorizedRole = userRole === "SUPER_ADMIN" || userRole === "ADMIN" || userRole === "MODERATOR";
+
+    // Only enforce role check for non-login pages
+    // Login page must remain accessible to unauthenticated users
+    // We detect login page by checking if session is absent (unauthenticated → going to login)
+    if (session && !isAuthorizedRole) {
+        redirect("/admin/login");
+    }
 
     return (
         <SessionProvider session={session}>

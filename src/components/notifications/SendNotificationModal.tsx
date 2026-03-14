@@ -144,7 +144,7 @@ export default function SendNotificationModal({
                 </div>
 
                 {/* Form */}
-                <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-5 overflow-y-auto max-h-[calc(90vh-5rem)] sm:max-h-none">
+                <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-5 overflow-y-auto max-h-[calc(90vh-5rem)] sm:max-h-[calc(85vh-5rem)]">
                     {/* Success Message */}
                     {success && (
                         <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-xl">

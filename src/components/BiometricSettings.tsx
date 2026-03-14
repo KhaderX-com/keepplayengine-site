@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { isWebAuthnSupported, isPlatformAuthenticatorAvailable } from "@/lib/webauthn-client";
+import { startRegistration } from "@simplewebauthn/browser";
 
 interface BiometricDevice {
     id: string;
@@ -80,11 +81,11 @@ export default function BiometricSettings() {
         setSuccess("");
 
         try {
-            // Get registration options
+            // Get registration options from server (already JSON-serializable base64url format)
             const optionsRes = await fetch("/api/webauthn/register/options", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ deviceName }),
+                body: JSON.stringify({ email: session?.user?.email }),
             });
 
             if (!optionsRes.ok) {
@@ -94,51 +95,16 @@ export default function BiometricSettings() {
 
             const { options } = await optionsRes.json();
 
-            // Convert arrays to Uint8Arrays
-            const publicKeyOptions = {
-                ...options,
-                challenge: new Uint8Array(options.challenge),
-                user: {
-                    ...options.user,
-                    id: new Uint8Array(options.user.id),
-                },
-                excludeCredentials: options.excludeCredentials?.map((cred: { id: number[]; type: string; transports?: string[] }) => ({
-                    ...cred,
-                    id: new Uint8Array(cred.id),
-                })),
-            };
+            // Use @simplewebauthn/browser for proper WebAuthn ceremony handling
+            const credential = await startRegistration({ optionsJSON: options });
 
-            // Create credential
-            const credential = await navigator.credentials.create({
-                publicKey: publicKeyOptions,
-            });
-
-            if (!credential) {
-                throw new Error("Enrollment cancelled");
-            }
-
-            // Prepare credential for verification
-            const publicKeyCredential = credential as PublicKeyCredential;
-            const response = publicKeyCredential.response as AuthenticatorAttestationResponse;
-
-            const credentialData = {
-                id: publicKeyCredential.id,
-                rawId: Array.from(new Uint8Array(publicKeyCredential.rawId)),
-                type: publicKeyCredential.type,
-                authenticatorAttachment: publicKeyCredential.authenticatorAttachment,
-                response: {
-                    clientDataJSON: Array.from(new Uint8Array(response.clientDataJSON)),
-                    attestationObject: Array.from(new Uint8Array(response.attestationObject)),
-                    getTransports: response.getTransports ? response.getTransports() : [],
-                },
-            };
-
-            // Verify registration
+            // Send the credential response directly — already in base64url JSON format
             const verifyRes = await fetch("/api/webauthn/register/verify", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    credential: credentialData,
+                    email: session?.user?.email,
+                    credential,
                     deviceName: deviceName || "My Device",
                 }),
             });

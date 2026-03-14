@@ -1,10 +1,7 @@
-"use client";
-
-import { useSession } from "next-auth/react";
-import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import AdminSidebar from "@/components/admin/AdminSidebar";
-import AdminHeader from "@/components/admin/AdminHeader";
+import { redirect } from "next/navigation";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import AdminPageShell from "@/components/admin/AdminPageShell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -13,69 +10,27 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { User, Mail, Shield, Calendar, CheckCircle2 } from "lucide-react";
 
-export default function ProfilePage() {
-    const { data: session, status } = useSession();
-    const router = useRouter();
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-    // Calculate session expiry time once during component initialization
-    const [sessionExpiryTime] = useState(() => {
-        return new Date(Date.now() + 2 * 60 * 60 * 1000).toLocaleString();
-    });
-
-    const handleToggleMobileMenu = useCallback(() => {
-        setIsMobileMenuOpen(!isMobileMenuOpen);
-    }, [isMobileMenuOpen]);
-
-    const handleCloseMobileMenu = useCallback(() => {
-        setIsMobileMenuOpen(false);
-    }, []);
-
-    useEffect(() => {
-        if (status === "unauthenticated") {
-            router.push("/admin/login");
-        }
-    }, [status, router]);
-
-    if (status === "loading") {
-        return (
-            <div className="flex items-center justify-center min-h-screen bg-gray-50">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            </div>
-        );
-    }
-
+export default async function ProfilePage() {
+    const session = await getServerSession(authOptions);
     if (!session?.user) {
-        return null;
+        redirect("/admin/login");
     }
 
     const user = session.user;
     const initials = user.name
         ?.split(' ')
-        .map((n) => n[0])
+        .map((n: string) => n[0])
         .join('')
         .toUpperCase() || 'A';
 
+    const sessionExpiryTime = new Date(Date.now() + 2 * 60 * 60 * 1000).toLocaleString();
+
     return (
-        <div className="flex h-screen bg-gray-50 overflow-hidden">
-            {/* Sidebar */}
-            <AdminSidebar
-                isMobileMenuOpen={isMobileMenuOpen}
-                onCloseMobileMenu={handleCloseMobileMenu}
-            />
-
-            {/* Main Content */}
-            <div className="flex-1 flex flex-col overflow-hidden">
-                {/* Header */}
-                <AdminHeader
-                    user={user}
-                    onToggleMobileMenu={handleToggleMobileMenu}
-                    title="My Profile"
-                    subtitle="Manage your account information"
-                />
-
-                {/* Page Content */}
-                <main className="flex-1 overflow-y-auto">
+        <AdminPageShell
+            user={user}
+            title="My Profile"
+            subtitle="Manage your account information"
+        >
                     <div className="container max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
 
                         <div className="grid gap-6">
@@ -209,8 +164,6 @@ export default function ProfilePage() {
                             </Card>
                         </div>
                     </div>
-                </main>
-            </div>
-        </div>
+        </AdminPageShell>
     );
 }

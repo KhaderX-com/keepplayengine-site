@@ -12,7 +12,8 @@ export function useSessionActivity() {
     const { data: session } = useSession();
 
     useEffect(() => {
-        if (!session || session.user.email === 'admin@keepplayengine.com') {
+        const excludedEmail = process.env.NEXT_PUBLIC_EXCLUDED_AUDIT_EMAIL;
+        if (!session || (excludedEmail && session.user.email === excludedEmail)) {
             return;
         }
 
