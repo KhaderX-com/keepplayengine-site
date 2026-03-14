@@ -137,7 +137,7 @@ export default function NotificationsClient({
         >
             <main className="p-4 sm:p-6 lg:p-8">
                 {/* Tabs */}
-                <div className="flex items-center gap-1 mb-6 bg-gray-100 p-1 rounded-lg w-fit">
+                <div className="flex items-center gap-1 mb-6 bg-gray-100 p-1 rounded-lg w-full sm:w-fit">
                     {[
                         { id: "all" as const, label: "All" },
                         { id: "unread" as const, label: "Unread", count: unreadCount },
@@ -147,7 +147,7 @@ export default function NotificationsClient({
                         <button
                             key={tab.id}
                             onClick={() => setSelectedTab(tab.id)}
-                            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2 ${
+                            className={`flex-1 sm:flex-none px-3 sm:px-4 py-2.5 sm:py-2 text-xs sm:text-sm font-medium rounded-md transition-colors flex items-center justify-center gap-1.5 touch-manipulation ${
                                 selectedTab === tab.id
                                     ? "bg-white text-gray-900 shadow-sm"
                                     : "text-gray-600 hover:text-gray-900"
@@ -253,9 +253,9 @@ function NotificationRow({
     const sender = notification.sender as AdminUserBasic | undefined;
 
     return (
-        <div className={`flex items-start gap-4 p-4 hover:bg-gray-50 transition-colors ${!notification.is_read ? "bg-blue-50/50" : ""}`}>
+        <div className={`flex items-start gap-3 sm:gap-4 p-3 sm:p-4 hover:bg-gray-50 transition-colors ${!notification.is_read ? "bg-blue-50/50" : ""}`}>
             {/* Unread indicator */}
-            <div className="pt-2">
+            <div className="pt-2 shrink-0">
                 {!notification.is_read ? (
                     <div className="w-2 h-2 bg-blue-500 rounded-full" />
                 ) : (
@@ -264,7 +264,7 @@ function NotificationRow({
             </div>
 
             {/* Avatar */}
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${sender ? "bg-blue-100" : "bg-gray-100"}`}>
+            <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shrink-0 ${sender ? "bg-blue-100" : "bg-gray-100"}`}>
                 {sender ? (
                     sender.avatar_url ? (
                         <Image
@@ -272,24 +272,24 @@ function NotificationRow({
                             alt={sender.full_name || sender.email}
                             width={48}
                             height={48}
-                            className="w-12 h-12 rounded-full object-cover"
+                            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover"
                         />
                     ) : (
-                        <span className="text-lg font-semibold text-blue-600">
+                        <span className="text-sm sm:text-lg font-semibold text-blue-600">
                             {(sender.full_name || sender.email)[0].toUpperCase()}
                         </span>
                     )
                 ) : (
-                    <span className="text-xl">{NOTIFICATION_ICONS[notification.type]}</span>
+                    <span className="text-base sm:text-xl">{NOTIFICATION_ICONS[notification.type]}</span>
                 )}
             </div>
 
             {/* Content */}
             <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-4">
-                    <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <span className={`font-semibold ${!notification.is_read ? PRIORITY_COLORS[notification.priority] : "text-gray-900"}`}>
+                <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                        <div className="flex items-center flex-wrap gap-2 mb-1">
+                            <span className={`font-semibold text-sm sm:text-base ${!notification.is_read ? PRIORITY_COLORS[notification.priority] : "text-gray-900"}`}>
                                 {notification.title}
                             </span>
                             {notification.priority === "urgent" && (
@@ -303,8 +303,8 @@ function NotificationRow({
                                 </span>
                             )}
                         </div>
-                        <p className="text-gray-600 mb-2">{notification.message}</p>
-                        <div className="flex items-center gap-3 text-sm text-gray-500">
+                        <p className="text-sm text-gray-600 mb-1.5 sm:mb-2">{notification.message}</p>
+                        <div className="flex items-center flex-wrap gap-x-2 gap-y-1 text-xs sm:text-sm text-gray-500">
                             {sender && <span>From: {sender.full_name || sender.email}</span>}
                             <span>&bull;</span>
                             <span title={format(new Date(notification.created_at), "PPpp")}>
@@ -320,7 +320,7 @@ function NotificationRow({
                         {notification.action_url && notification.action_label && (
                             <a
                                 href={notification.action_url}
-                                className="inline-flex items-center gap-1 mt-3 text-sm font-medium text-blue-600 hover:text-blue-800"
+                                className="inline-flex items-center gap-1 mt-2 text-sm font-medium text-blue-600 hover:text-blue-800"
                             >
                                 {notification.action_label}
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -330,8 +330,8 @@ function NotificationRow({
                         )}
                     </div>
 
-                    {/* Actions */}
-                    <div className="flex items-center gap-1">
+                    {/* Actions — hidden on mobile, visible on sm+ */}
+                    <div className="hidden sm:flex items-center gap-1 shrink-0">
                         {!notification.is_read && (
                             <button
                                 onClick={onMarkRead}
@@ -363,6 +363,39 @@ function NotificationRow({
                         </button>
                     </div>
                 </div>
+
+                {/* Mobile-only action row */}
+                <div className="flex sm:hidden items-center gap-2 mt-2 pt-2 border-t border-gray-100">
+                    {!notification.is_read && (
+                        <button
+                            onClick={onMarkRead}
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors touch-manipulation"
+                        >
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            Mark read
+                        </button>
+                    )}
+                    <button
+                        onClick={onArchive}
+                        className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors touch-manipulation"
+                    >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                        </svg>
+                        Archive
+                    </button>
+                    <button
+                        onClick={onDelete}
+                        className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-red-50 text-red-600 hover:bg-red-100 transition-colors touch-manipulation"
+                    >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Delete
+                    </button>
+                </div>
             </div>
         </div>
     );
@@ -373,16 +406,16 @@ function SentNotificationRow({ notification }: { notification: SentNotification 
     const recipient = notification.recipient as AdminUserBasic | undefined;
 
     return (
-        <div className="flex items-start gap-4 p-4 hover:bg-gray-50 transition-colors">
+        <div className="flex items-start gap-3 sm:gap-4 p-3 sm:p-4 hover:bg-gray-50 transition-colors">
             {/* Sent indicator */}
-            <div className="pt-2">
+            <div className="pt-2 shrink-0">
                 <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                 </svg>
             </div>
 
             {/* Recipient Avatar */}
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${recipient ? "bg-purple-100" : "bg-gray-100"}`}>
+            <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shrink-0 ${recipient ? "bg-purple-100" : "bg-gray-100"}`}>
                 {recipient ? (
                     recipient.avatar_url ? (
                         <Image
@@ -390,76 +423,80 @@ function SentNotificationRow({ notification }: { notification: SentNotification 
                             alt={recipient.full_name || recipient.email}
                             width={48}
                             height={48}
-                            className="w-12 h-12 rounded-full object-cover"
+                            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover"
                         />
                     ) : (
-                        <span className="text-lg font-semibold text-purple-600">
+                        <span className="text-sm sm:text-lg font-semibold text-purple-600">
                             {(recipient.full_name || recipient.email)[0].toUpperCase()}
                         </span>
                     )
                 ) : (
-                    <span className="text-xl">{NOTIFICATION_ICONS[notification.type]}</span>
+                    <span className="text-base sm:text-xl">{NOTIFICATION_ICONS[notification.type]}</span>
                 )}
             </div>
 
             {/* Content */}
             <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-4">
-                    <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <span className="font-semibold text-gray-900">{notification.title}</span>
-                            {notification.priority === "urgent" && (
-                                <span className="px-2 py-0.5 text-xs font-bold bg-red-100 text-red-700 rounded-full">URGENT</span>
-                            )}
-                            {notification.priority === "high" && (
-                                <span className="px-2 py-0.5 text-xs font-bold bg-orange-100 text-orange-700 rounded-full">HIGH</span>
-                            )}
-                        </div>
-                        <p className="text-gray-600 mb-2">{notification.message}</p>
-                        <div className="flex items-center gap-3 text-sm text-gray-500">
-                            {recipient && (
-                                <span className="flex items-center gap-1">
-                                    <span className="text-gray-400">To:</span>
-                                    <span className="font-medium text-gray-700">{recipient.full_name || recipient.email}</span>
-                                    <span className="px-1.5 py-0.5 text-xs bg-gray-100 text-gray-500 rounded">{recipient.role}</span>
-                                </span>
-                            )}
-                            <span>&bull;</span>
-                            <span title={format(new Date(notification.created_at), "PPpp")}>
-                                {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
-                            </span>
-                            <span>&bull;</span>
-                            {notification.is_read ? (
-                                <span className="flex items-center gap-1 text-green-600">
-                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                    </svg>
-                                    Read
-                                </span>
-                            ) : (
-                                <span className="text-amber-500">Unread</span>
-                            )}
-                        </div>
-                        {notification.action_url && notification.action_label && (
-                            <a
-                                href={notification.action_url}
-                                className="inline-flex items-center gap-1 mt-3 text-sm font-medium text-blue-600 hover:text-blue-800"
-                            >
-                                {notification.action_label}
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                </svg>
-                            </a>
+                {/* Title row — type badge sits here on desktop only */}
+                <div className="flex items-start justify-between gap-2 mb-1">
+                    <div className="flex items-center flex-wrap gap-2 min-w-0">
+                        <span className="font-semibold text-sm sm:text-base text-gray-900">{notification.title}</span>
+                        {notification.priority === "urgent" && (
+                            <span className="px-2 py-0.5 text-xs font-bold bg-red-100 text-red-700 rounded-full">URGENT</span>
+                        )}
+                        {notification.priority === "high" && (
+                            <span className="px-2 py-0.5 text-xs font-bold bg-orange-100 text-orange-700 rounded-full">HIGH</span>
                         )}
                     </div>
-
-                    {/* Type badge */}
-                    <div className="shrink-0">
-                        <span className="px-2 py-1 text-xs font-medium bg-blue-50 text-blue-700 rounded-full capitalize">
-                            {notification.type.replace(/_/g, " ")}
-                        </span>
-                    </div>
+                    {/* Type badge — right-aligned on sm+ */}
+                    <span className="hidden sm:inline-flex shrink-0 px-2 py-1 text-xs font-medium bg-blue-50 text-blue-700 rounded-full capitalize">
+                        {notification.type.replace(/_/g, " ")}
+                    </span>
                 </div>
+
+                <p className="text-sm text-gray-600 mb-1.5 sm:mb-2">{notification.message}</p>
+
+                {/* Meta row — type badge is inline here on mobile */}
+                <div className="flex items-center flex-wrap gap-x-2 gap-y-1 text-xs sm:text-sm text-gray-500">
+                    {/* Type badge inline on mobile */}
+                    <span className="sm:hidden inline-flex px-1.5 py-0.5 text-xs font-medium bg-blue-50 text-blue-700 rounded-full capitalize">
+                        {notification.type.replace(/_/g, " ")}
+                    </span>
+                    {recipient && (
+                        <span className="flex items-center gap-1">
+                            <span className="text-gray-400">To:</span>
+                            <span className="font-medium text-gray-700">{recipient.full_name || recipient.email}</span>
+                            <span className="px-1.5 py-0.5 text-xs bg-gray-100 text-gray-500 rounded">{recipient.role}</span>
+                        </span>
+                    )}
+                    <span>&bull;</span>
+                    <span title={format(new Date(notification.created_at), "PPpp")}>
+                        {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                    </span>
+                    <span>&bull;</span>
+                    {notification.is_read ? (
+                        <span className="flex items-center gap-1 text-green-600">
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            Read
+                        </span>
+                    ) : (
+                        <span className="text-amber-500">Unread</span>
+                    )}
+                </div>
+
+                {notification.action_url && notification.action_label && (
+                    <a
+                        href={notification.action_url}
+                        className="inline-flex items-center gap-1 mt-2 text-sm font-medium text-blue-600 hover:text-blue-800"
+                    >
+                        {notification.action_label}
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                    </a>
+                )}
             </div>
         </div>
     );
