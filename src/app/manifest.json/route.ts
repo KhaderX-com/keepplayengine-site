@@ -20,9 +20,21 @@ export async function GET(request: NextRequest) {
         icons: [
             {
                 src: "/keepplay-logo2.png",
+                sizes: "192x192",
+                type: "image/png",
+                purpose: "maskable any"
+            },
+            {
+                src: "/keepplay-logo2.png",
                 sizes: "512x512",
                 type: "image/png",
                 purpose: "maskable any"
+            },
+            {
+                src: "/keepplay-logo2.png",
+                sizes: "192x192",
+                type: "image/png",
+                purpose: "any"
             },
             {
                 src: "/keepplay-logo2.png",
