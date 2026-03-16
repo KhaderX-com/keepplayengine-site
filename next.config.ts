@@ -118,6 +118,13 @@ const nextConfig: NextConfig = {
     // If an old SW stays cached/active, users can see missing chunks/assets.
     return [
       {
+        source: "/admin-manifest.json",
+        headers: [
+          { key: "Access-Control-Allow-Origin", value: "*" },
+          { key: "Access-Control-Allow-Methods", value: "GET" },
+        ],
+      },
+      {
         source: "/sw.js",
         headers: [
           { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },

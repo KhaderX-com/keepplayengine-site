@@ -93,17 +93,7 @@ export async function proxy(request: NextRequest) {
         return resp;
     }
 
-    // M12: Block unauthenticated access to admin-manifest.json (reveals admin metadata)
-    if (pathname === "/admin-manifest.json") {
-        const token = await getToken({
-            req: request,
-            secret: process.env.NEXTAUTH_SECRET,
-            secureCookie: process.env.NODE_ENV === "production",
-        });
-        if (!token) {
-            return new NextResponse("Not found", { status: 404, headers: { "X-Request-ID": requestId } });
-        }
-    }
+    // M12: admin-manifest.json is now explicitly allowed unauthenticated so the PWA install prompt loads correctly without needing Cloudflare bypass.
 
     // Check if we're in development (localhost)
     const isLocalhost = hostname.includes("localhost") || hostname.includes("127.0.0.1");
