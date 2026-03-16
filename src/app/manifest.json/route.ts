@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET(request: NextRequest) {
     const host = request.headers.get('host') || '';
     const isAdmin = host.includes('admin.');
+    const adminV = "20260316-3";
 
     const manifest = {
         name: isAdmin
@@ -12,7 +13,8 @@ export async function GET(request: NextRequest) {
         description: isAdmin
             ? "Administrative panel for KeepPlay Engine"
             : "A Play-to-Earn Ecosystem That Never Runs Dry. Build technology that engages and excites players.",
-        id: isAdmin ? "/admin/" : "/",
+        // Bump the admin id when we need Chrome to refresh install metadata (icon, name, etc.).
+        id: isAdmin ? `/admin/?v=${adminV}` : "/",
         start_url: isAdmin ? "/admin/login" : "/",
         display: "standalone",
         background_color: "#ffffff",
@@ -20,25 +22,25 @@ export async function GET(request: NextRequest) {
         scope: isAdmin ? "/admin/" : "/",
         icons: [
             {
-                src: isAdmin ? "https://public-pwa.vercel.app/admin-icon-192-20260316-2.png" : "/keepplay-logo2.png",
+                src: isAdmin ? `/admin/pwa-icon-192?v=${adminV}` : "/keepplay-logo2.png",
                 sizes: "192x192",
                 type: "image/png",
                 purpose: "maskable any"
             },
             {
-                src: isAdmin ? "https://public-pwa.vercel.app/admin-icon-512-20260316-2.png" : "/keepplay-logo2.png",
+                src: isAdmin ? `/admin/pwa-icon-512?v=${adminV}` : "/keepplay-logo2.png",
                 sizes: "512x512",
                 type: "image/png",
                 purpose: "maskable any"
             },
             {
-                src: isAdmin ? "https://public-pwa.vercel.app/admin-icon-192-20260316-2.png" : "/keepplay-logo2.png",
+                src: isAdmin ? `/admin/pwa-icon-192?v=${adminV}` : "/keepplay-logo2.png",
                 sizes: "192x192",
                 type: "image/png",
                 purpose: "any"
             },
             {
-                src: isAdmin ? "https://public-pwa.vercel.app/admin-icon-512-20260316-2.png" : "/keepplay-logo2.png",
+                src: isAdmin ? `/admin/pwa-icon-512?v=${adminV}` : "/keepplay-logo2.png",
                 sizes: "512x512",
                 type: "image/png",
                 purpose: "any"
@@ -57,7 +59,7 @@ export async function GET(request: NextRequest) {
                 url: "/admin/login",
                 icons: [
                     {
-                        src: "https://public-pwa.vercel.app/admin-icon-512-20260316-2.png",
+                        src: `/admin/pwa-icon-512?v=${adminV}`,
                         sizes: "512x512"
                     }
                 ]
