@@ -73,6 +73,13 @@ export async function proxy(request: NextRequest) {
         return new NextResponse("Server misconfigured", { status: 500 });
     }
 
+    // Intercept favicon.ico to guarantee the KeepPlay Engine logo is used everywhere, ignoring any Next.js default Vercel logs
+    if (pathname === "/favicon.ico") {
+        const resp = NextResponse.rewrite(new URL("/keepplay-logo2.png", request.url));
+        resp.headers.set("X-Request-ID", requestId);
+        return resp;
+    }
+
     // M07: Global returnUrl / callbackUrl sanitization — strip dangerous params early
     const returnUrlParam = request.nextUrl.searchParams.get("returnUrl")
         ?? request.nextUrl.searchParams.get("callbackUrl");
@@ -345,9 +352,8 @@ export const config = {
          * Match all request paths except for the ones starting with:
          * - _next/static (static files)
          * - _next/image (image optimization files)
-         * - favicon.ico (favicon file)
          * - public files (public directory)
          */
-        "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+        "/((?!_next/static|_next/image|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
     ],
 };
