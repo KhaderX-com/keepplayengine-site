@@ -8,8 +8,8 @@ export const metadata: Metadata = {
     title: "Admin Panel - KeepPlay Engine",
     description: "Secure administrative interface for KeepPlay Engine",
     robots: "noindex, nofollow",
-    // PWA manifest served from same origin so it works on localhost
-    manifest: "/admin-manifest.json",
+    // Use the public PWA host for manifest/icons to keep install public
+    manifest: "https://public-pwa.vercel.app/admin-manifest.json",
     appleWebApp: {
         capable: true,
         statusBarStyle: "default",
@@ -20,11 +20,11 @@ export const metadata: Metadata = {
     },
     icons: {
         icon: [
-            { url: "/admin-icon-192.png", sizes: "192x192", type: "image/png" },
-            { url: "/admin-icon-512.png", sizes: "512x512", type: "image/png" },
+            { url: "https://public-pwa.vercel.app/admin-icon-192.png", sizes: "192x192", type: "image/png" },
+            { url: "https://public-pwa.vercel.app/admin-icon-512.png", sizes: "512x512", type: "image/png" },
         ],
         apple: [
-            { url: "/admin-icon-192.png", sizes: "192x192", type: "image/png" },
+            { url: "https://public-pwa.vercel.app/admin-icon-192.png", sizes: "192x192", type: "image/png" },
         ],
     },
 };
