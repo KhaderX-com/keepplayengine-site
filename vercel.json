@@ -12,6 +12,12 @@
   ],
   "headers": [
     {
+      "source": "/admin/(icon|apple-icon)(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store" }
+      ]
+    },
+    {
       "source": "/admin/(.*)",
       "headers": [
         { "key": "X-Frame-Options", "value": "DENY" },

@@ -23,13 +23,9 @@ export default function Icon() {
         (
             <img
                 src={logoDataUri}
+                alt="KeepPlay Engine"
                 width="48"
                 height="48"
-                style={{
-                    width: '100%',
-                    height: '100%',
-                    borderRadius: '8px',
-                }}
             />
         ),
         {

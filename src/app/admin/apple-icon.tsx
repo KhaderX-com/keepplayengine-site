@@ -1,42 +1,35 @@
-import { ImageResponse } from 'next/og';
-import { readFileSync } from 'fs';
-import { join } from 'path';
+/* eslint-disable @next/next/no-img-element */
+import { ImageResponse } from "next/og";
+import { readFileSync } from "fs";
+import { join } from "path";
 
 // Route segment config
-export const runtime = 'nodejs';
+export const runtime = "nodejs";
+export const revalidate = 0;
 
-// Apple touch icon dimensions
+// Image metadata (iOS)
 export const size = {
     width: 180,
     height: 180,
 };
-export const contentType = 'image/png';
+export const contentType = "image/png";
 
-// Generates the apple-touch-icon for the admin panel PWA.
-// Next.js serves this as /admin/apple-icon.png automatically.
 export default function AppleIcon() {
-    const logoPath = join(process.cwd(), 'public', 'admin-icon-192.png');
-    const logoBuffer = readFileSync(logoPath);
-    const logoBase64 = logoBuffer.toString('base64');
-    const logoDataUri = `data:image/png;base64,${logoBase64}`;
+    const preferred = join(process.cwd(), "public", "admin-icon-512.png");
+    const fallback = join(process.cwd(), "public", "keepplay-logo2.png");
+
+    let buffer: Buffer;
+    try {
+        buffer = readFileSync(preferred);
+    } catch {
+        buffer = readFileSync(fallback);
+    }
+
+    const base64 = buffer.toString("base64");
+    const dataUri = `data:image/png;base64,${base64}`;
 
     return new ImageResponse(
-        (
-            // eslint-disable-next-line @next/next/no-img-element -- ImageResponse requires raw <img>
-            <img
-                src={logoDataUri}
-                alt="KPE Admin"
-                width="180"
-                height="180"
-                style={{
-                    width: '100%',
-                    height: '100%',
-                    borderRadius: '20px',
-                }}
-            />
-        ),
-        {
-            ...size,
-        }
+        <img src={dataUri} alt="KPE Admin" width={size.width} height={size.height} />,
+        { ...size }
     );
 }

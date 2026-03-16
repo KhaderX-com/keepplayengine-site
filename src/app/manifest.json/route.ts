@@ -20,25 +20,25 @@ export async function GET(request: NextRequest) {
         scope: isAdmin ? "/admin/" : "/",
         icons: [
             {
-                src: isAdmin ? "/admin-icon-192.png" : "/keepplay-logo2.png",
+                src: isAdmin ? "https://public-pwa.vercel.app/admin-icon-192.png?v=20260316-1" : "/keepplay-logo2.png",
                 sizes: "192x192",
                 type: "image/png",
                 purpose: "maskable any"
             },
             {
-                src: isAdmin ? "/admin-icon-512.png" : "/keepplay-logo2.png",
+                src: isAdmin ? "https://public-pwa.vercel.app/admin-icon-512.png?v=20260316-1" : "/keepplay-logo2.png",
                 sizes: "512x512",
                 type: "image/png",
                 purpose: "maskable any"
             },
             {
-                src: isAdmin ? "/admin-icon-192.png" : "/keepplay-logo2.png",
+                src: isAdmin ? "https://public-pwa.vercel.app/admin-icon-192.png?v=20260316-1" : "/keepplay-logo2.png",
                 sizes: "192x192",
                 type: "image/png",
                 purpose: "any"
             },
             {
-                src: isAdmin ? "/admin-icon-512.png" : "/keepplay-logo2.png",
+                src: isAdmin ? "https://public-pwa.vercel.app/admin-icon-512.png?v=20260316-1" : "/keepplay-logo2.png",
                 sizes: "512x512",
                 type: "image/png",
                 purpose: "any"
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
                 url: "/admin/login",
                 icons: [
                     {
-                        src: isAdmin ? "/admin-icon-512.png" : "/keepplay-logo2.png",
+                        src: "https://public-pwa.vercel.app/admin-icon-512.png?v=20260316-1",
                         sizes: "512x512"
                     }
                 ]
