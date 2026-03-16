@@ -4,7 +4,11 @@ const enablePwaInDev = process.env.ENABLE_PWA_DEV === "true";
 
 const withPWA = require("@ducanh2912/next-pwa").default({
   dest: "public",
-  register: true,
+  // IMPORTANT: Keep this false.
+  // Admin routes send a strict CSP (nonce-based) which blocks next-pwa's inline
+  // registration snippet, causing the SW to never register and the app to be
+  // non-installable. We register the SW via an external script instead.
+  register: false,
   skipWaiting: true,
   reloadOnOnline: true,
   // Avoid caching HTML during client-side navigation/start URL.
