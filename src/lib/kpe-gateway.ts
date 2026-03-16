@@ -5,9 +5,8 @@
  * Every call through this gateway is:
  *   1. Authenticated (admin session required)
  *   2. Authorized (role check)
- *   3. Rate limited (per-admin, per-endpoint)
- *   4. Audited (full trail in KPE admin_audit_log)
- *   5. Server-side only
+ *   3. Audited (full trail in KPE admin_audit_log)
+ *   4. Server-side only
  *
  * This wraps createApiHandler from the main gateway with KPE-specific
  * audit logging and provides the KPE Supabase client to handlers.
@@ -35,7 +34,7 @@ type KpeGatewayOptions<T> = {
     bodySchema?: z.ZodSchema<T>;
     /** Required admin roles. Default: SUPER_ADMIN and ADMIN only */
     requiredRoles?: AdminRole[];
-    /** Rate limit overrides (defaults: 30 req / 60s — tighter than main gateway) */
+    /** @deprecated Rate limiting has been removed for admin panel */
     rateLimit?: { limit: number; windowMs: number };
     /** Resource type for audit logging (e.g., "kpe:users", "kpe:wallets") */
     auditResource: string;
@@ -46,38 +45,10 @@ type KpeGatewayOptions<T> = {
 };
 
 // ─────────────────────────────────────────────
-// KPE Rate Limiting (distributed via KPE DB)
+// KPE Rate Limiting — DISABLED
+// Rate limiting was causing 429 errors for legitimate admin
+// usage. The admin panel is a private, authenticated surface.
 // ─────────────────────────────────────────────
-
-async function checkKpeRateLimit(
-    adminId: string,
-    endpoint: string,
-    limit: number,
-    windowSeconds: number,
-): Promise<{ allowed: boolean; remaining: number; retryAfter: number }> {
-    try {
-        const { data, error } = await kpeAdmin.rpc("check_admin_rate_limit", {
-            p_key: `admin:${adminId}`,
-            p_endpoint: endpoint,
-            p_max_requests: limit,
-            p_window_seconds: Math.floor(windowSeconds / 1000),
-        });
-
-        if (error || !data) {
-            // Fail open for rate limiting (the main gateway already has its own rate limiter)
-            return { allowed: true, remaining: limit, retryAfter: 0 };
-        }
-
-        const result = data as { allowed: boolean; remaining: number; retry_after: number };
-        return {
-            allowed: result.allowed,
-            remaining: result.remaining,
-            retryAfter: result.retry_after,
-        };
-    } catch {
-        return { allowed: true, remaining: limit, retryAfter: 0 };
-    }
-}
 
 // ─────────────────────────────────────────────
 // KPE Audit Logging (non-blocking)
@@ -155,56 +126,18 @@ export function createKpeApiHandler<T = unknown>(
         context: KpeGatewayContext<T>,
     ) => Promise<NextResponse>,
 ) {
-    // Default: only SUPER_ADMIN and ADMIN can access KPE data
     const requiredRoles = options.requiredRoles ?? ["SUPER_ADMIN", "ADMIN"];
-    const rateLimit = options.rateLimit ?? { limit: 30, windowMs: 60_000 };
 
     return createApiHandler<T>(
         {
             bodySchema: options.bodySchema,
             requiredRoles,
-            rateLimit,
         },
         async (request, gatewayContext) => {
             const startTime = Date.now();
             const { session, ip, userAgent } = gatewayContext;
 
-            // ── KPE-specific rate limiting (per-admin, per-resource) ──
-            // In development, skip the KPE DB rate limiter since the main
-            // gateway already enforces per-IP rate limits and React Strict
-            // Mode + HMR cause duplicated requests that drain the quota.
-            const kpeRl =
-                process.env.NODE_ENV === "development"
-                    ? { allowed: true, remaining: rateLimit.limit, retryAfter: 0 }
-                    : await checkKpeRateLimit(
-                          session.user.id,
-                          `kpe:${options.auditResource}:${options.auditAction}`,
-                          rateLimit.limit,
-                          rateLimit.windowMs,
-                      );
-
-            if (!kpeRl.allowed) {
-                logKpeAudit({
-                    adminUserId: session.user.id,
-                    adminEmail: session.user.email,
-                    adminRole: session.user.role,
-                    action: options.auditAction,
-                    resourceType: options.auditResource,
-                    ipAddress: ip,
-                    userAgent,
-                    severity: "warning",
-                    statusCode: 429,
-                    description: "KPE rate limit exceeded",
-                });
-
-                const res = NextResponse.json(
-                    { error: "Too many requests to KPE" },
-                    { status: 429 },
-                );
-                res.headers.set("Retry-After", String(kpeRl.retryAfter));
-                res.headers.set("X-RateLimit-Source", "kpe");
-                return res;
-            }
+            // ── KPE rate limiting — DISABLED ──
 
             // ── Execute handler with KPE client ──
             try {
@@ -229,9 +162,6 @@ export function createKpeApiHandler<T = unknown>(
                     durationMs: duration,
                     statusCode: response.status,
                 });
-
-                // Add KPE rate limit header
-                response.headers.set("X-KPE-RateLimit-Remaining", String(kpeRl.remaining));
 
                 return response;
             } catch (err) {

@@ -22,7 +22,6 @@ export const GET = createKpeApiHandler(
         auditResource: "kpe:users",
         auditAction: "list",
         requiredRoles: ["SUPER_ADMIN", "ADMIN"],
-        rateLimit: { limit: 300, windowMs: 60000 }, // Increased limit to prevent 429 for admins
     },
     async (request: NextRequest, context) => {
         const { searchParams } = request.nextUrl;
