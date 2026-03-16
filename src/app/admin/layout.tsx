@@ -8,7 +8,9 @@ export const metadata: Metadata = {
     title: "Admin Panel - KeepPlay Engine",
     description: "Secure administrative interface for KeepPlay Engine",
     robots: "noindex, nofollow",
-    manifest: "/manifest.json?v=20260316-6",
+    manifest: process.env.NODE_ENV === "production"
+        ? "https://keepplayengine.com/admin-manifest.json?v=20260316-7"
+        : "/admin-manifest.json?v=20260316-7",
     appleWebApp: {
         capable: true,
         statusBarStyle: "default",
