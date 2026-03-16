@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     description: "Secure administrative interface for KeepPlay Engine",
     robots: "noindex, nofollow",
     // PWA manifest served from Vercel CDN to bypass Cloudflare Access
-    manifest: "https://public-pwa.vercel.app/admin-manifest.json",
+    manifest: "https://public-pwa.vercel.app/admin-manifest.json?v=3",
     appleWebApp: {
         capable: true,
         statusBarStyle: "default",
