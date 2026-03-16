@@ -6,12 +6,20 @@ importScripts("https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-comp
 let messaging = null;
 let initPromise = null;
 
-function getNotificationTargetUrl(data) {
-  if (!data || typeof data.url !== "string" || !data.url.startsWith("/")) {
+function normalizeNotificationUrl(rawUrl) {
+  if (typeof rawUrl !== "string" || !rawUrl.startsWith("/")) {
     return "/admin";
   }
 
-  return data.url;
+  if (rawUrl === "/admin/withdrawals") {
+    return "/admin/keepplay-engine/withdrawals";
+  }
+
+  return rawUrl;
+}
+
+function getNotificationTargetUrl(data) {
+  return normalizeNotificationUrl(data?.url);
 }
 
 function showBackgroundNotification(payload) {

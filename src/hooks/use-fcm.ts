@@ -6,6 +6,19 @@ import { messaging, getToken, onMessage, VAPID_KEY } from '@/lib/firebase-client
 
 const SERVICE_WORKER_READY_TIMEOUT_MS = 10000;
 const APP_SERVICE_WORKER_PATH = '/sw.js';
+const WITHDRAWALS_ROUTE = '/admin/keepplay-engine/withdrawals';
+
+function normalizeNotificationUrl(rawUrl?: string): string {
+  if (!rawUrl || typeof rawUrl !== 'string') {
+    return '/admin';
+  }
+
+  if (rawUrl === '/admin/withdrawals') {
+    return WITHDRAWALS_ROUTE;
+  }
+
+  return rawUrl;
+}
 
 function getDeviceType(): 'mobile' | 'tablet' | 'desktop' {
   if (typeof navigator === 'undefined') return 'desktop';
@@ -46,6 +59,40 @@ async function getActiveServiceWorkerRegistration(): Promise<ServiceWorkerRegist
   ]);
 
   return readyRegistration;
+}
+
+async function showNotification(
+  title: string,
+  body: string,
+  url?: string,
+): Promise<void> {
+  const normalizedUrl = normalizeNotificationUrl(url);
+  const registration = await getActiveServiceWorkerRegistration();
+
+  if (registration) {
+    await registration.showNotification(title, {
+      body,
+      icon: '/admin-icon-192.png',
+      badge: '/admin-icon-192.png',
+      data: {
+        url: normalizedUrl,
+        timestamp: Date.now(),
+      },
+      requireInteraction: true,
+      tag: 'admin-notification',
+    });
+    return;
+  }
+
+  if ('Notification' in window) {
+    new Notification(title, {
+      body,
+      icon: '/admin-icon-192.png',
+      data: {
+        url: normalizedUrl,
+      },
+    });
+  }
 }
 
 export function useFcmToken() {
@@ -204,10 +251,7 @@ export function useFcmToken() {
       console.log('[useFcmToken] Foreground message received:', payload);
       const { title, body } = payload.notification || {};
       if (title && body && 'Notification' in window && Notification.permission === 'granted') {
-        new Notification(title, {
-          body,
-          icon: '/keepplay-logo2.png',
-        });
+        void showNotification(title, body, payload.data?.url);
       }
     });
 
