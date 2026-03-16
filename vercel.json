@@ -12,7 +12,7 @@
   ],
   "headers": [
     {
-      "source": "/admin/(icon|apple-icon|pwa-icon-192|pwa-icon-512)(.*)",
+      "source": "/admin/(icon|apple-icon)(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "no-store" }
       ]
