@@ -207,18 +207,18 @@ export const authOptions: NextAuthOptions = {
                     const sessionToken = randomBytes(48).toString("hex");
                     const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000); // 2 hours
 
-                        await supabaseAdmin
-                            .from('admin_sessions')
-                            .insert({
-                                admin_user_id: admin.id,
-                                session_token: sessionToken,
-                                ip_address: ipAddress,
-                                user_agent: userAgent,
-                                device_info: {},
-                                expires_at: expiresAt.toISOString(),
-                                last_activity_at: new Date().toISOString(),
-                                is_revoked: false
-                            });
+                    await supabaseAdmin
+                        .from('admin_sessions')
+                        .insert({
+                            admin_user_id: admin.id,
+                            session_token: sessionToken,
+                            ip_address: ipAddress,
+                            user_agent: userAgent,
+                            device_info: {},
+                            expires_at: expiresAt.toISOString(),
+                            last_activity_at: new Date().toISOString(),
+                            is_revoked: false
+                        });
                 } catch (sessionError) {
                     console.error('Error creating session record:', sessionError);
                     // Don't fail login if session creation fails
@@ -285,8 +285,12 @@ export const authOptions: NextAuthOptions = {
         },
     },
     secret: process.env.NEXTAUTH_SECRET,
-    // M11: Cookie security verified — httpOnly + sameSite strict + secure in production
-    // This matches bank-level standards: no JS access, no cross-origin sending, HTTPS only
+    // M11: Cookie security — httpOnly + sameSite lax (lax needed for PWA) + secure in production
+    // sameSite "lax" (not "strict") is required for PWA / installed app mode.
+    // With "strict", the browser blocks session cookies in PWA standalone context,
+    // breaking all authenticated API calls from the installed admin PWA.
+    // "lax" still blocks CSRF (POST cross-origin is blocked), while allowing
+    // same-site navigation from the installed PWA window.
     cookies: {
         sessionToken: {
             name: process.env.NODE_ENV === "production"
@@ -294,7 +298,7 @@ export const authOptions: NextAuthOptions = {
                 : `next-auth.session-token`,
             options: {
                 httpOnly: true,
-                sameSite: "strict",
+                sameSite: "lax",
                 path: "/",
                 secure: process.env.NODE_ENV === "production",
             },

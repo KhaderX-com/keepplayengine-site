@@ -142,6 +142,30 @@ export async function sendFcmPush(
                                 sound: "default",
                             },
                         },
+                        webpush: {
+                            headers: {
+                                Urgency: "high",
+                            },
+                            notification: {
+                                icon: "/keepplay-logo2.png",
+                                badge: "/keepplay-logo2.png",
+                                requireInteraction: true,
+                            },
+                            fcm_options: {
+                                link: data?.url ?? "/admin",
+                            },
+                        },
+                        apns: {
+                            headers: {
+                                "apns-priority": "10",
+                            },
+                            payload: {
+                                aps: {
+                                    sound: "default",
+                                    badge: 1,
+                                },
+                            },
+                        },
                     },
                 }),
             },

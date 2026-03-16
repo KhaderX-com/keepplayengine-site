@@ -16,9 +16,6 @@ function validateCsrf(request: NextRequest): boolean {
         return true;
     }
 
-    // Origin must be present for state-changing requests
-    if (!origin) return false;
-
     // Build allowed origins from environment + host header
     const allowedOrigins = new Set<string>();
     if (process.env.NEXTAUTH_URL) {
@@ -27,6 +24,20 @@ function validateCsrf(request: NextRequest): boolean {
     if (host) {
         allowedOrigins.add(`https://${host}`);
         allowedOrigins.add(`http://${host}`); // dev only
+    }
+
+    // ── PWA / Installed App Support ──
+    // When the admin panel is installed as a PWA (Android, iOS, desktop),
+    // the standalone display mode may send requests with no Origin header
+    // (iOS Safari) or an origin of "null" (some Android/Chrome builds).
+    //
+    // Security rationale: Auth (step 1) runs BEFORE this check. Any request
+    // that reaches here already carries a valid, httpOnly+Lax admin session
+    // cookie. A rogue cross-site page cannot forge that cookie, so the CSRF
+    // attack vector is already neutralised. Allowing null/absent origin ONLY
+    // for authenticated sessions is equivalent to same-site cookie protection.
+    if (!origin || origin === "null") {
+        return true;
     }
 
     return allowedOrigins.has(origin);
