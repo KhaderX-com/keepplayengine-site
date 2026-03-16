@@ -142,6 +142,8 @@ export async function proxy(request: NextRequest) {
             pathname.startsWith("/static") ||
             pathname === "/sw.js" ||
             pathname === "/favicon.ico" ||
+            pathname === "/admin-icon-192.png" ||
+            pathname === "/admin-icon-512.png" ||
             pathname === "/admin/icon" ||
             pathname === "/admin/apple-icon" ||
             pathname === "/manifest.json" ||
@@ -266,6 +268,8 @@ export async function proxy(request: NextRequest) {
             pathname.startsWith("/static") ||
             pathname === "/sw.js" ||
             pathname === "/favicon.ico" ||
+            pathname === "/admin-icon-192.png" ||
+            pathname === "/admin-icon-512.png" ||
             pathname === "/admin/icon" ||
             pathname === "/admin/apple-icon" ||
             pathname === "/manifest.json" ||
