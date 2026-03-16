@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     description: "Secure administrative interface for KeepPlay Engine",
     robots: "noindex, nofollow",
     // PWA manifest served from same origin (middleware whitelists this path)
-    manifest: "/admin-manifest.json?v=5",
+    manifest: "/admin-manifest.json?v=6",
     appleWebApp: {
         capable: true,
         statusBarStyle: "default",
@@ -20,13 +20,14 @@ export const metadata: Metadata = {
     },
     icons: {
         icon: [
-            { url: "/keepplay-logo2.png?v=5", sizes: "512x512", type: "image/png" },
+            { url: "/admin-icon-192.png?v=1", sizes: "192x192", type: "image/png" },
+            { url: "/admin-icon-512.png?v=1", sizes: "512x512", type: "image/png" },
         ],
         shortcut: [
-            { url: "/keepplay-logo2.png?v=5", type: "image/png" },
+            { url: "/admin-icon-192.png?v=1", type: "image/png" },
         ],
         apple: [
-            { url: "/keepplay-logo2.png?v=5", sizes: "180x180", type: "image/png" },
+            { url: "/admin-icon-192.png?v=1", sizes: "180x180", type: "image/png" },
         ],
     },
 };
@@ -65,9 +66,10 @@ export default async function AdminLayout({
                     Next.js metadata.icons alone is sometimes insufficient on
                     subdomains / Cloudflare proxied routes, so we inject tags
                     directly too — same pattern as the root layout that works. */}
-                <link rel="icon" href="/keepplay-logo2.png?v=5" type="image/png" />
-                <link rel="shortcut icon" href="/keepplay-logo2.png?v=5" type="image/png" />
-                <link rel="apple-touch-icon" href="/keepplay-logo2.png?v=5" />
+                <link rel="icon" href="/admin-icon-192.png?v=1" type="image/png" sizes="192x192" />
+                <link rel="icon" href="/admin-icon-512.png?v=1" type="image/png" sizes="512x512" />
+                <link rel="shortcut icon" href="/admin-icon-192.png?v=1" type="image/png" />
+                <link rel="apple-touch-icon" href="/admin-icon-192.png?v=1" />
                 <meta name="mobile-web-app-capable" content="yes" />
                 <meta name="apple-mobile-web-app-capable" content="yes" />
             </head>

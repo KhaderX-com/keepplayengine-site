@@ -15,7 +15,7 @@ export const contentType = 'image/png';
 // Generates the apple-touch-icon for the admin panel PWA.
 // Next.js serves this as /admin/apple-icon.png automatically.
 export default function AppleIcon() {
-    const logoPath = join(process.cwd(), 'public', 'keepplay-logo2.png');
+    const logoPath = join(process.cwd(), 'public', 'admin-icon-192.png');
     const logoBuffer = readFileSync(logoPath);
     const logoBase64 = logoBuffer.toString('base64');
     const logoDataUri = `data:image/png;base64,${logoBase64}`;

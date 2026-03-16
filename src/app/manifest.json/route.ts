@@ -12,32 +12,33 @@ export async function GET(request: NextRequest) {
         description: isAdmin
             ? "Administrative panel for KeepPlay Engine"
             : "A Play-to-Earn Ecosystem That Never Runs Dry. Build technology that engages and excites players.",
+        id: isAdmin ? "/admin" : "/",
         start_url: isAdmin ? "/admin/login" : "/",
         display: "standalone",
         background_color: "#ffffff",
         theme_color: "#2563eb",
-        scope: "/",
+        scope: isAdmin ? "/admin/" : "/",
         icons: [
             {
-                src: "/keepplay-logo2.png",
+                src: isAdmin ? "/admin-icon-192.png" : "/keepplay-logo2.png",
                 sizes: "192x192",
                 type: "image/png",
                 purpose: "maskable any"
             },
             {
-                src: "/keepplay-logo2.png",
+                src: isAdmin ? "/admin-icon-512.png" : "/keepplay-logo2.png",
                 sizes: "512x512",
                 type: "image/png",
                 purpose: "maskable any"
             },
             {
-                src: "/keepplay-logo2.png",
+                src: isAdmin ? "/admin-icon-192.png" : "/keepplay-logo2.png",
                 sizes: "192x192",
                 type: "image/png",
                 purpose: "any"
             },
             {
-                src: "/keepplay-logo2.png",
+                src: isAdmin ? "/admin-icon-512.png" : "/keepplay-logo2.png",
                 sizes: "512x512",
                 type: "image/png",
                 purpose: "any"
@@ -56,7 +57,7 @@ export async function GET(request: NextRequest) {
                 url: "/admin/login",
                 icons: [
                     {
-                        src: "/keepplay-logo2.png",
+                        src: isAdmin ? "/admin-icon-512.png" : "/keepplay-logo2.png",
                         sizes: "512x512"
                     }
                 ]
