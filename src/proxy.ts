@@ -198,23 +198,17 @@ export async function proxy(request: NextRequest) {
             return NextResponse.redirect(new URL("/", mainSiteUrl));
         }
 
-        // Generate nonce for CSP (propagated to Next.js for inline scripts)
-        const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
         const requestHeaders = new Headers(request.headers);
-        requestHeaders.set("x-nonce", nonce);
         // M05: Propagate request ID to downstream handlers
         requestHeaders.set("x-request-id", requestId);
 
-        // H05: Only allow vercel.live in development
-        const vercelLive = process.env.NODE_ENV === "development" ? " https://vercel.live" : "";
-        // H08: Use nonce for styles instead of unsafe-inline
         const csp =
             "default-src 'self'; " +
-            `script-src 'self' 'nonce-${nonce}'${vercelLive}; ` +
-            `style-src 'self' 'unsafe-inline' 'nonce-${nonce}' https://fonts.googleapis.com; ` +
-            "font-src 'self' https://fonts.gstatic.com; " +
-            "img-src 'self' data: https: blob:; " +
-            `connect-src 'self' https://res.cloudinary.com ${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ""} https://public-pwa.vercel.app; ` +
+            "script-src 'self' 'unsafe-eval' 'unsafe-inline'; " +
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+            "font-src 'self' data: https://fonts.gstatic.com; " +
+            "img-src 'self' data: https:; " +
+            "connect-src 'self'; " +
             "frame-ancestors 'none'; " +
             "form-action 'self';";
 

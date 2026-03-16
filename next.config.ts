@@ -1,40 +1,28 @@
 import type { NextConfig } from "next";
 
-const enablePwaInDev = process.env.ENABLE_PWA_DEV === "true";
+const enablePwaInDev = process.env.ENABLE_PWA_DEV !== "false"; // default on for local PWA testing
 
 const withPWA = require("@ducanh2912/next-pwa").default({
   dest: "public",
-  // IMPORTANT: Keep this false.
-  // Admin routes send a strict CSP (nonce-based) which blocks next-pwa's inline
-  // registration snippet, causing the SW to never register and the app to be
-  // non-installable. We register the SW via an external script instead.
-  register: false,
+  register: true,
   skipWaiting: true,
   reloadOnOnline: true,
   // Avoid caching HTML during client-side navigation/start URL.
-  // We enable these now to allow PWA installation (offline capability required by browsers).
-  cacheStartUrl: true,
-  cacheOnFrontendNav: true,
-  // Service workers can interfere with HMR in dev, so we keep it off by default.
-  // Set ENABLE_PWA_DEV=true in your .env to test PWA locally.
+  // These are great for offline-first apps, but can easily cause stale chunk issues
+  // after a deployment (especially for authenticated/admin pages).
+  cacheStartUrl: false,
+  cacheOnFrontendNav: false,
+  // Service workers can interfere with HMR in dev; keep them on unless explicitly disabled.
+  // Set ENABLE_PWA_DEV=false in your .env to turn off locally.
   disable: process.env.NODE_ENV === "development" && !enablePwaInDev,
   workboxOptions: {
     cleanupOutdatedCaches: true,
     clientsClaim: true,
     skipWaiting: true,
     runtimeCaching: [
-      // NetworkFirst ensures we check for new content (so admin pages aren't stale),
-      // but falls back to cache if offline (satisfying PWA install requirements).
       {
         urlPattern: ({ request }: { request: Request }) => request.mode === "navigate",
-        handler: "NetworkFirst",
-        options: {
-          cacheName: "pages",
-          expiration: {
-            maxEntries: 32,
-            maxAgeSeconds: 24 * 60 * 60, // 24 hours
-          },
-        },
+        handler: "NetworkOnly",
       },
       {
         urlPattern: /^https:\/\/res\.cloudinary\.com\/.*/i,

@@ -8,8 +8,8 @@ export const metadata: Metadata = {
     title: "Admin Panel - KeepPlay Engine",
     description: "Secure administrative interface for KeepPlay Engine",
     robots: "noindex, nofollow",
-    // PWA manifest served from same origin (middleware whitelists this path)
-    manifest: "/admin-manifest.json?v=7",
+    // PWA manifest served from same origin so it works on localhost
+    manifest: "/admin-manifest.json",
     appleWebApp: {
         capable: true,
         statusBarStyle: "default",
@@ -20,14 +20,11 @@ export const metadata: Metadata = {
     },
     icons: {
         icon: [
-            { url: "/admin-icon-192.png?v=1", sizes: "192x192", type: "image/png" },
-            { url: "/admin-icon-512.png?v=1", sizes: "512x512", type: "image/png" },
-        ],
-        shortcut: [
-            { url: "/admin-icon-192.png?v=1", type: "image/png" },
+            { url: "/admin-icon-192.png", sizes: "192x192", type: "image/png" },
+            { url: "/admin-icon-512.png", sizes: "512x512", type: "image/png" },
         ],
         apple: [
-            { url: "/admin-icon-192.png?v=1", sizes: "180x180", type: "image/png" },
+            { url: "/admin-icon-192.png", sizes: "192x192", type: "image/png" },
         ],
     },
 };
@@ -61,18 +58,6 @@ export default async function AdminLayout({
 
     return (
         <SessionProvider session={session}>
-            <head>
-                {/* Explicit favicon links — force all browsers to use our logo.
-                    Next.js metadata.icons alone is sometimes insufficient on
-                    subdomains / Cloudflare proxied routes, so we inject tags
-                    directly too — same pattern as the root layout that works. */}
-                <link rel="icon" href="/admin-icon-192.png?v=1" type="image/png" sizes="192x192" />
-                <link rel="icon" href="/admin-icon-512.png?v=1" type="image/png" sizes="512x512" />
-                <link rel="shortcut icon" href="/admin-icon-192.png?v=1" type="image/png" />
-                <link rel="apple-touch-icon" href="/admin-icon-192.png?v=1" />
-                <meta name="mobile-web-app-capable" content="yes" />
-                <meta name="apple-mobile-web-app-capable" content="yes" />
-            </head>
             {children}
         </SessionProvider>
     );
