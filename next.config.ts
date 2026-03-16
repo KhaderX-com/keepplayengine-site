@@ -101,6 +101,18 @@ const nextConfig: NextConfig = {
   // Add empty turbopack config to silence Next.js 16 warning
   // The webpack config from next-pwa still works fine
   turbopack: {},
+  async rewrites() {
+    return {
+      beforeFiles: [
+        {
+          source: '/favicon.ico',
+          destination: '/keepplay-logo2.png',
+        },
+      ],
+      afterFiles: [],
+      fallback: [],
+    };
+  },
   async headers() {
     // Prevent service worker files from being cached across deployments.
     // If an old SW stays cached/active, users can see missing chunks/assets.

@@ -19,25 +19,13 @@ export async function GET(request: NextRequest) {
         scope: "/",
         icons: [
             {
-                src: "/icon-192.png",
-                sizes: "192x192",
-                type: "image/png",
-                purpose: "maskable any"
-            },
-            {
-                src: "/icon-512.png",
+                src: "/keepplay-logo2.png",
                 sizes: "512x512",
                 type: "image/png",
                 purpose: "maskable any"
             },
             {
-                src: "/icon-192.png",
-                sizes: "192x192",
-                type: "image/png",
-                purpose: "any"
-            },
-            {
-                src: "/icon-512.png",
+                src: "/keepplay-logo2.png",
                 sizes: "512x512",
                 type: "image/png",
                 purpose: "any"
@@ -56,8 +44,8 @@ export async function GET(request: NextRequest) {
                 url: "/admin/login",
                 icons: [
                     {
-                        src: "/icon-192.png",
-                        sizes: "192x192"
+                        src: "/keepplay-logo2.png",
+                        sizes: "512x512"
                     }
                 ]
             }

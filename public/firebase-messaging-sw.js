@@ -49,7 +49,7 @@ messaging.onBackgroundMessage((payload) => {
   const notificationTitle = payload.notification.title;
   const notificationOptions = {
     body: payload.notification.body,
-    icon: '/admin-icon-192.png', // custom icon
+    icon: '/keepplay-logo2.png', // custom icon
     data: payload.data
   };
 

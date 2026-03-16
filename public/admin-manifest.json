@@ -9,25 +9,13 @@
     "scope": "/admin/",
     "icons": [
         {
-            "src": "/admin-icon-192.png",
-            "sizes": "192x192",
-            "type": "image/png",
-            "purpose": "maskable any"
-        },
-        {
-            "src": "/admin-icon-512.png",
+            "src": "/keepplay-logo2.png",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "maskable any"
         },
         {
-            "src": "/admin-icon-192.png",
-            "sizes": "192x192",
-            "type": "image/png",
-            "purpose": "any"
-        },
-        {
-            "src": "/admin-icon-512.png",
+            "src": "/keepplay-logo2.png",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "any"
@@ -47,8 +35,8 @@
             "url": "/admin/login",
             "icons": [
                 {
-                    "src": "/admin-icon-192.png",
-                    "sizes": "192x192"
+                    "src": "/keepplay-logo2.png",
+                    "sizes": "512x512"
                 }
             ]
         }
