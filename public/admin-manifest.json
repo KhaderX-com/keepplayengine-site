@@ -2,7 +2,7 @@
     "name": "KeepPlay Engine - Admin Panel",
     "short_name": "KPE Admin",
     "description": "Administrative panel for KeepPlay Engine",
-    "id": "/admin",
+    "id": "/admin/",
     "start_url": "/admin/login",
     "display": "standalone",
     "background_color": "#ffffff",

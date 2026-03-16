@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
         description: isAdmin
             ? "Administrative panel for KeepPlay Engine"
             : "A Play-to-Earn Ecosystem That Never Runs Dry. Build technology that engages and excites players.",
-        id: isAdmin ? "/admin" : "/",
+        id: isAdmin ? "/admin/" : "/",
         start_url: isAdmin ? "/admin/login" : "/",
         display: "standalone",
         background_color: "#ffffff",

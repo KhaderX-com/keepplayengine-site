@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     description: "Secure administrative interface for KeepPlay Engine",
     robots: "noindex, nofollow",
     // PWA manifest served from same origin (middleware whitelists this path)
-    manifest: "/admin-manifest.json?v=6",
+    manifest: "/admin-manifest.json?v=7",
     appleWebApp: {
         capable: true,
         statusBarStyle: "default",
