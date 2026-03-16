@@ -53,6 +53,40 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_fcm_tokens: {
+        Row: {
+          created_at: string
+          device_type: string | null
+          id: string
+          token: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_type?: string | null
+          id?: string
+          token: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_type?: string | null
+          id?: string
+          token?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_fcm_tokens_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       ad_events: {
         Row: {
           ad_network: Database["public"]["Enums"]["ad_network"]

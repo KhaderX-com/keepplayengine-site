@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { User, Mail, Shield, Calendar, CheckCircle2 } from "lucide-react";
+import NotificationSettings from "@/components/admin/NotificationSettings";
 
 export default async function ProfilePage() {
     const session = await getServerSession(authOptions);
@@ -146,6 +147,8 @@ export default async function ProfilePage() {
                                     </div>
                                 </CardContent>
                             </Card>
+
+                            <NotificationSettings />
 
                             {/* Security Notice */}
                             <Card className="border-blue-200 bg-blue-50">
