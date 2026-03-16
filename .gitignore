@@ -93,6 +93,9 @@ docs/
 # Scripts (contains admin creation script - keep local only)
 /scripts/
 scripts/
+!/scripts/
+/scripts/*
+!/scripts/sync-pwa-icons.js
 
 # VSCode workspace settings (may contain local paths)
 /.vscode/
