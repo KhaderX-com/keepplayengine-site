@@ -233,7 +233,7 @@ export default function AdminSidebar({ activeSessions = 0, isMobileMenuOpen, onC
 
             {/* Sidebar - Mobile-First Responsive */}
             <aside
-                className={`fixed left-0 top-0 h-screen bg-linear-to-b from-gray-900 via-gray-900 to-gray-800 border-r border-gray-700 transition-all duration-300 z-50 
+                className={`fixed left-0 top-0 h-screen flex flex-col bg-linear-to-b from-gray-900 via-gray-900 to-gray-800 border-r border-gray-700 transition-all duration-300 z-50 overflow-hidden
                     ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
                     ${isCollapsed ? "w-20" : "w-72 sm:w-80 lg:w-64"}`}
             >
@@ -292,7 +292,7 @@ export default function AdminSidebar({ activeSessions = 0, isMobileMenuOpen, onC
                 </div>
 
                 {/* Navigation - Mobile Optimized with Touch Support */}
-                <nav className="px-2 lg:px-3 py-4 lg:py-6 space-y-1 overflow-y-auto h-[calc(100vh-4rem)] lg:h-[calc(100vh-5rem)] overscroll-contain">
+                <nav className="flex-1 min-h-0 px-2 lg:px-3 py-4 lg:py-6 space-y-1 overflow-y-auto overscroll-contain">
                     {navigation.map((item, navIndex) => {
                         const isExpanded = navIndex === 0 ? isAdminExpanded : navIndex === 1 ? isTasksExpanded : isKpeExpanded;
                         const setExpanded = navIndex === 0 ? setIsAdminExpanded : navIndex === 1 ? setIsTasksExpanded : setIsKpeExpanded;
