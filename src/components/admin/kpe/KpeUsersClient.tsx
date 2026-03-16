@@ -48,10 +48,19 @@ export default function KpeUsersClient() {
 
     // Filters
     const [search, setSearch] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState<string>("all");
     const [sortBy, setSortBy] = useState("created_at");
     const [sortOrder, setSortOrder] = useState("desc");
     const [offset, setOffset] = useState(0);
+
+    // Debounce search input
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearch(search);
+        }, 500);
+        return () => clearTimeout(handler);
+    }, [search]);
 
     const fetchUsers = useCallback(async () => {
         setLoading(true);
@@ -63,11 +72,14 @@ export default function KpeUsersClient() {
                 sort_by: sortBy,
                 sort_order: sortOrder,
             });
-            if (search) params.set("search", search);
+            if (debouncedSearch) params.set("search", debouncedSearch);
             if (statusFilter !== "all") params.set("status", statusFilter);
 
             const res = await fetch(`/api/kpe/users?${params.toString()}`);
             if (!res.ok) {
+                if (res.status === 429) {
+                    throw new Error("Too many requests. Please wait a moment.");
+                }
                 throw new Error(`Failed to fetch users: ${res.status}`);
             }
             const json: KpeUserListResponse = await res.json();
@@ -77,7 +89,7 @@ export default function KpeUsersClient() {
         } finally {
             setLoading(false);
         }
-    }, [offset, sortBy, sortOrder, search, statusFilter]);
+    }, [offset, sortBy, sortOrder, debouncedSearch, statusFilter]);
 
     useEffect(() => {
         fetchUsers();
@@ -86,7 +98,7 @@ export default function KpeUsersClient() {
     // Reset offset when filters change
     useEffect(() => {
         setOffset(0);
-    }, [search, statusFilter]);
+    }, [debouncedSearch, statusFilter]);
 
     const totalPages = data ? Math.ceil(data.total / PAGE_SIZE) : 0;
     const currentPage = Math.floor(offset / PAGE_SIZE) + 1;

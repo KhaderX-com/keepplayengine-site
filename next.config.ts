@@ -1,11 +1,26 @@
 import type { NextConfig } from "next";
 
+const enablePwaInDev = process.env.ENABLE_PWA_DEV === "true";
+
 const withPWA = require("@ducanh2912/next-pwa").default({
   dest: "public",
   register: true,
-  skipWaiting: false,
-  disable: process.env.NODE_ENV === "development",
+  skipWaiting: true,
+  // Service workers can interfere with HMR in dev, so we keep it off by default.
+  // Set ENABLE_PWA_DEV=true in your .env to test PWA locally.
+  disable: process.env.NODE_ENV === "development" && !enablePwaInDev,
   runtimeCaching: [
+    {
+      urlPattern: /^https:\/\/res\.cloudinary\.com\/.*/i,
+      handler: "CacheFirst",
+      options: {
+        cacheName: "cloudinary-images",
+        expiration: {
+          maxEntries: 64,
+          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+        },
+      },
+    },
     {
       urlPattern: /^https:\/\/fonts\.(?:gstatic)\.com\/.*/i,
       handler: "CacheFirst",
@@ -52,7 +67,7 @@ const withPWA = require("@ducanh2912/next-pwa").default({
     },
     {
       urlPattern: /\/_next\/image\?url=.+$/i,
-      handler: "StaleWhileRevalidate",
+      handler: "NetworkFirst",
       options: {
         cacheName: "next-image",
         expiration: {
