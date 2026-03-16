@@ -3,11 +3,6 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET(request: NextRequest) {
     const host = request.headers.get('host') || '';
     const isAdmin = host.includes('admin.');
-    const isLocal = host.includes('localhost') || host.includes('127.0.0.1');
-    const protocol = isLocal ? 'http' : 'https';
-    const origin = `${protocol}://${host}`;
-    const adminIcon192 = `${origin}/admin/pwa-icon-192?v=20260316-6`;
-    const adminIcon512 = `${origin}/admin/pwa-icon-512?v=20260316-6`;
 
     const manifest = {
         name: isAdmin
@@ -25,25 +20,25 @@ export async function GET(request: NextRequest) {
         scope: isAdmin ? "/admin/" : "/",
         icons: [
             {
-                src: isAdmin ? adminIcon192 : "/keepplay-logo2.png",
+                src: isAdmin ? "https://public-pwa.vercel.app/admin-icon-192-20260316-3.png" : "/keepplay-logo2.png",
                 sizes: "192x192",
                 type: "image/png",
                 purpose: "maskable any"
             },
             {
-                src: isAdmin ? adminIcon512 : "/keepplay-logo2.png",
+                src: isAdmin ? "https://public-pwa.vercel.app/admin-icon-512-20260316-3.png" : "/keepplay-logo2.png",
                 sizes: "512x512",
                 type: "image/png",
                 purpose: "maskable any"
             },
             {
-                src: isAdmin ? adminIcon192 : "/keepplay-logo2.png",
+                src: isAdmin ? "https://public-pwa.vercel.app/admin-icon-192-20260316-3.png" : "/keepplay-logo2.png",
                 sizes: "192x192",
                 type: "image/png",
                 purpose: "any"
             },
             {
-                src: isAdmin ? adminIcon512 : "/keepplay-logo2.png",
+                src: isAdmin ? "https://public-pwa.vercel.app/admin-icon-512-20260316-3.png" : "/keepplay-logo2.png",
                 sizes: "512x512",
                 type: "image/png",
                 purpose: "any"
@@ -62,7 +57,7 @@ export async function GET(request: NextRequest) {
                 url: "/admin/login",
                 icons: [
                     {
-                        src: "/admin-icon-512.png",
+                        src: "https://public-pwa.vercel.app/admin-icon-512-20260316-3.png",
                         sizes: "512x512"
                     }
                 ]
