@@ -5,11 +5,12 @@
   "scripts": {
     "dev": "next dev --webpack",
     "dev:turbo": "next dev",
-    "build": "next build --webpack",
+    "build": "node scripts/sync-pwa-icons.js && next build --webpack",
     "start": "next start",
     "lint": "eslint",
     "admin:create": "tsx scripts/create-admin.ts",
-    "icons:generate": "node scripts/generate-icons.js"
+    "icons:generate": "node scripts/generate-icons.js",
+    "icons:sync": "node scripts/sync-pwa-icons.js"
   },
   "dependencies": {
     "@auth/core": "^0.41.1",
