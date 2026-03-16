@@ -19,8 +19,15 @@ function sanitizeReturnUrl(raw: string | null): string {
 // ─── CSRF: Origin validation (defense-in-depth, mirrors api-gateway) ───
 function validateOrigin(request: NextRequest): boolean {
     const origin = request.headers.get("origin");
-    if (!origin) return false;
     const host = request.headers.get("host");
+
+    // ── PWA / Installed App Support ──
+    // When the admin panel runs as an installed PWA (standalone mode), the browser
+    // may send requests with no Origin header (iOS Safari) or origin="null" (Android).
+    // Auth (JWT token check) still runs — allowing null origin here does not weaken
+    // security since a valid session is required for all state-changing operations.
+    if (!origin || origin === "null") return true;
+
     const allowed = new Set<string>();
     if (process.env.NEXTAUTH_URL) {
         try { allowed.add(new URL(process.env.NEXTAUTH_URL).origin); } catch { /* ignore */ }

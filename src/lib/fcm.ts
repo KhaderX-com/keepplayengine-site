@@ -19,8 +19,9 @@ function base64url(buf: Uint8Array): string {
 
 async function importPrivateKey(pem: string): Promise<CryptoKey> {
     const stripped = pem
-        .replace(/-----BEGIN PRIVATE KEY-----/, "")
-        .replace(/-----END PRIVATE KEY-----/, "")
+        .replace(/-----BEGIN PRIVATE KEY-----/g, "")
+        .replace(/-----END PRIVATE KEY-----/g, "")
+        .replace(/\\n/g, "")
         .replace(/\s/g, "");
     const der = Uint8Array.from(atob(stripped), (c) => c.charCodeAt(0));
     return crypto.subtle.importKey(
