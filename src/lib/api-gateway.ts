@@ -195,9 +195,37 @@ export function createApiHandler<T = unknown>(
             const ip = extractIp(request);
             const userAgent = request.headers.get("user-agent");
 
-            // 1. Rate limiting (distributed via Supabase)
+            // 1. Authentication (when required)
+            // We do this before rate limiting so we can rate limit by admin user id.
+            let session: GatewaySession | null = null;
+            if (!options.skipAuth) {
+                const rawSession = await getServerSession(authOptions);
+                if (!rawSession?.user?.id || !rawSession?.user?.email) {
+                    return NextResponse.json(
+                        { error: "Unauthorized" },
+                        { status: 401 },
+                    );
+                }
+                session = rawSession as GatewaySession;
+
+                // 2. Authorization (role check)
+                if (options.requiredRoles?.length) {
+                    const userRole = session.user.role;
+                    if (!options.requiredRoles.includes(userRole as AdminRole)) {
+                        return NextResponse.json(
+                            { error: "Forbidden" },
+                            { status: 403 },
+                        );
+                    }
+                }
+            }
+
+            // 3. Rate limiting (distributed via Supabase)
             const rl = options.rateLimit ?? { limit: 60, windowMs: 60_000 };
-            const rateLimitKey = `${ip}:${request.nextUrl.pathname}`;
+            const rateLimitIdentity = session?.user?.id
+                ? `user:${session.user.id}`
+                : `ip:${ip}`;
+            const rateLimitKey = `${rateLimitIdentity}:${request.nextUrl.pathname}`;
             const { allowed, remaining, resetAt } = await checkRateLimit(
                 rateLimitKey,
                 rl.limit,
@@ -213,7 +241,7 @@ export function createApiHandler<T = unknown>(
                 return res;
             }
 
-            // 2. CSRF validation
+            // 4. CSRF validation
             if (!options.skipCsrf && !validateCsrf(request)) {
                 return NextResponse.json(
                     { error: "Invalid origin" },
@@ -221,36 +249,12 @@ export function createApiHandler<T = unknown>(
                 );
             }
 
-            // 3. Content-Type validation
+            // 5. Content-Type validation
             if (!options.skipContentType && !validateContentType(request)) {
                 return NextResponse.json(
                     { error: "Content-Type must be application/json" },
                     { status: 415 },
                 );
-            }
-
-            // 4. Authentication
-            let session: GatewaySession | null = null;
-            if (!options.skipAuth) {
-                const rawSession = await getServerSession(authOptions);
-                if (!rawSession?.user?.id || !rawSession?.user?.email) {
-                    return NextResponse.json(
-                        { error: "Unauthorized" },
-                        { status: 401 },
-                    );
-                }
-                session = rawSession as GatewaySession;
-
-                // 5. Authorization (role check)
-                if (options.requiredRoles?.length) {
-                    const userRole = session.user.role;
-                    if (!options.requiredRoles.includes(userRole as AdminRole)) {
-                        return NextResponse.json(
-                            { error: "Forbidden" },
-                            { status: 403 },
-                        );
-                    }
-                }
             }
 
             // 6. Body validation

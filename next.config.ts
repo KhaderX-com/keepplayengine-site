@@ -15,6 +15,9 @@ const withPWA = require("@ducanh2912/next-pwa").default({
       handler: "CacheFirst",
       options: {
         cacheName: "cloudinary-images",
+        cacheableResponse: {
+          statuses: [0, 200],
+        },
         expiration: {
           maxEntries: 64,
           maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
@@ -26,6 +29,9 @@ const withPWA = require("@ducanh2912/next-pwa").default({
       handler: "CacheFirst",
       options: {
         cacheName: "google-fonts-webfonts",
+        cacheableResponse: {
+          statuses: [0, 200],
+        },
         expiration: {
           maxEntries: 4,
           maxAgeSeconds: 365 * 24 * 60 * 60, // 365 days
@@ -37,6 +43,9 @@ const withPWA = require("@ducanh2912/next-pwa").default({
       handler: "StaleWhileRevalidate",
       options: {
         cacheName: "google-fonts-stylesheets",
+        cacheableResponse: {
+          statuses: [0, 200],
+        },
         expiration: {
           maxEntries: 4,
           maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
@@ -147,27 +156,30 @@ const withPWA = require("@ducanh2912/next-pwa").default({
     },
     {
       urlPattern: /\/api\/.*$/i,
-      handler: "NetworkFirst",
+      // Do not cache API responses (admin data changes frequently and is rate limited).
+      // Respect upstream `Cache-Control: no-store`.
+      handler: "NetworkOnly",
       method: "GET",
       options: {
         cacheName: "apis",
-        expiration: {
-          maxEntries: 16,
-          maxAgeSeconds: 24 * 60 * 60, // 24 hours
-        },
-        networkTimeoutSeconds: 10, // fall back to cache if api does not response within 10 seconds
       },
     },
     {
-      urlPattern: /.*/i,
+      // Cache only non-admin navigations. Caching HTML for admin routes can cause
+      // stale build mismatches after deploy (cached HTML references old chunk URLs).
+      urlPattern: ({ request, url }: { request: Request; url: URL }) =>
+        request.mode === "navigate" && !url.pathname.startsWith("/admin"),
       handler: "NetworkFirst",
       options: {
-        cacheName: "others",
+        cacheName: "pages",
+        cacheableResponse: {
+          statuses: [0, 200],
+        },
         expiration: {
           maxEntries: 32,
           maxAgeSeconds: 24 * 60 * 60, // 24 hours
         },
-        networkTimeoutSeconds: 10,
+        networkTimeoutSeconds: 3,
       },
     },
   ],
@@ -179,6 +191,10 @@ const nextConfig: NextConfig = {
   // The webpack config from next-pwa still works fine
   turbopack: {},
   images: {
+    // Cloudinary-hosted SVG logos are used across the site. Next/Image blocks remote
+    // SVGs by default unless explicitly enabled.
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     remotePatterns: [
       {
         protocol: 'https',
