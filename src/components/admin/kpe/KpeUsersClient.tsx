@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import type { KpeUserListItem, KpeUserListResponse } from "@/lib/supabase-kpe";
 import { Input } from "@/components/ui/input";
@@ -45,6 +45,8 @@ export default function KpeUsersClient() {
     const [data, setData] = useState<KpeUserListResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const abortRef = useRef<AbortController | null>(null);
 
     // Filters
     const [search, setSearch] = useState("");
@@ -63,6 +65,15 @@ export default function KpeUsersClient() {
     }, [search]);
 
     const fetchUsers = useCallback(async () => {
+        // Cancel any in-flight request and pending retries
+        if (retryTimerRef.current) {
+            clearTimeout(retryTimerRef.current);
+            retryTimerRef.current = null;
+        }
+        abortRef.current?.abort();
+        const controller = new AbortController();
+        abortRef.current = controller;
+
         setLoading(true);
         setError(null);
         try {
@@ -75,16 +86,38 @@ export default function KpeUsersClient() {
             if (debouncedSearch) params.set("search", debouncedSearch);
             if (statusFilter !== "all") params.set("status", statusFilter);
 
-            const res = await fetch(`/api/kpe/users?${params.toString()}`);
+            const res = await fetch(`/api/kpe/users?${params.toString()}`,
+                {
+                    cache: "no-store",
+                    headers: { "Cache-Control": "no-store" },
+                    signal: controller.signal,
+                },
+            );
             if (!res.ok) {
                 if (res.status === 429) {
-                    throw new Error("Too many requests. Please wait a moment.");
+                    const retryAfterRaw = res.headers.get("Retry-After");
+                    const retryAfter = Math.min(
+                        Math.max(parseInt(retryAfterRaw ?? "5", 10) || 5, 1),
+                        60,
+                    );
+                    const source = res.headers.get("X-RateLimit-Source") ?? "unknown";
+
+                    setError(`Too many requests (source: ${source}). Retrying in ${retryAfter}s...`);
+                    setLoading(false);
+
+                    // Backoff then retry once with current filters.
+                    retryTimerRef.current = setTimeout(() => {
+                        void fetchUsers();
+                    }, retryAfter * 1000);
+                    return;
                 }
                 throw new Error(`Failed to fetch users: ${res.status}`);
             }
             const json: KpeUserListResponse = await res.json();
             setData(json);
         } catch (err) {
+            // Ignore aborts (happen during fast filter changes)
+            if (err instanceof DOMException && err.name === "AbortError") return;
             setError(err instanceof Error ? err.message : "Unknown error");
         } finally {
             setLoading(false);
@@ -95,15 +128,19 @@ export default function KpeUsersClient() {
         fetchUsers();
     }, [fetchUsers]);
 
-    // Reset offset when filters change
+    // Cleanup
     useEffect(() => {
-        setOffset(0);
-    }, [debouncedSearch, statusFilter]);
+        return () => {
+            if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+            abortRef.current?.abort();
+        };
+    }, []);
 
     const totalPages = data ? Math.ceil(data.total / PAGE_SIZE) : 0;
     const currentPage = Math.floor(offset / PAGE_SIZE) + 1;
 
     const handleSort = (field: string) => {
+        setOffset(0);
         if (sortBy === field) {
             setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
         } else {
@@ -153,13 +190,22 @@ export default function KpeUsersClient() {
                         <Input
                             type="text"
                             value={search}
-                            onChange={(e) => setSearch(e.target.value)}
+                            onChange={(e) => {
+                                setOffset(0);
+                                setSearch(e.target.value);
+                            }}
                             placeholder="Search by ad ID..."
                             className="pl-9"
                         />
                     </div>
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                        <SelectTrigger className="w-full sm:w-[180px]">
+                    <Select
+                        value={statusFilter}
+                        onValueChange={(value) => {
+                            setOffset(0);
+                            setStatusFilter(value);
+                        }}
+                    >
+                        <SelectTrigger className="w-full sm:w-45">
                             <SelectValue placeholder="All Statuses" />
                         </SelectTrigger>
                         <SelectContent>
@@ -188,7 +234,7 @@ export default function KpeUsersClient() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="w-[200px]">
+                            <TableHead className="w-50">
                                 <button onClick={() => handleSort("ad_id")} className="flex items-center gap-1 hover:text-gray-900">
                                     Ad ID <ArrowUpDown className="w-3 h-3" />
                                 </button>

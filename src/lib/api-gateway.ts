@@ -238,6 +238,8 @@ export function createApiHandler<T = unknown>(
                 );
                 res.headers.set("Retry-After", String(Math.ceil((resetAt - Date.now()) / 1000)));
                 res.headers.set("X-RateLimit-Remaining", "0");
+                res.headers.set("X-RateLimit-Source", "gateway");
+                res.headers.set("X-RateLimit-Identity", rateLimitIdentity);
                 return res;
             }
 

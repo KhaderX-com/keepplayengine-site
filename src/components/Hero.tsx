@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 export default function Hero() {
     return (
         <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-white pt-16 sm:pt-20">
@@ -35,11 +33,12 @@ export default function Hero() {
                     {/* Right Content - Logo */}
                     <div className="relative flex items-center justify-center mt-6 lg:mt-0">
                         <div className="relative w-full max-w-xs sm:max-w-sm md:max-w-md">
-                            <Image
+                            <img
                                 src="https://res.cloudinary.com/destej60y/image/upload/v1766745807/Logo-transparent_icqnyx.svg"
                                 alt="KeepPlay Engine"
                                 width={500}
                                 height={500}
+                                loading="eager"
                                 className="w-full h-auto"
                             />
                         </div>

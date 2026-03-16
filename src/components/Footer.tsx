@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Facebook, Instagram } from "lucide-react";
 
@@ -58,11 +57,12 @@ export default function Footer() {
                     {/* Brand Section */}
                     <div className="col-span-2 lg:col-span-2">
                         <Link href="/" className="flex items-center space-x-2 sm:space-x-3 mb-3 sm:mb-4">
-                            <Image
+                            <img
                                 src="https://res.cloudinary.com/destej60y/image/upload/v1766745807/Logo-transparent_icqnyx.svg"
                                 alt="KeepPlay Engine Logo"
                                 width={40}
                                 height={40}
+                                loading="eager"
                                 className="h-8 sm:h-10 w-auto brightness-0 invert"
                             />
                             <span className="text-lg sm:text-xl font-bold text-white">KeepPlay Engine</span>

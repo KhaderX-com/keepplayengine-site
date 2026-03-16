@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import type { KpeUserDetail } from "@/lib/supabase-kpe";
 import { Badge } from "@/components/ui/badge";
@@ -45,25 +45,62 @@ export default function KpeUserDetailClient({ userId }: Props) {
     const [data, setData] = useState<KpeUserDetail | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const abortRef = useRef<AbortController | null>(null);
 
     useEffect(() => {
         async function fetchUser() {
+            if (retryTimerRef.current) {
+                clearTimeout(retryTimerRef.current);
+                retryTimerRef.current = null;
+            }
+            abortRef.current?.abort();
+            const controller = new AbortController();
+            abortRef.current = controller;
+
             setLoading(true);
             setError(null);
             try {
-                const res = await fetch(`/api/kpe/users/${userId}`);
+                const res = await fetch(`/api/kpe/users/${userId}`,
+                    {
+                        cache: "no-store",
+                        headers: { "Cache-Control": "no-store" },
+                        signal: controller.signal,
+                    },
+                );
                 if (!res.ok) {
+                    if (res.status === 429) {
+                        const retryAfterRaw = res.headers.get("Retry-After");
+                        const retryAfter = Math.min(
+                            Math.max(parseInt(retryAfterRaw ?? "5", 10) || 5, 1),
+                            60,
+                        );
+                        const source = res.headers.get("X-RateLimit-Source") ?? "unknown";
+
+                        setError(`Too many requests (source: ${source}). Retrying in ${retryAfter}s...`);
+                        setLoading(false);
+                        retryTimerRef.current = setTimeout(() => {
+                            void fetchUser();
+                        }, retryAfter * 1000);
+                        return;
+                    }
                     throw new Error(`Failed to fetch user: ${res.status}`);
                 }
                 const json: KpeUserDetail = await res.json();
                 setData(json);
             } catch (err) {
+                if (err instanceof DOMException && err.name === "AbortError") return;
                 setError(err instanceof Error ? err.message : "Unknown error");
             } finally {
                 setLoading(false);
             }
         }
         fetchUser();
+
+        return () => {
+            if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+            abortRef.current?.abort();
+        };
     }, [userId]);
 
     if (loading) {

@@ -202,6 +202,7 @@ export function createKpeApiHandler<T = unknown>(
                     { status: 429 },
                 );
                 res.headers.set("Retry-After", String(kpeRl.retryAfter));
+                res.headers.set("X-RateLimit-Source", "kpe");
                 return res;
             }
 

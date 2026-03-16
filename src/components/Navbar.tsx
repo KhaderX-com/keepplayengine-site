@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -19,12 +18,12 @@ export default function Navbar() {
                 <div className="flex items-center justify-between h-16 sm:h-20">
                     {/* Logo */}
                     <Link href="/" className="flex items-center space-x-2 sm:space-x-3">
-                        <Image
+                        <img
                             src="https://res.cloudinary.com/destej60y/image/upload/v1766745807/Logo-transparent_icqnyx.svg"
                             alt="KeepPlay Engine Logo"
                             width={50}
                             height={50}
-                            priority
+                            loading="eager"
                             className="h-8 sm:h-10 w-auto"
                         />
                         <span className="text-base sm:text-xl font-bold text-gray-900">KeepPlay Engine</span>
