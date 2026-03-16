@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     title: "Admin Panel - KeepPlay Engine",
     description: "Secure administrative interface for KeepPlay Engine",
     robots: "noindex, nofollow",
-    manifest: "https://public-pwa.vercel.app/admin-manifest.json?v=20260316-4",
+    manifest: "https://public-pwa.vercel.app/admin-manifest.json?v=20260316-8",
     appleWebApp: {
         capable: true,
         statusBarStyle: "default",
