@@ -1,24 +1,6 @@
 import type { NextConfig } from "next";
-import withPWA from "next-pwa";
 
-const nextConfig: NextConfig = {
-  /* config options here */
-  // Add empty turbopack config to silence Next.js 16 warning
-  // The webpack config from next-pwa still works fine
-  turbopack: {},
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'res.cloudinary.com',
-        port: '',
-        pathname: '/destej60y/**',
-      },
-    ],
-  },
-};
-
-const pwaConfig = withPWA({
+const withPWA = require("@ducanh2912/next-pwa").default({
   dest: "public",
   register: true,
   skipWaiting: false,
@@ -176,4 +158,21 @@ const pwaConfig = withPWA({
   ],
 });
 
-export default pwaConfig(nextConfig);
+const nextConfig: NextConfig = {
+  /* config options here */
+  // Add empty turbopack config to silence Next.js 16 warning
+  // The webpack config from next-pwa still works fine
+  turbopack: {},
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+        port: '',
+        pathname: '/destej60y/**',
+      },
+    ],
+  },
+};
+
+export default withPWA(nextConfig);
