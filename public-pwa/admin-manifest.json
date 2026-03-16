@@ -9,25 +9,25 @@
     "scope": "https://admin.keepplayengine.com/",
     "icons": [
         {
-            "src": "https://public-pwa.vercel.app/admin-icon-192-20260316-2.png",
+            "src": "https://public-pwa.vercel.app/admin-icon-192-20260316-3.png",
             "sizes": "192x192",
             "type": "image/png",
             "purpose": "any"
         },
         {
-            "src": "https://public-pwa.vercel.app/admin-icon-512-20260316-2.png",
+            "src": "https://public-pwa.vercel.app/admin-icon-512-20260316-3.png",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "any"
         },
         {
-            "src": "https://public-pwa.vercel.app/admin-icon-192-20260316-2.png",
+            "src": "https://public-pwa.vercel.app/admin-icon-192-20260316-3.png",
             "sizes": "192x192",
             "type": "image/png",
             "purpose": "maskable"
         },
         {
-            "src": "https://public-pwa.vercel.app/admin-icon-512-20260316-2.png",
+            "src": "https://public-pwa.vercel.app/admin-icon-512-20260316-3.png",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "maskable"
@@ -47,11 +47,11 @@
             "url": "https://admin.keepplayengine.com/admin/login",
             "icons": [
                 {
-                    "src": "https://public-pwa.vercel.app/admin-icon-192-20260316-2.png",
+                    "src": "https://public-pwa.vercel.app/admin-icon-192-20260316-3.png",
                     "sizes": "192x192"
                 },
                 {
-                    "src": "https://public-pwa.vercel.app/admin-icon-512-20260316-2.png",
+                    "src": "https://public-pwa.vercel.app/admin-icon-512-20260316-3.png",
                     "sizes": "512x512"
                 }
             ]
