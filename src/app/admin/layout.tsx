@@ -8,8 +8,8 @@ export const metadata: Metadata = {
     title: "Admin Panel - KeepPlay Engine",
     description: "Secure administrative interface for KeepPlay Engine",
     robots: "noindex, nofollow",
-    // PWA manifest served from main domain to bypass Cloudflare Access on admin.
-    manifest: "https://keepplayengine.com/admin-manifest.json?v=4",
+    // PWA manifest served from same origin (middleware whitelists this path)
+    manifest: "/admin-manifest.json?v=5",
     appleWebApp: {
         capable: true,
         statusBarStyle: "default",
@@ -20,13 +20,13 @@ export const metadata: Metadata = {
     },
     icons: {
         icon: [
-            { url: "/keepplay-logo2.png?v=2", sizes: "512x512", type: "image/png" },
+            { url: "/keepplay-logo2.png?v=5", sizes: "512x512", type: "image/png" },
         ],
         shortcut: [
-            { url: "/keepplay-logo2.png?v=2", type: "image/png" },
+            { url: "/keepplay-logo2.png?v=5", type: "image/png" },
         ],
         apple: [
-            { url: "/keepplay-logo2.png?v=2", sizes: "180x180", type: "image/png" },
+            { url: "/keepplay-logo2.png?v=5", sizes: "180x180", type: "image/png" },
         ],
     },
 };
@@ -65,9 +65,9 @@ export default async function AdminLayout({
                     Next.js metadata.icons alone is sometimes insufficient on
                     subdomains / Cloudflare proxied routes, so we inject tags
                     directly too — same pattern as the root layout that works. */}
-                <link rel="icon" href="/keepplay-logo2.png?v=2" type="image/png" />
-                <link rel="shortcut icon" href="/keepplay-logo2.png?v=2" type="image/png" />
-                <link rel="apple-touch-icon" href="/keepplay-logo2.png?v=2" />
+                <link rel="icon" href="/keepplay-logo2.png?v=5" type="image/png" />
+                <link rel="shortcut icon" href="/keepplay-logo2.png?v=5" type="image/png" />
+                <link rel="apple-touch-icon" href="/keepplay-logo2.png?v=5" />
                 <meta name="mobile-web-app-capable" content="yes" />
                 <meta name="apple-mobile-web-app-capable" content="yes" />
             </head>

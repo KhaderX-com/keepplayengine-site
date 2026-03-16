@@ -139,7 +139,12 @@ export async function proxy(request: NextRequest) {
             pathname.startsWith("/api/auth") ||
             pathname.startsWith("/api/webauthn") ||
             pathname.startsWith("/_next") ||
-            pathname.startsWith("/static")
+            pathname.startsWith("/static") ||
+            pathname === "/sw.js" ||
+            pathname === "/favicon.ico" ||
+            pathname === "/manifest.json" ||
+            pathname === "/admin-manifest.json" ||
+            pathname === "/firebase-messaging-sw.js"
         ) {
             const earlyResponse = NextResponse.next();
             if (isApiRoute) addCorsHeaders(earlyResponse, request);
@@ -262,7 +267,12 @@ export async function proxy(request: NextRequest) {
             pathname.startsWith("/api/auth") ||
             pathname.startsWith("/api/webauthn") ||
             pathname.startsWith("/_next") ||
-            pathname.startsWith("/static")
+            pathname.startsWith("/static") ||
+            pathname === "/sw.js" ||
+            pathname === "/favicon.ico" ||
+            pathname === "/manifest.json" ||
+            pathname === "/admin-manifest.json" ||
+            pathname === "/firebase-messaging-sw.js"
         ) {
             const earlyResponse = NextResponse.next();
             if (isApiRoute) addCorsHeaders(earlyResponse, request);
