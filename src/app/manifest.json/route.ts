@@ -20,25 +20,25 @@ export async function GET(request: NextRequest) {
         scope: isAdmin ? "/admin/" : "/",
         icons: [
             {
-                src: isAdmin ? "https://public-pwa.vercel.app/admin-icon-192-20260316-1.png" : "/keepplay-logo2.png",
+                src: isAdmin ? "https://public-pwa.vercel.app/admin-icon-192-20260316-2.png" : "/keepplay-logo2.png",
                 sizes: "192x192",
                 type: "image/png",
                 purpose: "maskable any"
             },
             {
-                src: isAdmin ? "https://public-pwa.vercel.app/admin-icon-512-20260316-1.png" : "/keepplay-logo2.png",
+                src: isAdmin ? "https://public-pwa.vercel.app/admin-icon-512-20260316-2.png" : "/keepplay-logo2.png",
                 sizes: "512x512",
                 type: "image/png",
                 purpose: "maskable any"
             },
             {
-                src: isAdmin ? "https://public-pwa.vercel.app/admin-icon-192-20260316-1.png" : "/keepplay-logo2.png",
+                src: isAdmin ? "https://public-pwa.vercel.app/admin-icon-192-20260316-2.png" : "/keepplay-logo2.png",
                 sizes: "192x192",
                 type: "image/png",
                 purpose: "any"
             },
             {
-                src: isAdmin ? "https://public-pwa.vercel.app/admin-icon-512-20260316-1.png" : "/keepplay-logo2.png",
+                src: isAdmin ? "https://public-pwa.vercel.app/admin-icon-512-20260316-2.png" : "/keepplay-logo2.png",
                 sizes: "512x512",
                 type: "image/png",
                 purpose: "any"
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
                 url: "/admin/login",
                 icons: [
                     {
-                        src: "https://public-pwa.vercel.app/admin-icon-512-20260316-1.png",
+                        src: "https://public-pwa.vercel.app/admin-icon-512-20260316-2.png",
                         sizes: "512x512"
                     }
                 ]
