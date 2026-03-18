@@ -1,6 +1,16 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@keyframes heroFloat {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-18px); }
+}
+
+@keyframes heroPulse {
+  0%, 100% { opacity: 0.2; transform: scale(0.95); }
+  50%       { opacity: 0.5; transform: scale(1.05); }
+}
+
 /* stylelint-disable-next-line at-rule-no-unknown */
 @custom-variant dark (&:is(.dark *));
 
@@ -56,7 +66,7 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  /* KeepPlay Engine Primary Color: #00E5FF */
+  /* KeepPlay Engine Primary Color: #0FFF12 */
   --primary: oklch(0.85 0.13 195);
   --primary-foreground: oklch(0.145 0 0);
   --secondary: oklch(0.97 0 0);

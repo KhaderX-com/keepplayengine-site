@@ -7,19 +7,19 @@ export default function Navbar() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     const navLinks = [
-        { href: "#ecosystem", label: "Ecosystem" },
-        { href: "#blog", label: "Blog" },
-        { href: "#contact", label: "Contact Us" },
+        { href: "/privacy-policy", label: "Privacy Policy" },
+        { href: "/terms-of-service", label: "Terms of Service" },
+        { href: "/contact", label: "Contact" },
     ];
 
     return (
-        <nav className="fixed top-0 left-0 right-0 z-50 bg-[#00E5FF] shadow-md">
+        <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0FFF12] shadow-md">
             <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-16 sm:h-20">
                     {/* Logo */}
                     <Link href="/" className="flex items-center space-x-2 sm:space-x-3">
                         <img
-                            src="https://res.cloudinary.com/destej60y/image/upload/v1766745807/Logo-transparent_icqnyx.svg"
+                            src="https://res.cloudinary.com/destej60y/image/upload/v1773809280/Bolt_1_jwgn1c.png"
                             alt="KeepPlay Engine Logo"
                             width={50}
                             height={50}
@@ -44,7 +44,7 @@ export default function Navbar() {
 
                     {/* Mobile Menu Button */}
                     <button
-                        className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-900 hover:text-white hover:bg-[#00D4EE] focus:outline-none"
+                        className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-900 hover:text-white hover:bg-[#0BCC0E] focus:outline-none"
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
                         {...({ "aria-expanded": isMenuOpen })}
                         aria-label="Toggle menu"
@@ -78,13 +78,13 @@ export default function Navbar() {
 
             {/* Mobile Menu */}
             {isMenuOpen && (
-                <div className="md:hidden border-t border-[#00D4EE] bg-[#00E5FF]">
+                <div className="md:hidden border-t border-[#0BCC0E] bg-[#0FFF12]">
                     <div className="px-4 pt-2 pb-3 space-y-1">
                         {navLinks.map((link) => (
                             <Link
                                 key={link.href}
                                 href={link.href}
-                                className="block px-3 py-2 rounded-md text-base font-medium text-gray-900 hover:text-white hover:bg-[#00D4EE] transition-colors duration-200"
+                                className="block px-3 py-2 rounded-md text-base font-medium text-gray-900 hover:text-white hover:bg-[#0BCC0E] transition-colors duration-200"
                                 onClick={() => setIsMenuOpen(false)}
                             >
                                 {link.label}

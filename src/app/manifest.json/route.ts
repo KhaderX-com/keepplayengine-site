@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
         short_name: isAdmin ? "KPE Admin" : "KeepPlay",
         description: isAdmin
             ? "Administrative panel for KeepPlay Engine"
-            : "A Play-to-Earn Ecosystem That Never Runs Dry. Build technology that engages and excites players.",
+            : "A Play-to-Earn Ecosystem That Keeps Players Coming Back. Build technology that engages and excites players.",
         id: isAdmin ? "/admin/" : "/",
         start_url: isAdmin ? "/admin/login" : "/",
         display: "standalone",

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import KlaroProvider from "@/components/KlaroProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "KeepPlay Engine - Play-to-Earn Ecosystem",
-  description: "A Play-to-Earn Ecosystem That Never Runs Dry. We build technology that engages and excites players — and an ecosystem that keeps the fun and the rewards flowing.",
+  description: "A Play-to-Earn Ecosystem That Keeps Players Coming Back. We build technology that engages and excites players | and an ecosystem that keeps the fun and the rewards flowing.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -49,6 +50,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <KlaroProvider />
         {children}
       </body>
     </html>
