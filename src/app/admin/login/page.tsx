@@ -200,10 +200,12 @@ export default function AdminLoginPage() {
       });
 
       if (result?.ok) {
+        setPinLoading(false);
+        setTransitionLoading(true);
         setTimeout(() => {
           router.push(returnUrl);
           router.refresh();
-        }, 100);
+        }, 1800);
       } else {
         throw new Error("Session creation failed");
       }
@@ -296,9 +298,13 @@ export default function AdminLoginPage() {
         throw new Error(data.error || "Authentication failed");
       }
 
-      setBiometricVerified(true);
       setBiometricLoading(false);
       setError("");
+      setTransitionLoading(true);
+      setTimeout(() => {
+        setBiometricVerified(true);
+        setTransitionLoading(false);
+      }, 1800);
     } catch (err) {
       const error = err as Error;
       setError(error.message || "Biometric authentication failed");
