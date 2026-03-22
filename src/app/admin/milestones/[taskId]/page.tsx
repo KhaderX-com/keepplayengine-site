@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import AdminHeader from '@/components/admin/AdminHeader';
-import type { Milestone, SubMilestone, TeamMember, MilestoneStatus, SubMilestonePriority } from '@/types/tasks';
+import type { SubMilestone, TeamMember, MilestoneStatus, SubMilestonePriority } from '@/types/tasks';
 import { MILESTONE_STATUS_CONFIG, PRIORITY_CONFIG } from '@/types/tasks';
 import {
     useMilestoneByTask,
@@ -22,7 +22,6 @@ import {
     Plus,
     ChevronLeft,
     Calendar,
-    User,
     MoreVertical,
     Check,
     Clock,
@@ -196,7 +195,7 @@ export default function MilestoneDetailPage() {
                         </div>
                         <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                             <div
-                                className="h-full bg-gradient-to-r from-purple-500 to-purple-600 rounded-full transition-all duration-500"
+                                className="h-full bg-linear-to-r from-purple-500 to-purple-600 rounded-full transition-all duration-500"
                                 style={{ width: `${milestone.progress_percentage}%` }}
                             />
                         </div>
@@ -266,7 +265,7 @@ export default function MilestoneDetailPage() {
                         <div className="space-y-8">
                             {majorNumbers.map(major => (
                                 <div key={major} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-visible">
-                                    <div className="px-6 py-4 bg-gradient-to-r from-purple-50 to-purple-100 
+                                    <div className="px-6 py-4 bg-linear-to-r from-purple-50 to-purple-100 
                                         dark:from-purple-900/20 dark:to-purple-900/10 border-b border-purple-100 dark:border-purple-900/30 rounded-t-2xl">
                                         <h3 className="text-lg font-bold text-purple-900 dark:text-purple-200">
                                             M{major} - Phase {major}
@@ -409,6 +408,7 @@ function SubMilestoneCard({
             <div className="flex items-start gap-4">
                 {/* Status Checkbox */}
                 <button
+                    aria-label="Toggle completion status"
                     onClick={() => handleStatusChange(
                         subMilestone.status === 'completed' ? 'not_started' : 'completed'
                     )}
@@ -450,6 +450,7 @@ function SubMilestoneCard({
                             <button
                                 ref={buttonRef}
                                 onClick={handleMenuToggle}
+                                aria-label="More actions"
                                 className="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                             >
                                 <MoreVertical className="w-4 h-4 text-gray-400" />
@@ -458,11 +459,11 @@ function SubMilestoneCard({
                             {showMenu && createPortal(
                                 <>
                                     <div
-                                        className="fixed inset-0 z-[9998]"
+                                        className="fixed inset-0 z-9998"
                                         onClick={() => setShowMenu(false)}
                                     />
                                     <div
-                                        className="fixed w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-[9999] py-1"
+                                        className="fixed w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-9999 py-1"
                                         style={{
                                             top: `${menuPosition.top}px`,
                                             left: `${menuPosition.left}px`
@@ -624,6 +625,7 @@ function AddSubMilestoneModal({
                         </h2>
                         <button
                             onClick={onClose}
+                            aria-label="Close"
                             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                         >
                             <X className="w-5 h-5 text-gray-400" />
@@ -656,10 +658,10 @@ function AddSubMilestoneModal({
                             value={formData.description}
                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                             rows={3}
+                            placeholder="Optional description"
                             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
                                 bg-white dark:bg-gray-700 text-gray-900 dark:text-white
                                 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                            placeholder="Optional description"
                         />
                     </div>
 
@@ -671,6 +673,7 @@ function AddSubMilestoneModal({
                             <select
                                 value={formData.priority}
                                 onChange={(e) => setFormData({ ...formData, priority: e.target.value as SubMilestonePriority })}
+                                title="Priority"
                                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
                                     bg-white dark:bg-gray-700 text-gray-900 dark:text-white
                                     focus:ring-2 focus:ring-purple-500 focus:border-transparent"
@@ -690,6 +693,7 @@ function AddSubMilestoneModal({
                                 type="date"
                                 value={formData.target_date}
                                 onChange={(e) => setFormData({ ...formData, target_date: e.target.value })}
+                                title="Target Date"
                                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
                                     bg-white dark:bg-gray-700 text-gray-900 dark:text-white
                                     focus:ring-2 focus:ring-purple-500 focus:border-transparent"
@@ -704,6 +708,7 @@ function AddSubMilestoneModal({
                         <select
                             value={formData.assignee_id}
                             onChange={(e) => setFormData({ ...formData, assignee_id: e.target.value })}
+                            title="Assignee"
                             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
                                 bg-white dark:bg-gray-700 text-gray-900 dark:text-white
                                 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
@@ -723,10 +728,10 @@ function AddSubMilestoneModal({
                             value={formData.notes}
                             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                             rows={2}
+                            placeholder="Additional notes"
                             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
                                 bg-white dark:bg-gray-700 text-gray-900 dark:text-white
                                 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                            placeholder="Additional notes"
                         />
                     </div>
 
@@ -811,6 +816,7 @@ function EditSubMilestoneModal({
                         </h2>
                         <button
                             onClick={onClose}
+                            aria-label="Close"
                             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                         >
                             <X className="w-5 h-5 text-gray-400" />
@@ -827,6 +833,7 @@ function EditSubMilestoneModal({
                             type="text"
                             value={formData.title}
                             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                            placeholder="Enter sub-milestone title"
                             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
                                 bg-white dark:bg-gray-700 text-gray-900 dark:text-white
                                 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
@@ -842,6 +849,7 @@ function EditSubMilestoneModal({
                             value={formData.description}
                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                             rows={3}
+                            placeholder="Optional description"
                             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
                                 bg-white dark:bg-gray-700 text-gray-900 dark:text-white
                                 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
@@ -856,6 +864,7 @@ function EditSubMilestoneModal({
                             <select
                                 value={formData.status}
                                 onChange={(e) => setFormData({ ...formData, status: e.target.value as MilestoneStatus })}
+                                title="Status"
                                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
                                     bg-white dark:bg-gray-700 text-gray-900 dark:text-white
                                     focus:ring-2 focus:ring-purple-500 focus:border-transparent"
@@ -875,6 +884,7 @@ function EditSubMilestoneModal({
                             <select
                                 value={formData.priority}
                                 onChange={(e) => setFormData({ ...formData, priority: e.target.value as SubMilestonePriority })}
+                                title="Priority"
                                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
                                     bg-white dark:bg-gray-700 text-gray-900 dark:text-white
                                     focus:ring-2 focus:ring-purple-500 focus:border-transparent"
@@ -895,6 +905,7 @@ function EditSubMilestoneModal({
                             type="date"
                             value={formData.target_date}
                             onChange={(e) => setFormData({ ...formData, target_date: e.target.value })}
+                            title="Target Date"
                             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
                                 bg-white dark:bg-gray-700 text-gray-900 dark:text-white
                                 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
@@ -908,6 +919,7 @@ function EditSubMilestoneModal({
                         <select
                             value={formData.assignee_id}
                             onChange={(e) => setFormData({ ...formData, assignee_id: e.target.value })}
+                            title="Assignee"
                             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
                                 bg-white dark:bg-gray-700 text-gray-900 dark:text-white
                                 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
@@ -927,6 +939,7 @@ function EditSubMilestoneModal({
                             value={formData.notes}
                             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                             rows={2}
+                            placeholder="Additional notes"
                             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
                                 bg-white dark:bg-gray-700 text-gray-900 dark:text-white
                                 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
