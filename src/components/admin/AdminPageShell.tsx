@@ -16,7 +16,6 @@ interface AdminPageShellProps {
     };
     title?: string;
     subtitle?: string;
-    activeSessions?: number;
     userRole?: string;
     className?: string;
 }
@@ -26,7 +25,6 @@ export default function AdminPageShell({
     user,
     title,
     subtitle,
-    activeSessions,
     userRole,
     className = "flex-1 overflow-y-auto",
 }: AdminPageShellProps) {
@@ -46,7 +44,6 @@ export default function AdminPageShell({
     return (
         <div className="flex h-screen bg-gray-50 overflow-hidden">
             <AdminSidebar
-                activeSessions={activeSessions}
                 isMobileMenuOpen={isMobileMenuOpen}
                 onCloseMobileMenu={handleCloseMobileMenu}
                 userRole={userRole}

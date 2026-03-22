@@ -114,13 +114,13 @@ export default function AuditManagement({ userRole }: AuditManagementProps) {
             <div className="w-full">
                 <button
                     onClick={() => setIsExpanded(true)}
-                    className="w-full sm:w-auto px-4 py-2.5 sm:px-6 sm:py-3 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-all duration-200 flex items-center justify-center sm:justify-start space-x-2 shadow-sm hover:shadow-md group"
+                    className="w-full sm:w-auto px-5 py-2.5 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-semibold rounded-full transition-all flex items-center justify-center sm:justify-start gap-2 group"
                 >
-                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
-                    <span className="text-sm sm:text-base">Delete Old Audit Logs</span>
-                    <svg className="w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <span className="text-sm">Delete Old Audit Logs</span>
+                    <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                 </button>
@@ -130,12 +130,12 @@ export default function AuditManagement({ userRole }: AuditManagementProps) {
 
     // Expanded state - full management interface
     return (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+        <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4">
                 <div className="flex items-center space-x-3">
                     <button
                         onClick={() => setIsExpanded(false)}
-                        className="shrink-0 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        className="shrink-0 p-2 hover:bg-gray-100 rounded-full transition-colors"
                         aria-label="Collapse audit management"
                     >
                         <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -249,7 +249,7 @@ export default function AuditManagement({ userRole }: AuditManagementProps) {
                     </svg>
                     <div className="flex-1 min-w-0">
                         <p className="text-xs sm:text-sm font-medium text-yellow-800">Warning</p>
-                        <p className="text-xs sm:text-sm text-yellow-700 mt-1 break-words">
+                        <p className="text-xs sm:text-sm text-yellow-700 mt-1 wrap-break-word">
                             This will delete all audit logs created before:{" "}
                             <strong className="block sm:inline mt-1 sm:mt-0">{formatDateForDisplay()}</strong>
                         </p>
@@ -293,53 +293,59 @@ export default function AuditManagement({ userRole }: AuditManagementProps) {
             <button
                 onClick={handleDeleteClick}
                 disabled={isDeleting || (selectedOption === "custom" && !customDate)}
-                className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white font-medium py-2.5 sm:py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 touch-manipulation active:scale-95"
+                className="w-full bg-red-600 hover:bg-red-700 active:bg-red-800 disabled:bg-gray-300 text-white font-semibold py-2.5 px-5 rounded-full transition-colors flex items-center justify-center gap-2 touch-manipulation"
             >
-                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
-                <span className="text-sm sm:text-base">{isDeleting ? "Deleting..." : "Delete Audit Logs"}</span>
+                <span className="text-sm">{isDeleting ? "Deleting..." : "Delete Audit Logs"}</span>
             </button>
 
             {/* Confirmation Dialog */}
             {showConfirmDialog && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-                    <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-4 sm:p-6 mx-4">
-                        <div className="flex items-start space-x-3 sm:space-x-4">
-                            <div className="shrink-0">
-                                <svg className="w-10 h-10 sm:w-12 sm:h-12 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                </svg>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
-                                    Confirm Deletion
-                                </h3>
-                                <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4 break-words">
-                                    Are you sure you want to delete all audit logs older than{" "}
-                                    <strong className="text-gray-900 block sm:inline mt-1 sm:mt-0">{formatDateForDisplay()}</strong>?
-                                </p>
-                                <p className="text-xs sm:text-sm text-red-600 font-medium mb-4 sm:mb-6">
-                                    This action cannot be undone!
-                                </p>
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+                    onClick={() => !isDeleting && setShowConfirmDialog(false)}
+                >
+                    <div
+                        className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-5"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Icon */}
+                        <div className="flex items-center justify-center w-14 h-14 bg-red-100 rounded-full mx-auto">
+                            <svg className="w-7 h-7 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
 
-                                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                                    <button
-                                        onClick={() => setShowConfirmDialog(false)}
-                                        disabled={isDeleting}
-                                        className="flex-1 px-4 py-2.5 sm:py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition-colors duration-200 text-sm touch-manipulation active:scale-95 order-2 sm:order-1"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        onClick={handleConfirmDelete}
-                                        disabled={isDeleting}
-                                        className="flex-1 px-4 py-2.5 sm:py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-lg font-medium transition-colors duration-200 text-sm touch-manipulation active:scale-95 order-1 sm:order-2"
-                                    >
-                                        {isDeleting ? "Deleting..." : "Yes, Delete"}
-                                    </button>
-                                </div>
-                            </div>
+                        {/* Text */}
+                        <div className="text-center">
+                            <h3 className="text-lg font-bold text-gray-900">Confirm Deletion</h3>
+                            <p className="text-sm text-gray-500 mt-1">
+                                Delete all audit logs older than
+                            </p>
+                            <p className="text-sm font-semibold text-gray-800 mt-0.5">
+                                {formatDateForDisplay()}
+                            </p>
+                            <p className="text-xs text-red-500 font-medium mt-2">This action cannot be undone!</p>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowConfirmDialog(false)}
+                                disabled={isDeleting}
+                                className="flex-1 px-4 py-2.5 rounded-full border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors touch-manipulation"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleConfirmDelete}
+                                disabled={isDeleting}
+                                className="flex-1 px-4 py-2.5 rounded-full bg-red-600 hover:bg-red-700 active:bg-red-800 disabled:bg-gray-300 text-sm font-semibold text-white transition-colors touch-manipulation"
+                            >
+                                {isDeleting ? "Deleting..." : "Yes, Delete"}
+                            </button>
                         </div>
                     </div>
                 </div>

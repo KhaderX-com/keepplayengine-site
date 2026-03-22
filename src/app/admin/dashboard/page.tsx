@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
+import Link from "next/link";
 import { authOptions } from "@/lib/auth";
 import { AdminDAL, getUserClient } from "@/lib/dal";
 import AdminPageShell from "@/components/admin/AdminPageShell";
@@ -26,15 +27,13 @@ export default async function DashboardPage({
     const client = await getUserClient(user.id, user.role ?? "ADMIN");
 
     // Fetch initial data server-side
-    const [logsResult, sessionsResult, statsResult] = await Promise.all([
+    const [logsResult, sessionsResult] = await Promise.all([
         AdminDAL.getActivityLogs(client, { limit: 50, offset: 0 }),
         AdminDAL.getActiveSessions(client),
-        AdminDAL.getDashboardStats(client),
     ]);
 
     const activityLogs = logsResult.data ?? [];
     const activeSessions = sessionsResult.data ?? [];
-    const stats = statsResult.data as { activeSessions?: number } | null;
 
     // Map session data for the client component
     const mappedSessions = activeSessions.map((s: Record<string, unknown>) => ({
@@ -71,41 +70,41 @@ export default async function DashboardPage({
             user={user}
             title="Dashboard"
             subtitle="Activity Logs & Session Monitoring"
-            activeSessions={stats?.activeSessions ?? activeSessions.length}
             userRole={user.role}
         >
             <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-                {/* Tab Navigation */}
+                {/* Pill Tab Navigation */}
                 <div className="max-w-7xl mx-auto mb-6">
-                    <div className="border-b border-gray-200">
-                        <nav className="-mb-px flex space-x-8">
-                            <a
-                                href="/admin/dashboard?tab=audit"
-                                className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
-                                    initialTab === "audit"
-                                        ? "border-blue-500 text-blue-600"
-                                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                                }`}
-                            >
-                                <svg className="w-5 h-5 inline mr-2 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                                Audit Logs
-                            </a>
-                            <a
-                                href="/admin/dashboard?tab=sessions"
-                                className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
+                    <div className="flex gap-2">
+                        <Link
+                            href="/admin/dashboard?tab=audit"
+                            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all ${
+                                initialTab === "audit"
+                                    ? "bg-black text-white"
+                                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                            }`}
+                        >
+                            Audit Logs
+                        </Link>
+                        <Link
+                            href="/admin/dashboard?tab=sessions"
+                            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all ${
+                                initialTab === "sessions"
+                                    ? "bg-black text-white"
+                                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                            }`}
+                        >
+                            Active Sessions
+                            {activeSessions.length > 0 && (
+                                <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${
                                     initialTab === "sessions"
-                                        ? "border-blue-500 text-blue-600"
-                                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                                }`}
-                            >
-                                <svg className="w-5 h-5 inline mr-2 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                                </svg>
-                                Active Sessions ({activeSessions.length})
-                            </a>
-                        </nav>
+                                        ? "bg-white text-black"
+                                        : "bg-gray-300 text-gray-700"
+                                }`}>
+                                    {activeSessions.length}
+                                </span>
+                            )}
+                        </Link>
                     </div>
                 </div>
 
