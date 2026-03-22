@@ -132,7 +132,7 @@ export default async function AdminPage() {
             subtitle="Admin control center"
             className="flex-1 overflow-y-auto bg-white overscroll-contain"
         >
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16 sm:pb-10 lg:py-12">
                 {/* Header */}
                 <div className="mb-10">
                     <h1 className="text-3xl sm:text-4xl lg:text-5xl text-gray-900 font-(family-name:--font-lilita-one) leading-tight">
@@ -166,7 +166,7 @@ export default async function AdminPage() {
                                             </p>
                                         </div>
                                         <svg
-                                            className="w-4 h-4 text-gray-300 group-hover:text-gray-500 group-hover:translate-x-0.5 transition-all shrink-0"
+                                            className="hidden sm:block w-4 h-4 text-gray-300 group-hover:text-gray-500 group-hover:translate-x-0.5 transition-all shrink-0"
                                             fill="none"
                                             stroke="currentColor"
                                             viewBox="0 0 24 24"
