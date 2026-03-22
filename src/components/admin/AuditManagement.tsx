@@ -17,10 +17,33 @@ export default function AuditManagement({ userRole }: AuditManagementProps) {
         message: string;
     } | null>(null);
 
+    // Custom date picker state
+    const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+    const [calViewDate, setCalViewDate] = useState(new Date());
+    const [pickerDay, setPickerDay] = useState<Date | null>(null);
+    const [pickerHour, setPickerHour] = useState(12);
+    const [pickerMinute, setPickerMinute] = useState(0);
+    const [pickerAmPm, setPickerAmPm] = useState<"AM" | "PM">("PM");
+
     // Only show for SUPER_ADMIN
     if (userRole !== "SUPER_ADMIN") {
         return null;
     }
+
+    const pad2 = (n: number) => n.toString().padStart(2, "0");
+    const getDaysInMonth = (y: number, m: number) => new Date(y, m + 1, 0).getDate();
+    const getFirstDayOfMonth = (y: number, m: number) => new Date(y, m, 1).getDay();
+    const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+    const confirmPickerDate = () => {
+        if (!pickerDay) return;
+        const d = new Date(pickerDay);
+        let h = pickerHour % 12;
+        if (pickerAmPm === "PM") h += 12;
+        d.setHours(h, pickerMinute, 0, 0);
+        setCustomDate(`${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`);
+        setIsCalendarOpen(false);
+    };
 
     const getDeleteBeforeDate = (): Date => {
         const now = new Date();
@@ -223,17 +246,149 @@ export default function AuditManagement({ userRole }: AuditManagementProps) {
                     </label>
                 </div>
 
-                {/* Custom Date Input */}
+                {/* Custom Date Picker */}
                 {selectedOption === "custom" && (
-                    <div className="ml-0 sm:ml-7 mt-2">
-                        <input
-                            type="datetime-local"
-                            value={customDate}
-                            onChange={(e) => setCustomDate(e.target.value)}
-                            max={new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 16)}
-                            aria-label="Select custom date for audit log deletion"
-                            className="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
+                    <div className="ml-0 sm:ml-7 mt-3">
+                        {/* Trigger button */}
+                        <button
+                            type="button"
+                            onClick={() => setIsCalendarOpen(!isCalendarOpen)}
+                            className="flex items-center gap-2.5 px-4 py-2.5 bg-white border border-gray-200 rounded-2xl text-sm hover:border-gray-300 hover:bg-gray-50 transition-all group w-full sm:w-auto"
+                        >
+                            <svg className="w-4 h-4 text-gray-400 group-hover:text-gray-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <span className={customDate ? "font-medium text-gray-900" : "text-gray-400"}>
+                                {customDate
+                                    ? new Date(customDate).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })
+                                    : "Select date & time"}
+                            </span>
+                            <svg className={`w-4 h-4 text-gray-400 ml-auto sm:ml-2 transition-transform ${isCalendarOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+
+                        {/* Calendar + time popover */}
+                        {isCalendarOpen && (
+                            <div className="mt-2 bg-white border border-gray-200 rounded-2xl shadow-xl p-4 w-full sm:w-72">
+                                {/* Month navigation */}
+                                <div className="flex items-center justify-between mb-4">
+                                    <button
+                                        type="button"
+                                        aria-label="Previous month"
+                                        onClick={() => setCalViewDate(prev => { const d = new Date(prev); d.setMonth(d.getMonth() - 1); return d; })}
+                                        className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 active:bg-gray-200 transition-colors"
+                                    >
+                                        <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                                    </button>
+                                    <span className="text-sm font-bold text-gray-900">
+                                        {MONTH_NAMES[calViewDate.getMonth()]} {calViewDate.getFullYear()}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        aria-label="Next month"
+                                        onClick={() => setCalViewDate(prev => { const d = new Date(prev); d.setMonth(d.getMonth() + 1); return d; })}
+                                        className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 active:bg-gray-200 transition-colors"
+                                    >
+                                        <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                                    </button>
+                                </div>
+
+                                {/* Day-of-week headers */}
+                                <div className="grid grid-cols-7 mb-1">
+                                    {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map(d => (
+                                        <div key={d} className="text-center text-[11px] font-semibold text-gray-400 py-1">{d}</div>
+                                    ))}
+                                </div>
+
+                                {/* Day grid */}
+                                <div className="grid grid-cols-7 gap-y-0.5">
+                                    {Array.from({ length: getFirstDayOfMonth(calViewDate.getFullYear(), calViewDate.getMonth()) }).map((_, i) => (
+                                        <div key={`e-${i}`} />
+                                    ))}
+                                    {Array.from({ length: getDaysInMonth(calViewDate.getFullYear(), calViewDate.getMonth()) }).map((_, i) => {
+                                        const day = i + 1;
+                                        const thisDate = new Date(calViewDate.getFullYear(), calViewDate.getMonth(), day);
+                                        const maxDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
+                                        const isDisabled = thisDate > maxDate;
+                                        const isSelected = pickerDay &&
+                                            pickerDay.getFullYear() === thisDate.getFullYear() &&
+                                            pickerDay.getMonth() === thisDate.getMonth() &&
+                                            pickerDay.getDate() === thisDate.getDate();
+                                        const isToday = new Date().toDateString() === thisDate.toDateString();
+                                        return (
+                                            <button
+                                                key={day}
+                                                type="button"
+                                                disabled={isDisabled}
+                                                onClick={() => setPickerDay(thisDate)}
+                                                className={`w-full aspect-square flex items-center justify-center text-xs font-medium rounded-full transition-colors ${
+                                                    isSelected
+                                                        ? "bg-black text-white"
+                                                        : isToday
+                                                        ? "border border-gray-400 text-gray-900 hover:bg-gray-100"
+                                                        : isDisabled
+                                                        ? "text-gray-300 cursor-not-allowed"
+                                                        : "text-gray-700 hover:bg-gray-100 active:bg-gray-200"
+                                                }`}
+                                            >
+                                                {day}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Divider */}
+                                <div className="border-t border-gray-100 my-4" />
+
+                                {/* Time picker */}
+                                <div className="flex items-center justify-center gap-4">
+                                    {/* Hour */}
+                                    <div className="flex flex-col items-center gap-1">
+                                        <button type="button" aria-label="Increase hour" onClick={() => setPickerHour(h => h === 12 ? 1 : h + 1)} className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 active:bg-gray-200 transition-colors">
+                                            <svg className="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+                                        </button>
+                                        <span className="text-xl font-mono font-bold text-gray-900 w-8 text-center select-none">{pad2(pickerHour)}</span>
+                                        <button type="button" aria-label="Decrease hour" onClick={() => setPickerHour(h => h === 1 ? 12 : h - 1)} className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 active:bg-gray-200 transition-colors">
+                                            <svg className="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                                        </button>
+                                    </div>
+
+                                    <span className="text-2xl font-bold text-gray-200 select-none">:</span>
+
+                                    {/* Minute */}
+                                    <div className="flex flex-col items-center gap-1">
+                                        <button type="button" aria-label="Increase minute" onClick={() => setPickerMinute(m => (m + 5) % 60)} className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 active:bg-gray-200 transition-colors">
+                                            <svg className="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+                                        </button>
+                                        <span className="text-xl font-mono font-bold text-gray-900 w-8 text-center select-none">{pad2(pickerMinute)}</span>
+                                        <button type="button" aria-label="Decrease minute" onClick={() => setPickerMinute(m => m === 0 ? 55 : m - 5)} className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 active:bg-gray-200 transition-colors">
+                                            <svg className="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                                        </button>
+                                    </div>
+
+                                    {/* AM / PM toggle */}
+                                    <button
+                                        type="button"
+                                        onClick={() => setPickerAmPm(a => a === "AM" ? "PM" : "AM")}
+                                        className="px-3 py-1.5 bg-black hover:bg-gray-800 text-white text-xs font-bold rounded-full transition-colors select-none"
+                                    >
+                                        {pickerAmPm}
+                                    </button>
+                                </div>
+
+                                {/* Confirm button */}
+                                <button
+                                    type="button"
+                                    onClick={confirmPickerDate}
+                                    disabled={!pickerDay}
+                                    className="mt-4 w-full bg-black hover:bg-gray-800 disabled:bg-gray-200 disabled:text-gray-400 text-white text-sm font-semibold py-2.5 rounded-full transition-colors"
+                                >
+                                    Confirm
+                                </button>
+                            </div>
+                        )}
+
                         <p className="text-xs text-gray-500 mt-2">
                             Select a date at least 24 hours in the past
                         </p>

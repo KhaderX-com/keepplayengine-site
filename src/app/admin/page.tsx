@@ -132,7 +132,7 @@ export default async function AdminPage() {
             subtitle="Admin control center"
             className="flex-1 overflow-y-auto bg-white overscroll-contain"
         >
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16 sm:pb-10 lg:py-12">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-36 sm:pb-10 lg:py-12">
                 {/* Header */}
                 <div className="mb-10">
                     <h1 className="text-3xl sm:text-4xl lg:text-5xl text-gray-900 font-(family-name:--font-lilita-one) leading-tight">
