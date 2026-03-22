@@ -1,11 +1,19 @@
 import type { Metadata, Viewport } from "next";
+import { Lilita_One } from "next/font/google";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import SessionProvider from "@/components/SessionProvider";
 
+const lilitaOne = Lilita_One({
+    variable: "--font-lilita-one",
+    subsets: ["latin"],
+    weight: "400",
+    display: "swap",
+});
+
 export const metadata: Metadata = {
-    title: "Admin Panel - KeepPlay Engine",
+    title: "Admin Panel | KeepPlay Engine",
     description: "Secure administrative interface for KeepPlay Engine",
     robots: "noindex, nofollow",
     manifest: "https://public-pwa.vercel.app/admin-manifest.json?v=20260316-8",
@@ -56,7 +64,9 @@ export default async function AdminLayout({
 
     return (
         <SessionProvider session={session}>
-            {children}
+            <div className={lilitaOne.variable}>
+                {children}
+            </div>
         </SessionProvider>
     );
 }
