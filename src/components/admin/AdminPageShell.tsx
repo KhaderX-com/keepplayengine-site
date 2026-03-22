@@ -4,7 +4,6 @@ import { useState, useCallback } from "react";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminHeader from "@/components/admin/AdminHeader";
 import { useSessionActivity } from "@/hooks/useSessionActivity";
-import { useFcmToken } from "@/hooks/use-fcm";
 
 interface AdminPageShellProps {
     children: React.ReactNode;
@@ -35,9 +34,6 @@ export default function AdminPageShell({
 
     // Track session activity (excludes admin@keepplayengine.com)
     useSessionActivity();
-
-    // Auto-register FCM token for push notifications (web + PWA)
-    useFcmToken();
 
     const handleToggleMobileMenu = useCallback(() => {
         setIsMobileMenuOpen((prev) => !prev);

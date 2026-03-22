@@ -145,8 +145,7 @@ export async function proxy(request: NextRequest) {
             pathname === "/admin/icon" ||
             pathname === "/admin/apple-icon" ||
             pathname === "/manifest.json" ||
-            pathname === "/admin-manifest.json" ||
-            pathname === "/firebase-messaging-sw.js"
+            pathname === "/admin-manifest.json"
         ) {
             const earlyResponse = NextResponse.next();
             if (isApiRoute) addCorsHeaders(earlyResponse, request);
@@ -269,8 +268,7 @@ export async function proxy(request: NextRequest) {
             pathname === "/admin/icon" ||
             pathname === "/admin/apple-icon" ||
             pathname === "/manifest.json" ||
-            pathname === "/admin-manifest.json" ||
-            pathname === "/firebase-messaging-sw.js"
+            pathname === "/admin-manifest.json"
         ) {
             const earlyResponse = NextResponse.next();
             if (isApiRoute) addCorsHeaders(earlyResponse, request);

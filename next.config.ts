@@ -128,12 +128,7 @@ const nextConfig: NextConfig = {
           { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
         ],
       },
-      {
-        source: "/firebase-messaging-sw.js",
-        headers: [
-          { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
-        ],
-      },
+
     ];
   },
   images: {
