@@ -103,7 +103,7 @@ export const KpeWithdrawalsDAL = {
         let query = client
             .from("withdrawal_requests")
             .select(
-                "*, user:users(id, ad_id, platform, status), method:withdrawal_methods(display_name, method_key, logo_url)",
+                "*, user:users(id, ad_id, platform, status, user_profile(display_name)), method:withdrawal_methods(display_name, method_key, logo_url)",
                 { count: "exact" },
             )
             .order("created_at", { ascending: false })

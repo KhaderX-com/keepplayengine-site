@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -39,6 +40,8 @@ import {
     ArrowRight,
     User,
     CalendarDays,
+    ChevronDown,
+    ArrowUpDown,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────
@@ -50,6 +53,7 @@ interface WithdrawalUser {
     ad_id: string;
     platform: string;
     status: string;
+    user_profile?: { display_name: string } | null;
 }
 
 interface WithdrawalMethod {
@@ -153,6 +157,8 @@ export default function WithdrawalsClient() {
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState<string>("all");
     const [methodFilter, setMethodFilter] = useState<string>("all");
+    const [sortBy, setSortBy] = useState<string>("newest");
+    const [showSortMenu, setShowSortMenu] = useState(false);
     const [offset, setOffset] = useState(0);
 
     // Action dialog
@@ -533,14 +539,24 @@ export default function WithdrawalsClient() {
                         <span className="text-gray-300">·</span>{" "}
                         {new Date(w.created_at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
                     </span>
-                    <span className="flex items-center gap-1 truncate max-w-[45%]">
-                        <User className="w-3 h-3 shrink-0" />
-                        <span className="font-mono truncate">
-                            {w.user?.ad_id
-                                ? (w.user.ad_id.length > 14 ? `${w.user.ad_id.slice(0, 14)}…` : w.user.ad_id)
-                                : "—"}
+                    {w.user ? (
+                        <Link
+                            href={`/admin/keepplay-engine/users/${w.user.id}`}
+                            className="flex items-center gap-1 truncate max-w-[45%] hover:text-blue-600 transition-colors"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <User className="w-3 h-3 shrink-0" />
+                            <span className="truncate underline decoration-dotted underline-offset-2">
+                                {w.user.user_profile?.display_name
+                                    ? `${w.user.user_profile.display_name} · ${w.user.ad_id.slice(0, 8)}`
+                                    : w.user.ad_id.slice(0, 8)}
+                            </span>
+                        </Link>
+                    ) : (
+                        <span className="flex items-center gap-1 text-gray-400">
+                            <User className="w-3 h-3 shrink-0" /> —
                         </span>
-                    </span>
+                    )}
                 </div>
 
                 {/* Balance Row */}
@@ -586,15 +602,34 @@ export default function WithdrawalsClient() {
     };
 
     // ── Render: Withdrawal List (Cards on mobile, Table on desktop) ──
+    const SORT_OPTIONS = [
+        { value: "newest",     label: "Newest first",     icon: CalendarDays },
+        { value: "oldest",     label: "Oldest first",     icon: CalendarDays },
+        { value: "amount_high", label: "Amount: High → Low", icon: DollarSign },
+        { value: "amount_low",  label: "Amount: Low → High", icon: DollarSign },
+    ];
+
     const renderWithdrawalList = (showActions: boolean) => {
-        const displayWithdrawals = showActions && methodFilter !== "all"
+        const filtered = showActions && methodFilter !== "all"
             ? withdrawals.filter((w) => (w.method_key ?? "").toLowerCase() === methodFilter)
-            : withdrawals;
+            : [...withdrawals];
+
+        // Apply sorting
+        if (sortBy === "oldest") {
+            filtered.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+        } else if (sortBy === "amount_high") {
+            filtered.sort((a, b) => b.amount_points - a.amount_points);
+        } else if (sortBy === "amount_low") {
+            filtered.sort((a, b) => a.amount_points - b.amount_points);
+        }
+        // "newest" is the default API order — no re-sort needed
+
+        const displayWithdrawals = filtered;
         return (
         <div className="space-y-4">
             {/* Filters */}
             <div className="space-y-3">
-                {/* Search + Refresh */}
+                {/* Search + Sort + Refresh */}
                 <div className="flex gap-2">
                     <div className="flex-1 relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -602,13 +637,55 @@ export default function WithdrawalsClient() {
                             type="text"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Search by destination…"
-                            className="pl-9 h-10 rounded-xl border-gray-200 bg-white text-sm"
+                            placeholder="Search…"
+                            className="pl-9 h-9 rounded-xl border-gray-200 bg-white text-sm"
                         />
+                    </div>
+                    {/* Sort / Filter Button */}
+                    <div className="relative">
+                        <button
+                            onClick={() => setShowSortMenu((v) => !v)}
+                            className={`h-9 flex items-center gap-1.5 px-3 border rounded-xl text-xs font-medium transition-colors shrink-0 ${
+                                sortBy !== "newest"
+                                    ? "bg-gray-900 text-white border-gray-900"
+                                    : "bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                            }`}
+                            title="Sort & Filter"
+                        >
+                            <ArrowUpDown className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">{SORT_OPTIONS.find(s => s.value === sortBy)?.label ?? "Sort"}</span>
+                            <ChevronDown className={`w-3 h-3 transition-transform ${showSortMenu ? "rotate-180" : ""}`} />
+                        </button>
+                        {showSortMenu && (
+                            <>
+                                <div className="fixed inset-0 z-40" onClick={() => setShowSortMenu(false)} />
+                                <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-gray-200 rounded-xl shadow-lg min-w-[180px] py-1 overflow-hidden">
+                                    {SORT_OPTIONS.map((opt) => {
+                                        const Icon = opt.icon;
+                                        const isActive = sortBy === opt.value;
+                                        return (
+                                            <button
+                                                key={opt.value}
+                                                onClick={() => { setSortBy(opt.value); setShowSortMenu(false); }}
+                                                className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs transition-colors ${
+                                                    isActive
+                                                        ? "bg-gray-900 text-white font-semibold"
+                                                        : "text-gray-700 hover:bg-gray-50 font-medium"
+                                                }`}
+                                            >
+                                                <Icon className="w-3.5 h-3.5" />
+                                                {opt.label}
+                                                {isActive && <Check className="w-3.5 h-3.5 ml-auto" />}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </>
+                        )}
                     </div>
                     <button
                         onClick={() => { fetchWithdrawals(); fetchStats(); }}
-                        className="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shrink-0"
+                        className="w-9 h-9 flex items-center justify-center bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shrink-0"
                         title="Refresh"
                     >
                         <RefreshCw className="w-4 h-4 text-gray-500" />
@@ -787,11 +864,21 @@ export default function WithdrawalsClient() {
                                                 <span className="text-xs text-gray-400">{w.destination_type}</span>
                                             </TableCell>
                                             <TableCell>
-                                                <span className="font-mono text-xs text-gray-600">
-                                                    {w.user?.ad_id
-                                                        ? (w.user.ad_id.length > 16 ? `${w.user.ad_id.slice(0, 16)}…` : w.user.ad_id)
-                                                        : "—"}
-                                                </span>
+                                                {w.user ? (
+                                                    <Link
+                                                        href={`/admin/keepplay-engine/users/${w.user.id}`}
+                                                        className="inline-flex items-center gap-1.5 text-xs text-gray-700 hover:text-blue-600 transition-colors group"
+                                                    >
+                                                        <span className="font-medium group-hover:underline">
+                                                            {w.user.user_profile?.display_name ?? ""}
+                                                        </span>
+                                                        <span className="font-mono text-gray-400 group-hover:text-blue-400">
+                                                            {w.user.ad_id.slice(0, 8)}
+                                                        </span>
+                                                    </Link>
+                                                ) : (
+                                                    <span className="text-xs text-gray-400">—</span>
+                                                )}
                                             </TableCell>
                                             <TableCell className="text-right text-xs font-mono text-gray-500">
                                                 <div><span className="text-gray-400">Before:</span> {toUsd(w.balance_before)}</div>
@@ -997,13 +1084,18 @@ export default function WithdrawalsClient() {
                                     </div>
                                     <div className="flex items-center justify-between px-4 py-2.5">
                                         <span className="text-xs text-gray-500 font-medium">User</span>
-                                        <span className="font-mono text-xs text-gray-700 truncate max-w-[60%]">
-                                            {actionDialog.withdrawal.user?.ad_id
-                                                ? (actionDialog.withdrawal.user.ad_id.length > 22
-                                                    ? `${actionDialog.withdrawal.user.ad_id.slice(0, 22)}…`
-                                                    : actionDialog.withdrawal.user.ad_id)
-                                                : "—"}
-                                        </span>
+                                        {actionDialog.withdrawal.user ? (
+                                            <Link
+                                                href={`/admin/keepplay-engine/users/${actionDialog.withdrawal.user.id}`}
+                                                className="text-xs text-blue-600 hover:text-blue-800 hover:underline truncate max-w-[60%] transition-colors"
+                                            >
+                                                {actionDialog.withdrawal.user.user_profile?.display_name
+                                                    ? `${actionDialog.withdrawal.user.user_profile.display_name} · ${actionDialog.withdrawal.user.ad_id.slice(0, 8)}`
+                                                    : actionDialog.withdrawal.user.ad_id.slice(0, 8)}
+                                            </Link>
+                                        ) : (
+                                            <span className="text-xs text-gray-400">—</span>
+                                        )}
                                     </div>
                                     <div className="flex items-center justify-between px-4 py-2.5">
                                         <span className="text-xs text-gray-500 font-medium">Requested</span>
