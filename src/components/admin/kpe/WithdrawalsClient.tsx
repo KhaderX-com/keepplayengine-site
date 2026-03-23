@@ -1,8 +1,7 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -13,13 +12,6 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
     Dialog,
@@ -43,6 +35,10 @@ import {
     Loader2,
     Copy,
     Check,
+    Wallet,
+    ArrowRight,
+    User,
+    CalendarDays,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────
@@ -112,13 +108,30 @@ interface WithdrawalStats {
 
 const PAGE_SIZE = 20;
 
-const STATUS_BADGE: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; label: string; icon: React.ReactNode }> = {
-    pending: { variant: "outline", label: "Pending", icon: <Clock className="w-3 h-3" /> },
-    processing: { variant: "secondary", label: "Processing", icon: <img src="https://res.cloudinary.com/destej60y/image/upload/v1773619307/hour-glass_vujzem.png" alt="processing" className="w-3 h-3" /> },
-    completed: { variant: "default", label: "Completed", icon: <CheckCircle2 className="w-3 h-3" /> },
-    failed: { variant: "destructive", label: "Failed", icon: <AlertTriangle className="w-3 h-3" /> },
-    rejected: { variant: "destructive", label: "Rejected", icon: <XCircle className="w-3 h-3" /> },
+const STATUS_CONFIG: Record<string, {
+    variant: "default" | "secondary" | "destructive" | "outline";
+    label: string;
+    icon: React.ReactNode;
+    border: string;
+    bg: string;
+    text: string;
+    dot: string;
+}> = {
+    pending:    { variant: "outline",     label: "Pending",    icon: <Clock className="w-3 h-3" />,          border: "border-l-blue-400",   bg: "bg-blue-50",   text: "text-blue-700",   dot: "bg-blue-400"   },
+    processing: { variant: "secondary",   label: "Processing", icon: <img src="https://res.cloudinary.com/destej60y/image/upload/v1773619307/hour-glass_vujzem.png" alt="processing" className="w-3 h-3" />, border: "border-l-amber-400", bg: "bg-amber-50", text: "text-amber-700", dot: "bg-amber-400" },
+    completed:  { variant: "default",     label: "Completed",  icon: <CheckCircle2 className="w-3 h-3" />,   border: "border-l-emerald-400",bg: "bg-emerald-50",text: "text-emerald-700",dot: "bg-emerald-400"},
+    failed:     { variant: "destructive", label: "Failed",     icon: <AlertTriangle className="w-3 h-3" />,  border: "border-l-orange-400", bg: "bg-orange-50", text: "text-orange-700", dot: "bg-orange-400" },
+    rejected:   { variant: "destructive", label: "Rejected",   icon: <XCircle className="w-3 h-3" />,        border: "border-l-red-400",    bg: "bg-red-50",    text: "text-red-700",    dot: "bg-red-400"    },
 };
+
+const STATUS_FILTERS = [
+    { value: "all",        label: "All" },
+    { value: "processing", label: "Processing" },
+    { value: "completed",  label: "Completed" },
+    { value: "pending",    label: "Pending" },
+    { value: "rejected",   label: "Rejected" },
+    { value: "failed",     label: "Failed" },
+];
 
 // ─────────────────────────────────────────────
 // Component
@@ -139,6 +152,7 @@ export default function WithdrawalsClient() {
     // Filters
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState<string>("all");
+    const [methodFilter, setMethodFilter] = useState<string>("all");
     const [offset, setOffset] = useState(0);
 
     // Action dialog
@@ -287,20 +301,27 @@ export default function WithdrawalsClient() {
     };
 
     // ── Render: Stats Card ──
-    const StatCard = ({ label, value, sub, icon, color }: {
+    const StatCard = ({ label, value, sub, icon, color, accent }: {
         label: string;
         value: string | number;
         sub?: string;
         icon: React.ReactNode;
         color: string;
+        accent?: string;
     }) => (
-        <div className="bg-white rounded-xl p-4 border border-gray-200">
-            <div className="flex items-center justify-between mb-1">
-                <span className="text-sm text-gray-500 font-medium">{label}</span>
-                <div className={color}>{icon}</div>
+        <div className={`bg-white rounded-2xl p-4 border border-gray-100 shadow-sm border-l-4 ${accent ?? "border-l-gray-200"}`}>
+            <div className="flex items-start justify-between">
+                <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide truncate">{label}</p>
+                    <p className="text-xl font-bold text-gray-900 mt-1 leading-tight">
+                        {typeof value === "number" ? value.toLocaleString() : value}
+                    </p>
+                    {sub && <p className="text-xs text-gray-400 mt-0.5 truncate">{sub}</p>}
+                </div>
+                <div className={`p-2 rounded-xl ${color} bg-opacity-10 ml-2 shrink-0`}>
+                    <div className={color}>{icon}</div>
+                </div>
             </div>
-            <p className="text-2xl font-bold text-gray-900">{typeof value === "number" ? value.toLocaleString() : value}</p>
-            {sub && <p className="text-xs text-gray-400 mt-1">{sub}</p>}
         </div>
     );
 
@@ -308,11 +329,11 @@ export default function WithdrawalsClient() {
     const renderDashboard = () => {
         if (statsLoading) {
             return (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                     {Array.from({ length: 8 }).map((_, i) => (
-                        <div key={i} className="bg-white rounded-xl p-4 border border-gray-200">
-                            <Skeleton className="h-4 w-20 mb-2" />
-                            <Skeleton className="h-8 w-16" />
+                        <div key={i} className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+                            <Skeleton className="h-3 w-16 mb-3 rounded-full" />
+                            <Skeleton className="h-6 w-12 rounded-md" />
                         </div>
                     ))}
                 </div>
@@ -321,7 +342,7 @@ export default function WithdrawalsClient() {
 
         if (statsError) {
             return (
-                <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700">
+                <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-red-700">
                     <p className="font-medium">Error loading stats</p>
                     <p className="text-sm mt-1">{statsError}</p>
                     <Button variant="outline" size="sm" className="mt-2" onClick={fetchStats}>Retry</Button>
@@ -332,143 +353,78 @@ export default function WithdrawalsClient() {
         if (!stats) return null;
 
         return (
-            <div className="space-y-6">
+            <div className="space-y-5">
                 {/* Pending Alert */}
                 {stats.pending_count > 0 && (
-                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3">
-                        <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
-                        <div>
-                            <p className="font-semibold text-amber-800">
-                                {stats.pending_count} Pending Withdrawal{stats.pending_count !== 1 ? "s" : ""} Require Action
-                            </p>
-                            <p className="text-sm text-amber-600">
-                                Total: {toUsd(stats.pending_points)} awaiting approval
-                            </p>
+                    <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+                        <div className="flex items-start gap-3">
+                            <div className="p-2 bg-amber-100 rounded-xl shrink-0">
+                                <AlertTriangle className="w-4 h-4 text-amber-600" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="font-semibold text-amber-800 text-sm">
+                                    {stats.pending_count} Request{stats.pending_count !== 1 ? "s" : ""} Need Action
+                                </p>
+                                <p className="text-xs text-amber-600 mt-0.5">
+                                    {toUsd(stats.pending_points)} awaiting approval
+                                </p>
+                            </div>
                         </div>
                         <Button
                             size="sm"
-                            variant="outline"
-                            className="ml-auto border-amber-300 text-amber-700 hover:bg-amber-100"
-                            onClick={() => {
-                                setStatusFilter("processing");
-                                setTab("requests");
-                            }}
+                            className="w-full mt-3 bg-amber-500 hover:bg-amber-600 text-white border-0 h-9 rounded-xl font-medium"
+                            onClick={() => { setStatusFilter("processing"); setTab("requests"); }}
                         >
-                            Review Now
+                            Review Now →
                         </Button>
                     </div>
                 )}
 
-                {/* Time-based Stats */}
+                {/* Overview */}
                 <div>
-                    <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Overview</h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                        <StatCard
-                            label="Total Withdrawals"
-                            value={stats.total_withdrawals}
-                            icon={<DollarSign className="w-5 h-5" />}
-                            color="text-blue-500"
-                        />
-                        <StatCard
-                            label="Total Withdrawn"
-                            value={toUsd(stats.total_points_withdrawn)}
-                            sub="All time (completed + processing)"
-                            icon={<TrendingUp className="w-5 h-5" />}
-                            color="text-green-500"
-                        />
-                        <StatCard
-                            label="Pending Requests"
-                            value={stats.pending_count}
-                            sub={toUsd(stats.pending_points)}
-                            icon={<Clock className="w-5 h-5" />}
-                            color="text-amber-500"
-                        />
-                        <StatCard
-                            label="Completed"
-                            value={stats.total_completed}
-                            icon={<CheckCircle2 className="w-5 h-5" />}
-                            color="text-emerald-500"
-                        />
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3 px-1">Overview</p>
+                    <div className="grid grid-cols-2 gap-3">
+                        <StatCard label="Total Requests"   value={stats.total_withdrawals}             icon={<DollarSign className="w-4 h-4" />}   color="text-blue-500"    accent="border-l-blue-400" />
+                        <StatCard label="Total Withdrawn"  value={toUsd(stats.total_points_withdrawn)} sub="All time"                               icon={<TrendingUp className="w-4 h-4" />}   color="text-green-500"   accent="border-l-green-400" />
+                        <StatCard label="Processing"       value={stats.pending_count}                 sub={toUsd(stats.pending_points)}            icon={<Clock className="w-4 h-4" />}        color="text-amber-500"   accent="border-l-amber-400" />
+                        <StatCard label="Completed"        value={stats.total_completed}               icon={<CheckCircle2 className="w-4 h-4" />}  color="text-emerald-500" accent="border-l-emerald-400" />
                     </div>
                 </div>
 
                 {/* Time Periods */}
                 <div>
-                    <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">By Period</h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                        <StatCard
-                            label="Today"
-                            value={stats.today_count}
-                            sub={`${toUsd(stats.today_points)} · ${stats.today_completed} completed`}
-                            icon={<Clock className="w-5 h-5" />}
-                            color="text-blue-500"
-                        />
-                        <StatCard
-                            label="Yesterday"
-                            value={stats.yesterday_count}
-                            sub={toUsd(stats.yesterday_points)}
-                            icon={<Clock className="w-5 h-5" />}
-                            color="text-gray-500"
-                        />
-                        <StatCard
-                            label="This Week"
-                            value={stats.week_count}
-                            sub={toUsd(stats.week_points)}
-                            icon={<TrendingUp className="w-5 h-5" />}
-                            color="text-indigo-500"
-                        />
-                        <StatCard
-                            label="This Month"
-                            value={stats.month_count}
-                            sub={toUsd(stats.month_points)}
-                            icon={<TrendingUp className="w-5 h-5" />}
-                            color="text-purple-500"
-                        />
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3 px-1">By Period</p>
+                    <div className="grid grid-cols-2 gap-3">
+                        <StatCard label="Today"      value={stats.today_count}     sub={`${toUsd(stats.today_points)} · ${stats.today_completed} done`} icon={<CalendarDays className="w-4 h-4" />} color="text-blue-500"   accent="border-l-blue-300" />
+                        <StatCard label="Yesterday"  value={stats.yesterday_count} sub={toUsd(stats.yesterday_points)}  icon={<CalendarDays className="w-4 h-4" />} color="text-gray-500"   accent="border-l-gray-300" />
+                        <StatCard label="This Week"  value={stats.week_count}      sub={toUsd(stats.week_points)}       icon={<TrendingUp className="w-4 h-4" />}   color="text-indigo-500" accent="border-l-indigo-400" />
+                        <StatCard label="This Month" value={stats.month_count}     sub={toUsd(stats.month_points)}      icon={<TrendingUp className="w-4 h-4" />}   color="text-purple-500" accent="border-l-purple-400" />
                     </div>
                 </div>
 
-                {/* Rejected / Failed */}
+                {/* Issues */}
                 <div>
-                    <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Issues</h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                        <StatCard
-                            label="Rejected"
-                            value={stats.total_rejected}
-                            icon={<XCircle className="w-5 h-5" />}
-                            color="text-red-500"
-                        />
-                        <StatCard
-                            label="Failed"
-                            value={stats.total_failed}
-                            icon={<AlertTriangle className="w-5 h-5" />}
-                            color="text-orange-500"
-                        />
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3 px-1">Issues</p>
+                    <div className="grid grid-cols-2 gap-3">
+                        <StatCard label="Rejected" value={stats.total_rejected} icon={<XCircle className="w-4 h-4" />}       color="text-red-500"    accent="border-l-red-400" />
+                        <StatCard label="Failed"   value={stats.total_failed}   icon={<AlertTriangle className="w-4 h-4" />} color="text-orange-500" accent="border-l-orange-400" />
                     </div>
                 </div>
 
                 {/* By Method */}
                 {stats.by_method && stats.by_method.length > 0 && (
                     <div>
-                        <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">By Method</h3>
-                        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Method</TableHead>
-                                        <TableHead className="text-right">Requests</TableHead>
-                                        <TableHead className="text-right">Total (USD)</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {stats.by_method.map((m) => (
-                                        <TableRow key={m.method_key}>
-                                            <TableCell className="font-medium">{m.display_name}</TableCell>
-                                            <TableCell className="text-right">{m.count.toLocaleString()}</TableCell>
-                                            <TableCell className="text-right font-mono">{toUsd(m.total_points)}</TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
+                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3 px-1">By Method</p>
+                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden divide-y divide-gray-50">
+                            {stats.by_method.map((m) => (
+                                <div key={m.method_key} className="flex items-center justify-between px-4 py-3">
+                                    <span className="font-medium text-sm text-gray-800">{m.display_name}</span>
+                                    <div className="flex items-center gap-3 text-right">
+                                        <span className="text-xs text-gray-400">{m.count.toLocaleString()} req</span>
+                                        <span className="text-sm font-bold text-gray-900 font-mono">{toUsd(m.total_points)}</span>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 )}
@@ -476,33 +432,23 @@ export default function WithdrawalsClient() {
                 {/* By Status */}
                 {stats.by_status && stats.by_status.length > 0 && (
                     <div>
-                        <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">By Status</h3>
-                        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead className="text-right">Count</TableHead>
-                                        <TableHead className="text-right">Total (USD)</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {stats.by_status.map((s) => (
-                                        <TableRow key={s.status}>
-                                            <TableCell>
-                                                <Badge variant={STATUS_BADGE[s.status]?.variant ?? "outline"}>
-                                                    <span className="flex items-center gap-1">
-                                                        {STATUS_BADGE[s.status]?.icon}
-                                                        {STATUS_BADGE[s.status]?.label ?? s.status}
-                                                    </span>
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell className="text-right">{s.count.toLocaleString()}</TableCell>
-                                            <TableCell className="text-right font-mono">{toUsd(s.total_points)}</TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
+                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3 px-1">By Status</p>
+                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden divide-y divide-gray-50">
+                            {stats.by_status.map((s) => {
+                                const cfg = STATUS_CONFIG[s.status];
+                                return (
+                                    <div key={s.status} className="flex items-center justify-between px-4 py-3">
+                                        <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${cfg?.bg ?? "bg-gray-100"} ${cfg?.text ?? "text-gray-600"}`}>
+                                            <span className={`w-1.5 h-1.5 rounded-full ${cfg?.dot ?? "bg-gray-400"}`} />
+                                            {cfg?.label ?? s.status}
+                                        </span>
+                                        <div className="flex items-center gap-3 text-right">
+                                            <span className="text-xs text-gray-400">{s.count.toLocaleString()}</span>
+                                            <span className="text-sm font-bold text-gray-900 font-mono">{toUsd(s.total_points)}</span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
                 )}
@@ -510,160 +456,285 @@ export default function WithdrawalsClient() {
         );
     };
 
-    // ── Render: Withdrawal Row ──
-    const renderWithdrawalRow = (w: Withdrawal, showActions: boolean) => (
-        <TableRow key={w.id}>
-            <TableCell className="text-sm">
-                {new Date(w.created_at).toLocaleDateString()}{" "}
-                <span className="text-gray-400">{new Date(w.created_at).toLocaleTimeString()}</span>
-            </TableCell>
-            <TableCell>
-                <Badge variant={STATUS_BADGE[w.status]?.variant ?? "outline"}>
-                    <span className="flex items-center gap-1">
-                        {STATUS_BADGE[w.status]?.icon}
-                        {STATUS_BADGE[w.status]?.label ?? w.status}
-                    </span>
-                </Badge>
-            </TableCell>
-            <TableCell className="font-mono text-right">
-                <span className="inline-flex items-center gap-1">
-                    <DollarSign className="w-4 h-4 text-green-500" />
-                    {toUsd(w.amount_points)}
-                </span>
-            </TableCell>
-            <TableCell>{w.method?.display_name ?? w.method_key}</TableCell>
-            <TableCell>
-                <div className="flex items-center gap-2">
-                    <span className="text-sm font-mono">{w.destination_plain || w.destination_masked}</span>
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            copyToClipboard(w.destination_plain || w.destination_masked, w.id);
-                        }}
-                        className="p-1.5 hover:bg-gray-100 rounded-md transition-colors border border-gray-200"
-                        title="Copy destination"
-                    >
-                        {copiedId === w.id ? (
-                            <Check className="w-4 h-4 text-green-500" />
-                        ) : (
-                            <Copy className="w-4 h-4 text-gray-400" />
-                        )}
-                    </button>
-                </div>
-                <span className="text-xs text-gray-400">{w.destination_type}</span>
-            </TableCell>
-            <TableCell className="text-sm">
-                <span className="font-mono text-xs">
-                    {w.user?.ad_id ? (w.user.ad_id.length > 16 ? `${w.user.ad_id.slice(0, 16)}...` : w.user.ad_id) : "—"}
-                </span>
-            </TableCell>
-            <TableCell className="text-right text-sm text-gray-500">
-                <div className="font-mono text-xs">
-                    <span className="text-gray-400">Before:</span> {toUsd(w.balance_before)}
-                </div>
-                <div className="font-mono text-xs">
-                    <span className="text-gray-400">After:</span> {toUsd(w.balance_after)}
-                </div>
-            </TableCell>
-            <TableCell>
-                {showActions && w.status === "processing" ? (
-                    <div className="flex items-center gap-1">
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-green-600 border-green-200 hover:bg-green-50 h-7 px-2 text-xs"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                openActionDialog(w, "completed");
-                            }}
-                        >
-                            <CheckCircle2 className="w-3 h-3 mr-1" />
-                            Approve
-                        </Button>
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-red-600 border-red-200 hover:bg-red-50 h-7 px-2 text-xs"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                openActionDialog(w, "rejected");
-                            }}
-                        >
-                            <XCircle className="w-3 h-3 mr-1" />
-                            Reject
-                        </Button>
-                    </div>
-                ) : (
-                    <span className="text-xs text-gray-400">
-                        {w.processed_at
-                            ? new Date(w.processed_at).toLocaleDateString()
-                            : "—"}
-                    </span>
-                )}
-            </TableCell>
-        </TableRow>
-    );
+    // ── Render: Withdrawal Card (Mobile-First) ──
+    const renderWithdrawalCard = (w: Withdrawal, showActions: boolean) => {
+        const cfg = STATUS_CONFIG[w.status] ?? STATUS_CONFIG.pending;
+        const destDisplay = w.destination_plain || w.destination_masked;
+        const isProcessing = w.status === "processing";
+        const methodKey = (w.method_key ?? w.method?.method_key ?? "").toLowerCase();
+        const methodBorderColor: Record<string, string> = {
+            paypal:   "border-l-[#283593]",
+            binance:  "border-l-[#F0B90B]",
+            coinbase: "border-l-[#0052FF]",
+        };
+        const borderColor = methodBorderColor[methodKey] ?? cfg.border;
 
-    // ── Render: Withdrawal Table ──
-    const renderWithdrawalTable = (showActions: boolean) => (
+        return (
+            <div
+                key={w.id}
+                className={`bg-white rounded-2xl border border-gray-100 shadow-sm border-l-4 ${borderColor} overflow-hidden`}
+            >
+                {/* Card Header */}
+                <div className="px-4 pt-4 pb-3 flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                        {w.method?.logo_url ? (
+                            <img
+                                src={w.method.logo_url}
+                                alt={w.method.display_name}
+                                className="w-9 h-9 rounded-xl object-contain border border-gray-100 p-1 bg-gray-50 shrink-0"
+                            />
+                        ) : (
+                            <div className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center shrink-0">
+                                <Wallet className="w-4 h-4 text-gray-400" />
+                            </div>
+                        )}
+                        <div className="min-w-0">
+                            <p className="font-semibold text-gray-900 text-sm leading-tight truncate">
+                                {w.method?.display_name ?? w.method_key}
+                            </p>
+                            <p className="text-xs text-gray-400 mt-0.5">
+                                {w.destination_type}
+                            </p>
+                        </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-1.5 shrink-0">
+                        <span className="text-lg font-bold text-gray-900 leading-tight">
+                            {toUsd(w.amount_points)}
+                        </span>
+                        <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.text}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+                            {cfg.label}
+                        </span>
+                    </div>
+                </div>
+
+                {/* Destination Row */}
+                <div className="px-4 pb-2">
+                    <div className="flex items-center justify-between gap-2 bg-gray-50 rounded-xl px-3 py-2">
+                        <span className="font-mono text-xs text-gray-700 truncate flex-1">{destDisplay}</span>
+                        <button
+                            onClick={(e) => { e.stopPropagation(); copyToClipboard(destDisplay, w.id); }}
+                            aria-label="Copy destination"
+                            className="shrink-0 p-1.5 hover:bg-white rounded-lg transition-colors border border-gray-200 bg-white"
+                        >
+                            {copiedId === w.id
+                                ? <Check className="w-3.5 h-3.5 text-emerald-500" />
+                                : <Copy className="w-3.5 h-3.5 text-gray-400" />
+                            }
+                        </button>
+                    </div>
+                </div>
+
+                {/* Meta Row */}
+                <div className="px-4 pb-3 flex items-center justify-between gap-2 text-xs text-gray-400">
+                    <span className="flex items-center gap-1">
+                        <CalendarDays className="w-3 h-3" />
+                        {new Date(w.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}{" "}
+                        <span className="text-gray-300">·</span>{" "}
+                        {new Date(w.created_at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                    <span className="flex items-center gap-1 truncate max-w-[45%]">
+                        <User className="w-3 h-3 shrink-0" />
+                        <span className="font-mono truncate">
+                            {w.user?.ad_id
+                                ? (w.user.ad_id.length > 14 ? `${w.user.ad_id.slice(0, 14)}…` : w.user.ad_id)
+                                : "—"}
+                        </span>
+                    </span>
+                </div>
+
+                {/* Balance Row */}
+                <div className="px-4 pb-3">
+                    <div className="flex items-center gap-1.5 text-xs text-gray-400 bg-gray-50 rounded-xl px-3 py-2">
+                        <Wallet className="w-3 h-3 shrink-0" />
+                        <span className="font-mono">{toUsd(w.balance_before)}</span>
+                        <ArrowRight className="w-3 h-3 text-gray-300 shrink-0" />
+                        <span className="font-mono text-gray-600">{toUsd(w.balance_after)}</span>
+                    </div>
+                </div>
+
+                {/* Actions */}
+                {showActions && isProcessing && (
+                    <div className="px-4 pb-4 grid grid-cols-2 gap-2">
+                        <button
+                            onClick={(e) => { e.stopPropagation(); openActionDialog(w, "completed"); }}
+                            aria-label="Approve withdrawal"
+                            className="flex items-center justify-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white text-sm font-semibold h-10 rounded-xl transition-colors"
+                        >
+                            <CheckCircle2 className="w-4 h-4" />
+                            Approve
+                        </button>
+                        <button
+                            onClick={(e) => { e.stopPropagation(); openActionDialog(w, "rejected"); }}
+                            aria-label="Reject withdrawal"
+                            className="flex items-center justify-center gap-1.5 bg-red-500 hover:bg-red-600 active:bg-red-700 text-white text-sm font-semibold h-10 rounded-xl transition-colors"
+                        >
+                            <XCircle className="w-4 h-4" />
+                            Reject
+                        </button>
+                    </div>
+                )}
+                {(!showActions || !isProcessing) && w.processed_at && (
+                    <div className="px-4 pb-3">
+                        <p className="text-[11px] text-gray-400 text-right">
+                            Processed {new Date(w.processed_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                        </p>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    // ── Render: Withdrawal List (Cards on mobile, Table on desktop) ──
+    const renderWithdrawalList = (showActions: boolean) => {
+        const displayWithdrawals = showActions && methodFilter !== "all"
+            ? withdrawals.filter((w) => (w.method_key ?? "").toLowerCase() === methodFilter)
+            : withdrawals;
+        return (
         <div className="space-y-4">
             {/* Filters */}
-            <div className="bg-white rounded-xl p-4 border border-gray-200">
-                <div className="flex flex-col sm:flex-row gap-4">
+            <div className="space-y-3">
+                {/* Search + Refresh */}
+                <div className="flex gap-2">
                     <div className="flex-1 relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                         <Input
                             type="text"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Search by destination (email, ID)..."
-                            className="pl-9"
+                            placeholder="Search by destination…"
+                            className="pl-9 h-10 rounded-xl border-gray-200 bg-white text-sm"
                         />
                     </div>
-                    {!showActions && (
-                        <Select value={statusFilter} onValueChange={setStatusFilter}>
-                            <SelectTrigger className="w-full sm:w-[180px]">
-                                <SelectValue placeholder="All Statuses" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Statuses</SelectItem>
-                                <SelectItem value="pending">Pending</SelectItem>
-                                <SelectItem value="processing">Processing</SelectItem>
-                                <SelectItem value="completed">Completed</SelectItem>
-                                <SelectItem value="rejected">Rejected</SelectItem>
-                                <SelectItem value="failed">Failed</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    )}
-                    <Button variant="outline" size="icon" onClick={() => { fetchWithdrawals(); fetchStats(); }} title="Refresh">
-                        <RefreshCw className="w-4 h-4" />
-                    </Button>
+                    <button
+                        onClick={() => { fetchWithdrawals(); fetchStats(); }}
+                        className="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shrink-0"
+                        title="Refresh"
+                    >
+                        <RefreshCw className="w-4 h-4 text-gray-500" />
+                    </button>
                 </div>
+
+                {/* Status Filter Pills — All Withdrawals tab */}
+                {!showActions && (
+                    <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
+                        {STATUS_FILTERS.map((f) => {
+                            const cfg = STATUS_CONFIG[f.value];
+                            const isActive = statusFilter === f.value;
+                            return (
+                                <button
+                                    key={f.value}
+                                    onClick={() => setStatusFilter(f.value)}
+                                    className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors whitespace-nowrap ${
+                                        isActive
+                                            ? "bg-gray-900 text-white border-gray-900"
+                                            : `bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50`
+                                    }`}
+                                >
+                                    {f.value !== "all" && cfg && (
+                                        <span className={`inline-block w-1.5 h-1.5 rounded-full mr-1.5 ${isActive ? "bg-white" : cfg.dot}`} />
+                                    )}
+                                    {f.label}
+                                </button>
+                            );
+                        })}
+                    </div>
+                )}
+
+                {/* Method Filter Pills — Pending tab */}
+                {showActions && (
+                    <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
+                        {([
+                            { value: "all",      label: "All",      bg: "bg-gray-900",      border: "border-gray-900",      text: "text-white" },
+                            { value: "paypal",   label: "PayPal",   bg: "bg-[#283593]",    border: "border-[#283593]",    text: "text-white" },
+                            { value: "binance",  label: "Binance",  bg: "bg-[#F0B90B]",    border: "border-[#F0B90B]",    text: "text-gray-900" },
+                            { value: "coinbase", label: "Coinbase", bg: "bg-[#0052FF]",    border: "border-[#0052FF]",    text: "text-white" },
+                        ] as const).map((m) => {
+                            const isActive = methodFilter === m.value;
+                            return (
+                                <button
+                                    key={m.value}
+                                    onClick={() => setMethodFilter(m.value)}
+                                    className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors whitespace-nowrap ${
+                                        isActive
+                                            ? `${m.bg} ${m.border} ${m.text}`
+                                            : "bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                                    }`}
+                                >
+                                    {m.label}
+                                </button>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
 
             {/* Error */}
             {error && (
-                <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700">
-                    <p className="font-medium">Error loading withdrawals</p>
-                    <p className="text-sm mt-1">{error}</p>
+                <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-red-700">
+                    <p className="font-medium text-sm">Error loading withdrawals</p>
+                    <p className="text-xs mt-1">{error}</p>
                     <Button variant="outline" size="sm" className="mt-2" onClick={fetchWithdrawals}>Retry</Button>
                 </div>
             )}
 
-            {/* Table */}
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            {/* ── Mobile Cards ── */}
+            <div className="block lg:hidden space-y-3">
+                {loading ? (
+                    Array.from({ length: 4 }).map((_, i) => (
+                        <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
+                            <div className="flex items-start justify-between">
+                                <div className="flex items-center gap-3">
+                                    <Skeleton className="w-9 h-9 rounded-xl" />
+                                    <div className="space-y-1.5">
+                                        <Skeleton className="h-4 w-20 rounded" />
+                                        <Skeleton className="h-3 w-12 rounded" />
+                                    </div>
+                                </div>
+                                <div className="space-y-1.5 text-right">
+                                    <Skeleton className="h-5 w-16 rounded ml-auto" />
+                                    <Skeleton className="h-4 w-20 rounded ml-auto" />
+                                </div>
+                            </div>
+                            <Skeleton className="h-9 w-full rounded-xl" />
+                            <div className="flex justify-between">
+                                <Skeleton className="h-3 w-24 rounded" />
+                                <Skeleton className="h-3 w-24 rounded" />
+                            </div>
+                            {showActions && (
+                                <div className="grid grid-cols-2 gap-2 pt-1">
+                                    <Skeleton className="h-10 rounded-xl" />
+                                    <Skeleton className="h-10 rounded-xl" />
+                                </div>
+                            )}
+                        </div>
+                    ))
+                ) : displayWithdrawals.length ? (
+                    displayWithdrawals.map((w) => renderWithdrawalCard(w, showActions))
+                ) : (
+                    <div className="bg-white rounded-2xl border border-gray-100 py-12 text-center text-gray-400">
+                        <Wallet className="w-8 h-8 mx-auto mb-3 opacity-30" />
+                        <p className="text-sm font-medium">No withdrawals found</p>
+                    </div>
+                )}
+            </div>
+
+            {/* ── Desktop Table ── */}
+            <div className="hidden lg:block bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                     <Table>
                         <TableHeader>
-                            <TableRow>
-                                <TableHead className="min-w-[140px]">Date</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead className="text-right">Amount</TableHead>
-                                <TableHead>Method</TableHead>
-                                <TableHead>Destination</TableHead>
-                                <TableHead>User</TableHead>
-                                <TableHead className="text-right">Balance</TableHead>
-                                <TableHead className="min-w-[150px]">{showActions ? "Actions" : "Processed"}</TableHead>
+                            <TableRow className="bg-gray-50">
+                                <TableHead className="min-w-[130px] font-semibold text-gray-600">Date</TableHead>
+                                <TableHead className="font-semibold text-gray-600">Status</TableHead>
+                                <TableHead className="text-right font-semibold text-gray-600">Amount</TableHead>
+                                <TableHead className="font-semibold text-gray-600">Method</TableHead>
+                                <TableHead className="font-semibold text-gray-600">Destination</TableHead>
+                                <TableHead className="font-semibold text-gray-600">User</TableHead>
+                                <TableHead className="text-right font-semibold text-gray-600">Balance</TableHead>
+                                <TableHead className="min-w-[150px] font-semibold text-gray-600">
+                                    {showActions ? "Actions" : "Processed"}
+                                </TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -671,18 +742,91 @@ export default function WithdrawalsClient() {
                                 Array.from({ length: 5 }).map((_, i) => (
                                     <TableRow key={i}>
                                         {Array.from({ length: 8 }).map((_, j) => (
-                                            <TableCell key={j}>
-                                                <Skeleton className="h-4 w-full" />
-                                            </TableCell>
+                                            <TableCell key={j}><Skeleton className="h-4 w-full rounded" /></TableCell>
                                         ))}
                                     </TableRow>
                                 ))
-                            ) : withdrawals.length ? (
-                                withdrawals.map((w) => renderWithdrawalRow(w, showActions))
+                            ) : displayWithdrawals.length ? (
+                                displayWithdrawals.map((w) => {
+                                    const cfg = STATUS_CONFIG[w.status] ?? STATUS_CONFIG.pending;
+                                    const destDisplay = w.destination_plain || w.destination_masked;
+                                    return (
+                                        <TableRow key={w.id} className="hover:bg-gray-50/50 transition-colors">
+                                            <TableCell className="text-sm">
+                                                {new Date(w.created_at).toLocaleDateString()}{" "}
+                                                <span className="text-gray-400">{new Date(w.created_at).toLocaleTimeString()}</span>
+                                            </TableCell>
+                                            <TableCell>
+                                                <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${cfg.bg} ${cfg.text}`}>
+                                                    <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+                                                    {cfg.label}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell className="font-mono text-right font-semibold">
+                                                <span className="inline-flex items-center gap-1">
+                                                    <DollarSign className="w-3.5 h-3.5 text-green-500" />
+                                                    {toUsd(w.amount_points)}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell>
+                                                <span className="text-sm font-medium">{w.method?.display_name ?? w.method_key}</span>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-sm font-mono text-gray-700">{destDisplay}</span>
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); copyToClipboard(destDisplay, w.id); }}
+                                                        className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200"
+                                                    >
+                                                        {copiedId === w.id
+                                                            ? <Check className="w-3.5 h-3.5 text-emerald-500" />
+                                                            : <Copy className="w-3.5 h-3.5 text-gray-400" />
+                                                        }
+                                                    </button>
+                                                </div>
+                                                <span className="text-xs text-gray-400">{w.destination_type}</span>
+                                            </TableCell>
+                                            <TableCell>
+                                                <span className="font-mono text-xs text-gray-600">
+                                                    {w.user?.ad_id
+                                                        ? (w.user.ad_id.length > 16 ? `${w.user.ad_id.slice(0, 16)}…` : w.user.ad_id)
+                                                        : "—"}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell className="text-right text-xs font-mono text-gray-500">
+                                                <div><span className="text-gray-400">Before:</span> {toUsd(w.balance_before)}</div>
+                                                <div><span className="text-gray-400">After:</span> {toUsd(w.balance_after)}</div>
+                                            </TableCell>
+                                            <TableCell>
+                                                {showActions && w.status === "processing" ? (
+                                                    <div className="flex items-center gap-1.5">
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); openActionDialog(w, "completed"); }}
+                                                            className="flex items-center gap-1 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold h-7 px-2.5 rounded-lg transition-colors"
+                                                        >
+                                                            <CheckCircle2 className="w-3 h-3" /> Approve
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); openActionDialog(w, "rejected"); }}
+                                                            className="flex items-center gap-1 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold h-7 px-2.5 rounded-lg transition-colors"
+                                                        >
+                                                            <XCircle className="w-3 h-3" /> Reject
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-xs text-gray-400">
+                                                        {w.processed_at ? new Date(w.processed_at).toLocaleDateString() : "—"}
+                                                    </span>
+                                                )}
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={8} className="text-center py-8 text-gray-500">
-                                        No withdrawals found
+                                    <TableCell colSpan={8} className="text-center py-12 text-gray-400">
+                                        <Wallet className="w-7 h-7 mx-auto mb-2 opacity-30" />
+                                        <p className="text-sm">No withdrawals found</p>
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -692,27 +836,21 @@ export default function WithdrawalsClient() {
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                    <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200">
-                        <p className="text-sm text-gray-500">
-                            Showing {offset + 1}–{Math.min(offset + PAGE_SIZE, total)} of {total}
+                    <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100">
+                        <p className="text-xs text-gray-500">
+                            {offset + 1}–{Math.min(offset + PAGE_SIZE, total)} of {total.toLocaleString()}
                         </p>
                         <div className="flex items-center gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={offset === 0}
-                                onClick={() => setOffset((prev) => Math.max(0, prev - PAGE_SIZE))}
+                            <Button variant="outline" size="sm" disabled={offset === 0}
+                                onClick={() => setOffset((p) => Math.max(0, p - PAGE_SIZE))}
+                                className="h-8 w-8 p-0 rounded-lg"
                             >
                                 <ChevronLeft className="w-4 h-4" />
                             </Button>
-                            <span className="text-sm font-medium text-gray-700">
-                                {currentPage} / {totalPages}
-                            </span>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={offset + PAGE_SIZE >= total}
-                                onClick={() => setOffset((prev) => prev + PAGE_SIZE)}
+                            <span className="text-xs font-medium text-gray-700 px-1">{currentPage} / {totalPages}</span>
+                            <Button variant="outline" size="sm" disabled={offset + PAGE_SIZE >= total}
+                                onClick={() => setOffset((p) => p + PAGE_SIZE)}
+                                className="h-8 w-8 p-0 rounded-lg"
                             >
                                 <ChevronRight className="w-4 h-4" />
                             </Button>
@@ -720,193 +858,226 @@ export default function WithdrawalsClient() {
                     </div>
                 )}
             </div>
+
+            {/* Mobile Pagination */}
+            {totalPages > 1 && (
+                <div className="flex lg:hidden items-center justify-between px-1">
+                    <p className="text-xs text-gray-500">
+                        {offset + 1}–{Math.min(offset + PAGE_SIZE, total)} of {total.toLocaleString()}
+                    </p>
+                    <div className="flex items-center gap-2">
+                        <button
+                            aria-label="Previous page"
+                            disabled={offset === 0}
+                            onClick={() => setOffset((p) => Math.max(0, p - PAGE_SIZE))}
+                            className="w-9 h-9 flex items-center justify-center bg-white border border-gray-200 rounded-xl disabled:opacity-40 hover:bg-gray-50 transition-colors"
+                        >
+                            <ChevronLeft className="w-4 h-4" />
+                        </button>
+                        <span className="text-xs font-semibold text-gray-700">{currentPage} / {totalPages}</span>
+                        <button
+                            aria-label="Next page"
+                            disabled={offset + PAGE_SIZE >= total}
+                            onClick={() => setOffset((p) => p + PAGE_SIZE)}
+                            className="w-9 h-9 flex items-center justify-center bg-white border border-gray-200 rounded-xl disabled:opacity-40 hover:bg-gray-50 transition-colors"
+                        >
+                            <ChevronRight className="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
+    };
 
     return (
-        <div className="max-w-7xl mx-auto space-y-6">
+        <div className="max-w-7xl mx-auto space-y-5">
             <Tabs value={tab} onValueChange={(v) => {
                 setTab(v);
-                // When switching to pending requests tab, auto-filter to processing
-                if (v === "requests") {
-                    setStatusFilter("processing");
-                    setOffset(0);
-                } else if (v === "all") {
-                    setStatusFilter("all");
-                    setOffset(0);
-                }
+                if (v === "requests") { setStatusFilter("processing"); setMethodFilter("all"); setOffset(0); }
+                else if (v === "all")  { setStatusFilter("all");        setOffset(0); }
             }}>
-                <TabsList className="bg-white border border-gray-200">
-                    <TabsTrigger value="dashboard" className="data-[state=active]:bg-gray-900 data-[state=active]:text-white">
+                {/* ── Tab Bar ── */}
+                <TabsList className="h-auto p-1 bg-white border border-gray-200 rounded-2xl shadow-sm gap-1 w-full sm:w-auto">
+                    <TabsTrigger
+                        value="dashboard"
+                        className="flex-1 sm:flex-none text-xs sm:text-sm rounded-xl py-2 px-3 font-medium data-[state=active]:bg-gray-900 data-[state=active]:text-white data-[state=active]:shadow-sm transition-all"
+                    >
                         Dashboard
                     </TabsTrigger>
-                    <TabsTrigger value="requests" className="data-[state=active]:bg-gray-900 data-[state=active]:text-white relative">
-                        Pending Requests
+                    <TabsTrigger
+                        value="requests"
+                        className="flex-1 sm:flex-none text-xs sm:text-sm rounded-xl py-2 px-3 font-medium data-[state=active]:bg-gray-900 data-[state=active]:text-white data-[state=active]:shadow-sm transition-all relative"
+                    >
+                        Pending
                         {stats && stats.pending_count > 0 && (
-                            <span className="ml-1.5 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-amber-500 text-white min-w-[18px]">
+                            <span className="ml-1.5 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-amber-500 text-white min-w-[18px] leading-none">
                                 {stats.pending_count}
                             </span>
                         )}
                     </TabsTrigger>
-                    <TabsTrigger value="all" className="data-[state=active]:bg-gray-900 data-[state=active]:text-white">
-                        All Withdrawals
+                    <TabsTrigger
+                        value="all"
+                        className="flex-1 sm:flex-none text-xs sm:text-sm rounded-xl py-2 px-3 font-medium data-[state=active]:bg-gray-900 data-[state=active]:text-white data-[state=active]:shadow-sm transition-all"
+                    >
+                        All
                     </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="dashboard" className="mt-6">
+                <TabsContent value="dashboard" className="mt-5">
                     {renderDashboard()}
                 </TabsContent>
 
-                <TabsContent value="requests" className="mt-6">
-                    {renderWithdrawalTable(true)}
+                <TabsContent value="requests" className="mt-5">
+                    {renderWithdrawalList(true)}
                 </TabsContent>
 
-                <TabsContent value="all" className="mt-6">
-                    {renderWithdrawalTable(false)}
+                <TabsContent value="all" className="mt-5">
+                    {renderWithdrawalList(false)}
                 </TabsContent>
             </Tabs>
 
-            {/* Approve / Reject Confirmation Dialog */}
+            {/* ── Approve / Reject Confirmation Dialog ── */}
             <Dialog open={actionDialog.open} onOpenChange={(open) => {
                 if (!open) setActionDialog({ open: false, withdrawal: null, action: "completed" });
             }}>
-                <DialogContent className="sm:max-w-lg">
-                    <DialogHeader>
-                        <DialogTitle className={actionDialog.action === "completed" ? "text-green-700" : "text-red-700"}>
-                            {actionDialog.action === "completed" ? "Approve Withdrawal" : "Reject Withdrawal"}
-                        </DialogTitle>
-                        <DialogDescription>
-                            {actionDialog.action === "completed"
-                                ? "This will mark the withdrawal as completed. Confirm you have sent the payment to the user."
-                                : "This will reject the withdrawal and refund the points back to the user's wallet."
-                            }
-                        </DialogDescription>
-                    </DialogHeader>
+                <DialogContent className="w-[calc(100vw-2rem)] max-w-md rounded-2xl sm:rounded-2xl mx-auto p-0 overflow-hidden border-0 shadow-2xl">
+                    {/* Dialog Header */}
+                    <div className={`px-5 pt-5 pb-4 ${actionDialog.action === "completed" ? "bg-emerald-50" : "bg-red-50"}`}>
+                        <DialogHeader>
+                            <DialogTitle className={`text-base font-bold ${actionDialog.action === "completed" ? "text-emerald-800" : "text-red-800"}`}>
+                                <span className="flex items-center gap-2">
+                                    {actionDialog.action === "completed"
+                                        ? <><CheckCircle2 className="w-5 h-5 text-emerald-600" /> Approve Withdrawal</>
+                                        : <><XCircle className="w-5 h-5 text-red-600" /> Reject Withdrawal</>
+                                    }
+                                </span>
+                            </DialogTitle>
+                            <DialogDescription className={`text-xs mt-1 ${actionDialog.action === "completed" ? "text-emerald-700" : "text-red-700"}`}>
+                                {actionDialog.action === "completed"
+                                    ? "Confirm you have sent the payment to the user."
+                                    : "This will reject the withdrawal request."
+                                }
+                            </DialogDescription>
+                        </DialogHeader>
+                    </div>
 
-                    {actionDialog.withdrawal && (
-                        <div className="space-y-3 py-2">
-                            <div className="bg-gray-50 rounded-lg p-3 space-y-2 text-sm">
-                                <div className="flex justify-between">
-                                    <span className="text-gray-500">Amount</span>
-                                    <span className="font-bold">{toUsd(actionDialog.withdrawal.amount_points)}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-500">Method</span>
-                                    <span>{actionDialog.withdrawal.method?.display_name ?? actionDialog.withdrawal.method_key}</span>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-gray-500">Destination</span>
-                                    <div className="flex items-center gap-2">
-                                        <span className="font-mono">{actionDialog.withdrawal.destination_plain || actionDialog.withdrawal.destination_masked}</span>
-                                        <button
-                                            onClick={() => copyToClipboard(
-                                                actionDialog.withdrawal!.destination_plain || actionDialog.withdrawal!.destination_masked,
-                                                `dialog-${actionDialog.withdrawal!.id}`
-                                            )}
-                                            className="p-1.5 hover:bg-gray-200 rounded-md transition-colors border border-gray-200"
-                                            title="Copy destination"
-                                        >
-                                            {copiedId === `dialog-${actionDialog.withdrawal.id}` ? (
-                                                <Check className="w-4 h-4 text-green-500" />
-                                            ) : (
-                                                <Copy className="w-4 h-4 text-gray-400" />
-                                            )}
-                                        </button>
+                    <div className="px-5 py-4 space-y-4">
+                        {actionDialog.withdrawal && (
+                            <>
+                                {/* Summary */}
+                                <div className="bg-gray-50 rounded-xl divide-y divide-gray-100 overflow-hidden border border-gray-100">
+                                    <div className="flex items-center justify-between px-4 py-2.5">
+                                        <span className="text-xs text-gray-500 font-medium">Amount</span>
+                                        <span className="text-sm font-bold text-gray-900">{toUsd(actionDialog.withdrawal.amount_points)}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between px-4 py-2.5">
+                                        <span className="text-xs text-gray-500 font-medium">Method</span>
+                                        <span className="text-sm font-medium text-gray-800">{actionDialog.withdrawal.method?.display_name ?? actionDialog.withdrawal.method_key}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between px-4 py-2.5 gap-3">
+                                        <span className="text-xs text-gray-500 font-medium shrink-0">Destination</span>
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            <span className="font-mono text-xs text-gray-800 truncate">
+                                                {actionDialog.withdrawal.destination_plain || actionDialog.withdrawal.destination_masked}
+                                            </span>
+                                            <button
+                                                onClick={() => copyToClipboard(
+                                                    actionDialog.withdrawal!.destination_plain || actionDialog.withdrawal!.destination_masked,
+                                                    `dialog-${actionDialog.withdrawal!.id}`
+                                                )}
+                                                className="shrink-0 p-1.5 hover:bg-gray-200 rounded-lg transition-colors border border-gray-200 bg-white"
+                                            >
+                                                {copiedId === `dialog-${actionDialog.withdrawal.id}`
+                                                    ? <Check className="w-3.5 h-3.5 text-emerald-500" />
+                                                    : <Copy className="w-3.5 h-3.5 text-gray-400" />
+                                                }
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center justify-between px-4 py-2.5">
+                                        <span className="text-xs text-gray-500 font-medium">User</span>
+                                        <span className="font-mono text-xs text-gray-700 truncate max-w-[60%]">
+                                            {actionDialog.withdrawal.user?.ad_id
+                                                ? (actionDialog.withdrawal.user.ad_id.length > 22
+                                                    ? `${actionDialog.withdrawal.user.ad_id.slice(0, 22)}…`
+                                                    : actionDialog.withdrawal.user.ad_id)
+                                                : "—"}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center justify-between px-4 py-2.5">
+                                        <span className="text-xs text-gray-500 font-medium">Requested</span>
+                                        <span className="text-xs text-gray-700">{new Date(actionDialog.withdrawal.created_at).toLocaleString()}</span>
                                     </div>
                                 </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-500">User</span>
-                                    <span className="font-mono text-xs">
-                                        {actionDialog.withdrawal.user?.ad_id
-                                            ? (actionDialog.withdrawal.user.ad_id.length > 20
-                                                ? `${actionDialog.withdrawal.user.ad_id.slice(0, 20)}...`
-                                                : actionDialog.withdrawal.user.ad_id)
-                                            : "—"}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-500">Requested</span>
-                                    <span>{new Date(actionDialog.withdrawal.created_at).toLocaleString()}</span>
-                                </div>
-                            </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Admin Notes (optional)
-                                </label>
-                                <Input
-                                    value={adminNotes}
-                                    onChange={(e) => setAdminNotes(e.target.value)}
-                                    placeholder={actionDialog.action === "rejected" ? "Reason for rejection..." : "Payment reference, notes..."}
-                                    maxLength={500}
-                                />
-                            </div>
+                                {/* Admin Notes */}
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                                        Admin Notes <span className="font-normal text-gray-400">(optional)</span>
+                                    </label>
+                                    <Input
+                                        value={adminNotes}
+                                        onChange={(e) => setAdminNotes(e.target.value)}
+                                        placeholder={actionDialog.action === "rejected" ? "Reason for rejection…" : "Payment reference, notes…"}
+                                        maxLength={500}
+                                        className="rounded-xl text-sm h-10 border-gray-200"
+                                    />
+                                </div>
 
-                            {actionDialog.action === "rejected" && (
-                                <div className="space-y-3">
-                                    <div className="flex items-center justify-between">
-                                        <label htmlFor="refund-toggle" className="text-sm font-medium text-gray-700">
-                                            Refund points to user
-                                        </label>
-                                        <button
-                                            id="refund-toggle"
-                                            type="button"
-                                            role="switch"
-                                            aria-checked={refundPoints ? "true" : "false"}
-                                            onClick={() => setRefundPoints(!refundPoints)}
-                                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                                                refundPoints ? "bg-green-500" : "bg-gray-300"
-                                            }`}
-                                        >
-                                            <span
-                                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                                                    refundPoints ? "translate-x-6" : "translate-x-1"
-                                                }`}
-                                            />
-                                        </button>
+                                {/* Refund Toggle (Reject only) */}
+                                {actionDialog.action === "rejected" && (
+                                    <div className="space-y-2.5">
+                                        <div className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3 border border-gray-100">
+                                            <div>
+                                                <p className="text-sm font-semibold text-gray-800">Refund points</p>
+                                                <p className="text-xs text-gray-500 mt-0.5">Return {toUsd(actionDialog.withdrawal.amount_points)} to wallet</p>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                role="switch"
+                                                aria-label="Toggle refund points"
+                                                aria-checked={refundPoints}
+                                                onClick={() => setRefundPoints(!refundPoints)}
+                                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 ${refundPoints ? "bg-emerald-500" : "bg-gray-300"}`}
+                                            >
+                                                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${refundPoints ? "translate-x-6" : "translate-x-1"}`} />
+                                            </button>
+                                        </div>
+                                        <div className={`rounded-xl p-3 text-xs font-medium flex items-start gap-2 ${refundPoints ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+                                            <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                                            {refundPoints
+                                                ? `${toUsd(actionDialog.withdrawal.amount_points)} will be credited back to the user's wallet.`
+                                                : `${toUsd(actionDialog.withdrawal.amount_points)} will NOT be returned. User loses these points.`
+                                            }
+                                        </div>
                                     </div>
-                                    {refundPoints ? (
-                                        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
-                                            <p className="font-medium flex items-center gap-1">
-                                                <AlertTriangle className="w-4 h-4" />
-                                                Points will be refunded
-                                            </p>
-                                            <p className="mt-1">
-                                                {toUsd(actionDialog.withdrawal.amount_points)} will be credited back to the user&apos;s wallet.
-                                            </p>
-                                        </div>
-                                    ) : (
-                                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-700">
-                                            <p className="font-medium flex items-center gap-1">
-                                                <AlertTriangle className="w-4 h-4" />
-                                                No refund
-                                            </p>
-                                            <p className="mt-1">
-                                                {toUsd(actionDialog.withdrawal.amount_points)} will NOT be returned. The user loses these points.
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    )}
+                                )}
+                            </>
+                        )}
+                    </div>
 
-                    <DialogFooter className="gap-2 sm:gap-0">
+                    <DialogFooter className="px-5 pb-5 gap-2 flex-row">
                         <Button
                             variant="outline"
                             onClick={() => setActionDialog({ open: false, withdrawal: null, action: "completed" })}
                             disabled={actionLoading}
+                            className="flex-1 h-11 rounded-xl font-semibold border-gray-200"
                         >
                             Cancel
                         </Button>
-                        <Button
-                            variant={actionDialog.action === "completed" ? "default" : "destructive"}
+                        <button
                             onClick={handleAction}
                             disabled={actionLoading}
+                            className={`flex-1 h-11 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-60 ${
+                                actionDialog.action === "completed"
+                                    ? "bg-emerald-500 hover:bg-emerald-600 text-white"
+                                    : "bg-red-500 hover:bg-red-600 text-white"
+                            }`}
                         >
-                            {actionLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                            {actionLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                             {actionDialog.action === "completed" ? "Confirm Approval" : "Confirm Rejection"}
-                        </Button>
+                        </button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

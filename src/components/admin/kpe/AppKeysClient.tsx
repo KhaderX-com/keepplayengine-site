@@ -15,6 +15,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
 import { AlertDialog } from "@/components/ui/alert-dialog";
 import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
     Dialog,
     DialogContent,
     DialogDescription,
@@ -42,6 +49,9 @@ import {
     Eye,
     EyeOff,
     AlertTriangle,
+    MoreVertical,
+    PowerOff,
+    Power,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────
@@ -96,9 +106,11 @@ export default function AppKeysClient() {
     const [keyCopied, setKeyCopied] = useState(false);
     const [keyVisible, setKeyVisible] = useState(false);
 
-    // Toggle / Delete confirmation
+    // Toggle / Delete confirmation (2-step)
     const [toggleTarget, setToggleTarget] = useState<AppKey | null>(null);
+    const [toggleStep2, setToggleStep2] = useState<AppKey | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<AppKey | null>(null);
+    const [deleteStep2, setDeleteStep2] = useState<AppKey | null>(null);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
 
     // ── Fetch keys ───────────────────────────
@@ -381,31 +393,44 @@ export default function AppKeysClient() {
                                 </p>
 
                                 {/* Actions */}
-                                <div className="flex items-center gap-2 pt-1">
-                                    <Button
-                                        variant={
-                                            k.is_active
-                                                ? "outline"
-                                                : "default"
-                                        }
-                                        size="sm"
-                                        className="flex-1"
-                                        disabled={actionLoading === k.id}
-                                        onClick={() => setToggleTarget(k)}
-                                    >
-                                        {k.is_active
-                                            ? "Deactivate"
-                                            : "Activate"}
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-                                        disabled={actionLoading === k.id}
-                                        onClick={() => setDeleteTarget(k)}
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </Button>
+                                <div className="flex items-center justify-end pt-1">
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-8 w-8 p-0"
+                                                disabled={actionLoading === k.id}
+                                            >
+                                                <MoreVertical className="w-4 h-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem
+                                                onClick={() => setToggleTarget(k)}
+                                            >
+                                                {k.is_active ? (
+                                                    <>
+                                                        <PowerOff className="w-4 h-4 mr-2 text-amber-500" />
+                                                        Deactivate
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Power className="w-4 h-4 mr-2 text-green-500" />
+                                                        Activate
+                                                    </>
+                                                )}
+                                            </DropdownMenuItem>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem
+                                                className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400"
+                                                onClick={() => setDeleteTarget(k)}
+                                            >
+                                                <Trash2 className="w-4 h-4 mr-2" />
+                                                Delete
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                 </div>
                             </CardContent>
                         </Card>
@@ -600,7 +625,7 @@ export default function AppKeysClient() {
                 </DialogContent>
             </Dialog>
 
-            {/* ── Toggle Confirmation ──────────── */}
+            {/* ── Toggle Confirmation — Step 1 ──────────── */}
             <AlertDialog
                 open={!!toggleTarget}
                 onOpenChange={(open) => {
@@ -613,30 +638,76 @@ export default function AppKeysClient() {
                 }
                 description={
                     toggleTarget?.is_active
-                        ? `This will immediately revoke API access for "${toggleTarget.app_name}". All requests using this key will be rejected.`
-                        : `This will re-enable API access for "${toggleTarget?.app_name}".`
+                        ? `You are about to deactivate "${toggleTarget.app_name}". This will revoke API access immediately. Do you wish to continue?`
+                        : `You are about to re-enable "${toggleTarget?.app_name}". This will restore API access for all apps using this key. Do you wish to continue?`
                 }
                 confirmText={
-                    toggleTarget?.is_active ? "Deactivate" : "Activate"
+                    toggleTarget?.is_active ? "Yes, Deactivate" : "Yes, Activate"
                 }
                 variant={toggleTarget?.is_active ? "warning" : "info"}
                 onConfirm={() => {
-                    if (toggleTarget) handleToggle(toggleTarget);
+                    if (toggleTarget) {
+                        setToggleStep2(toggleTarget);
+                        setToggleTarget(null);
+                    }
                 }}
             />
 
-            {/* ── Delete Confirmation ──────────── */}
+            {/* ── Toggle Confirmation — Step 2 ──────────── */}
+            <AlertDialog
+                open={!!toggleStep2}
+                onOpenChange={(open) => {
+                    if (!open) setToggleStep2(null);
+                }}
+                title={
+                    toggleStep2?.is_active
+                        ? "Final Confirmation — Deactivate?"
+                        : "Final Confirmation — Activate?"
+                }
+                description={
+                    toggleStep2?.is_active
+                        ? `This is your second and final warning. Deactivating "${toggleStep2.app_name}" will immediately reject all live API requests using this key. Confirm to proceed.`
+                        : `This is your second and final confirmation. Activating "${toggleStep2?.app_name}" will instantly restore API access. Confirm to proceed.`
+                }
+                confirmText={
+                    toggleStep2?.is_active ? "Confirm Deactivation" : "Confirm Activation"
+                }
+                variant={toggleStep2?.is_active ? "warning" : "info"}
+                onConfirm={() => {
+                    if (toggleStep2) handleToggle(toggleStep2);
+                }}
+            />
+
+            {/* ── Delete Confirmation — Step 1 ──────────── */}
             <AlertDialog
                 open={!!deleteTarget}
                 onOpenChange={(open) => {
                     if (!open) setDeleteTarget(null);
                 }}
                 title="Permanently Delete App Key?"
-                description={`This will permanently delete the key for "${deleteTarget?.app_name}". This action cannot be undone. Any application using this key will lose access immediately.`}
-                confirmText="Delete Permanently"
+                description={`You are about to permanently delete the key for "${deleteTarget?.app_name}". This action cannot be undone. Any application using this key will lose access immediately. Are you sure?`}
+                confirmText="Yes, Delete It"
                 variant="danger"
                 onConfirm={() => {
-                    if (deleteTarget) handleDelete(deleteTarget);
+                    if (deleteTarget) {
+                        setDeleteStep2(deleteTarget);
+                        setDeleteTarget(null);
+                    }
+                }}
+            />
+
+            {/* ── Delete Confirmation — Step 2 ──────────── */}
+            <AlertDialog
+                open={!!deleteStep2}
+                onOpenChange={(open) => {
+                    if (!open) setDeleteStep2(null);
+                }}
+                title="This Cannot Be Undone — Final Warning!"
+                description={`Last chance. "${deleteStep2?.app_name}" and its key will be erased from the system forever. There is no recovery. Click "Delete Forever" only if you are completely certain.`}
+                confirmText="Delete Forever"
+                variant="danger"
+                onConfirm={() => {
+                    if (deleteStep2) handleDelete(deleteStep2);
                 }}
             />
         </div>
