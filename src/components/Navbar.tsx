@@ -1,10 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Lilita_One } from "next/font/google";
+
+const lilitaOne = Lilita_One({ weight: "400", subsets: ["latin"] });
 
 export default function Navbar() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isScrolled, setIsScrolled] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setIsScrolled(window.scrollY > window.innerHeight * 0.85);
+        };
+        window.addEventListener("scroll", handleScroll, { passive: true });
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
 
     const navLinks = [
         { href: "/privacy-policy", label: "Privacy Policy" },
@@ -13,7 +25,7 @@ export default function Navbar() {
     ];
 
     return (
-        <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0FFF12] shadow-md">
+        <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${lilitaOne.className} ${isScrolled ? "bg-white shadow-md" : "bg-transparent shadow-none"}`}>
             <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-16 sm:h-20">
                     {/* Logo */}
@@ -26,7 +38,7 @@ export default function Navbar() {
                             loading="eager"
                             className="h-8 sm:h-10 w-auto"
                         />
-                        <span className="text-base sm:text-xl font-bold text-gray-900">KeepPlay Engine</span>
+                        <span className="text-base sm:text-xl text-black">KeepPlay Engine</span>
                     </Link>
 
                     {/* Desktop Navigation */}
@@ -35,7 +47,7 @@ export default function Navbar() {
                             <Link
                                 key={link.href}
                                 href={link.href}
-                                className="text-gray-900 hover:text-white transition-colors duration-200 font-medium"
+                                className="text-black hover:underline transition-colors duration-200"
                             >
                                 {link.label}
                             </Link>
@@ -44,7 +56,7 @@ export default function Navbar() {
 
                     {/* Mobile Menu Button */}
                     <button
-                        className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-900 hover:text-white hover:bg-[#0BCC0E] focus:outline-none"
+                        className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-black hover:text-white hover:bg-[#0BCC0E] focus:outline-none"
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
                         {...({ "aria-expanded": isMenuOpen })}
                         aria-label="Toggle menu"
@@ -78,13 +90,13 @@ export default function Navbar() {
 
             {/* Mobile Menu */}
             {isMenuOpen && (
-                <div className="md:hidden border-t border-[#0BCC0E] bg-[#0FFF12]">
+                <div className={`md:hidden border-t border-[#0BCC0E] ${isScrolled ? "bg-white" : "bg-white/90"}`}>
                     <div className="px-4 pt-2 pb-3 space-y-1">
                         {navLinks.map((link) => (
                             <Link
                                 key={link.href}
                                 href={link.href}
-                                className="block px-3 py-2 rounded-md text-base font-medium text-gray-900 hover:text-white hover:bg-[#0BCC0E] transition-colors duration-200"
+                                className="block px-3 py-2 rounded-md text-base text-black hover:text-white hover:bg-[#0BCC0E] transition-colors duration-200"
                                 onClick={() => setIsMenuOpen(false)}
                             >
                                 {link.label}

@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { Lilita_One } from "next/font/google";
+
+const lilitaOne = Lilita_One({ weight: "400", subsets: ["latin"] });
 
 export default function Footer() {
     const columns = [
@@ -31,7 +34,7 @@ export default function Footer() {
     ];
 
     return (
-        <footer className="bg-black text-gray-300">
+        <footer className={`bg-black text-gray-300 ${lilitaOne.className}`}>
             <div className="max-w-7xl mx-auto px-8 sm:px-12 lg:px-16 py-10 sm:py-14">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 sm:gap-12">
                     {/* Brand Section */}
@@ -55,7 +58,7 @@ export default function Footer() {
                     {/* Link Columns */}
                     {columns.map((col) => (
                         <div key={col.heading}>
-                            <h3 className="text-white font-bold text-sm tracking-widest uppercase mb-5">
+                            <h3 className="text-white font-bold text-xl tracking-widest uppercase mb-5">
                                 {col.heading}
                             </h3>
                             <ul className="space-y-4">
@@ -81,22 +84,38 @@ export default function Footer() {
                         © 2026 RAVADO TECH LTD. All rights reserved.
                     </p>
 
-                    {/* YouTube icon */}
-                    <a
-                        href="https://youtube.com"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label="YouTube"
-                        className="h-9 w-9 rounded-full border border-gray-700 flex items-center justify-center text-gray-400 hover:text-white hover:border-gray-500 transition-colors"
-                    >
-                        <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 576 512">
-                            <path d="M549.655 124.083c-6.281-23.65-24.787-42.276-48.284-48.597C458.781 64 288 64 288 64S117.22 64 74.629 75.486c-23.497 6.322-42.003 24.947-48.284 48.597C14.786 166.95 14.786 256 14.786 256s0 89.05 11.559 131.917c6.281 23.65 24.787 41.5 48.284 47.821C117.22 448 288 448 288 448s170.78 0 213.371-12.262c23.497-6.321 42.003-24.171 48.284-47.821C561.214 345.05 561.214 256 561.214 256s0-89.05-11.559-131.917zM232.145 337.591V174.409L374.884 256 232.145 337.591z" />
-                        </svg>
-                    </a>
+                    {/* Social icons */}
+                    <div className="flex items-center gap-3">
+                        {/* LinkedIn icon */}
+                        <a
+                            href="https://www.linkedin.com/company/keepplay-engine/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="LinkedIn"
+                            className="h-9 w-9 rounded-full border border-gray-700 flex items-center justify-center text-gray-400 hover:text-white hover:border-gray-500 transition-colors"
+                        >
+                            <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 448 512">
+                                <path d="M100.28 448H7.4V148.9h92.88zM53.79 108.1C24.09 108.1 0 83.5 0 53.8a53.79 53.79 0 0 1 107.58 0c0 29.7-24.1 54.3-53.79 54.3zM447.9 448h-92.68V302.4c0-34.7-.7-79.2-48.29-79.2-48.29 0-55.69 37.7-55.69 76.7V448h-92.78V148.9h89.08v40.8h1.3c12.4-23.5 42.69-48.3 87.88-48.3 94 0 111.28 61.9 111.28 142.3V448z" />
+                            </svg>
+                        </a>
+
+                        {/* YouTube icon */}
+                        <a
+                            href="https://www.youtube.com/@KeepPlayEngine"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="YouTube"
+                            className="h-9 w-9 rounded-full border border-gray-700 flex items-center justify-center text-gray-400 hover:text-white hover:border-gray-500 transition-colors"
+                        >
+                            <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 576 512">
+                                <path d="M549.655 124.083c-6.281-23.65-24.787-42.276-48.284-48.597C458.781 64 288 64 288 64S117.22 64 74.629 75.486c-23.497 6.322-42.003 24.947-48.284 48.597C14.786 166.95 14.786 256 14.786 256s0 89.05 11.559 131.917c6.281 23.65 24.787 41.5 48.284 47.821C117.22 448 288 448 288 448s170.78 0 213.371-12.262c23.497-6.321 42.003-24.171 48.284-47.821C561.214 345.05 561.214 256 561.214 256s0-89.05-11.559-131.917zM232.145 337.591V174.409L374.884 256 232.145 337.591z" />
+                            </svg>
+                        </a>
+                    </div>
                 </div>
 
                 {/* Address */}
-                <p className="mt-4 text-center text-xs font-semibold text-white">
+                <p className="mt-4 text-center text-xs text-white">
                     RAVADO TECH LTD. 71–75 Shelton Street, Covent Garden, London, WC2H 9JQ, United Kingdom.
                 </p>
             </div>
