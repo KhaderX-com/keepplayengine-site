@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,8 @@ import {
     CalendarDays,
     ChevronDown,
     ArrowUpDown,
+    Plus,
+    Download,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────
@@ -141,9 +144,21 @@ const STATUS_FILTERS = [
 // Component
 // ─────────────────────────────────────────────
 
-export default function WithdrawalsClient() {
+interface WithdrawalsClientProps {
+    initialTab?: string;
+    initialMethod?: string;
+}
+
+const BASE = "/admin/keepplay-engine/withdrawals";
+
+export default function WithdrawalsClient({
+    initialTab = "dashboard",
+    initialMethod = "all",
+}: WithdrawalsClientProps) {
+    const router = useRouter();
+
     // ── State ──
-    const [tab, setTab] = useState("dashboard");
+    const [tab, setTab] = useState(initialTab);
     const [stats, setStats] = useState<WithdrawalStats | null>(null);
     const [statsLoading, setStatsLoading] = useState(true);
     const [statsError, setStatsError] = useState<string | null>(null);
@@ -155,8 +170,10 @@ export default function WithdrawalsClient() {
 
     // Filters
     const [search, setSearch] = useState("");
-    const [statusFilter, setStatusFilter] = useState<string>("all");
-    const [methodFilter, setMethodFilter] = useState<string>("all");
+    const [statusFilter, setStatusFilter] = useState<string>(
+        initialTab === "requests" ? "processing" : "all"
+    );
+    const [methodFilter, setMethodFilter] = useState<string>(initialMethod);
     const [sortBy, setSortBy] = useState<string>("newest");
     const [showSortMenu, setShowSortMenu] = useState(false);
     const [offset, setOffset] = useState(0);
@@ -174,6 +191,9 @@ export default function WithdrawalsClient() {
     // Copy state
     const [copiedId, setCopiedId] = useState<string | null>(null);
 
+    // PayPal payout list for CSV export
+    const [payoutList, setPayoutList] = useState<{ withdrawalId: string; email: string; amountPoints: number }[]>([]);
+
     // Conversion rate (1 coin = X USD)
     const [conversionRate, setConversionRate] = useState<number | null>(null);
 
@@ -181,6 +201,35 @@ export default function WithdrawalsClient() {
         if (conversionRate == null) return `${points.toLocaleString()} pts`;
         const usd = points * conversionRate;
         return `$${usd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    };
+
+    // ── PayPal Payout helpers ──
+    const addToPayoutList = (w: Withdrawal) => {
+        const email = w.destination_plain || w.destination_masked;
+        if (payoutList.some(p => p.withdrawalId === w.id)) return;
+        setPayoutList(prev => [...prev, { withdrawalId: w.id, email, amountPoints: w.amount_points }]);
+    };
+
+    const downloadPayoutCsv = () => {
+        if (payoutList.length === 0) return;
+        const header = "Email/Phone,Amount,Currency code,Reference ID (optional),Note to recipient,Recipient wallet,Social Feed Privacy (optional),Holler URL (deprecated),Logo URL (optional),Purpose (optional)";
+        const rows = payoutList.map(p => {
+            const usdAmount = conversionRate != null ? (p.amountPoints * conversionRate).toFixed(2) : p.amountPoints.toFixed(2);
+            return `${p.email},${usdAmount},USD,,KeepPlay ❤️,PayPal,,,,`;
+        });
+        const csv = [header, ...rows].join("\n");
+        const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const now = new Date();
+        const ts = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,"0")}${String(now.getDate()).padStart(2,"0")}_${String(now.getHours()).padStart(2,"0")}${String(now.getMinutes()).padStart(2,"0")}${String(now.getSeconds()).padStart(2,"0")}`;
+        const filename = `KPE_PayPal_Payout_${ts}.csv`;
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     };
 
     // ── Fetch Conversion Rate ──
@@ -379,7 +428,7 @@ export default function WithdrawalsClient() {
                         <Button
                             size="sm"
                             className="w-full mt-3 bg-amber-500 hover:bg-amber-600 text-white border-0 h-9 rounded-xl font-medium"
-                            onClick={() => { setStatusFilter("processing"); setTab("requests"); }}
+                            onClick={() => router.push(`${BASE}/pending`)}
                         >
                             Review Now →
                         </Button>
@@ -571,23 +620,41 @@ export default function WithdrawalsClient() {
 
                 {/* Actions */}
                 {showActions && isProcessing && (
-                    <div className="px-4 pb-4 grid grid-cols-2 gap-2">
-                        <button
-                            onClick={(e) => { e.stopPropagation(); openActionDialog(w, "completed"); }}
-                            aria-label="Approve withdrawal"
-                            className="flex items-center justify-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white text-sm font-semibold h-10 rounded-xl transition-colors"
-                        >
-                            <CheckCircle2 className="w-4 h-4" />
-                            Approve
-                        </button>
-                        <button
-                            onClick={(e) => { e.stopPropagation(); openActionDialog(w, "rejected"); }}
-                            aria-label="Reject withdrawal"
-                            className="flex items-center justify-center gap-1.5 bg-red-500 hover:bg-red-600 active:bg-red-700 text-white text-sm font-semibold h-10 rounded-xl transition-colors"
-                        >
-                            <XCircle className="w-4 h-4" />
-                            Reject
-                        </button>
+                    <div className="px-4 pb-4 space-y-2">
+                        {methodKey === "paypal" && (
+                            <button
+                                onClick={(e) => { e.stopPropagation(); addToPayoutList(w); }}
+                                disabled={payoutList.some(p => p.withdrawalId === w.id)}
+                                className={`w-full flex items-center justify-center gap-1.5 text-sm font-semibold h-9 rounded-xl transition-colors ${
+                                    payoutList.some(p => p.withdrawalId === w.id)
+                                        ? "bg-gray-100 text-gray-400 cursor-default"
+                                        : "bg-[#283593] hover:bg-[#1a237e] active:bg-[#0d1642] text-white"
+                                }`}
+                            >
+                                {payoutList.some(p => p.withdrawalId === w.id)
+                                    ? <><Check className="w-4 h-4" /> Added to Payout</>
+                                    : <><Plus className="w-4 h-4" /> Add to Payout</>
+                                }
+                            </button>
+                        )}
+                        <div className="grid grid-cols-2 gap-2">
+                            <button
+                                onClick={(e) => { e.stopPropagation(); openActionDialog(w, "completed"); }}
+                                aria-label="Approve withdrawal"
+                                className="flex items-center justify-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white text-sm font-semibold h-10 rounded-xl transition-colors"
+                            >
+                                <CheckCircle2 className="w-4 h-4" />
+                                Approve
+                            </button>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); openActionDialog(w, "rejected"); }}
+                                aria-label="Reject withdrawal"
+                                className="flex items-center justify-center gap-1.5 bg-red-500 hover:bg-red-600 active:bg-red-700 text-white text-sm font-semibold h-10 rounded-xl transition-colors"
+                            >
+                                <XCircle className="w-4 h-4" />
+                                Reject
+                            </button>
+                        </div>
                     </div>
                 )}
                 {(!showActions || !isProcessing) && w.processed_at && (
@@ -731,7 +798,14 @@ export default function WithdrawalsClient() {
                             return (
                                 <button
                                     key={m.value}
-                                    onClick={() => setMethodFilter(m.value)}
+                                    onClick={() => {
+                                        setMethodFilter(m.value);
+                                        if (m.value === "all") {
+                                            router.push(`${BASE}/pending`);
+                                        } else {
+                                            router.push(`${BASE}/pending/${m.value}`);
+                                        }
+                                    }}
                                     className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors whitespace-nowrap ${
                                         isActive
                                             ? `${m.bg} ${m.border} ${m.text}`
@@ -742,6 +816,40 @@ export default function WithdrawalsClient() {
                                 </button>
                             );
                         })}
+                    </div>
+                )}
+
+                {/* PayPal Payout CSV Builder */}
+                {showActions && payoutList.length > 0 && (
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-[#283593]/5 border-2 border-[#283593]/20 rounded-2xl px-4 py-3">
+                        <div className="flex items-center gap-2.5 text-sm">
+                            <div className="p-2 bg-[#283593]/10 rounded-xl">
+                                <Download className="w-5 h-5 text-[#283593]" />
+                            </div>
+                            <div>
+                                <p className="font-bold text-[#283593] text-sm">
+                                    {payoutList.length} recipient{payoutList.length !== 1 ? "s" : ""} in payout
+                                </p>
+                                <p className="text-xs text-gray-500 font-mono">
+                                    Total: ${payoutList.reduce((sum, p) => sum + (conversionRate != null ? p.amountPoints * conversionRate : p.amountPoints), 0).toFixed(2)} USD
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                            <button
+                                onClick={() => setPayoutList([])}
+                                className="text-xs text-gray-500 hover:text-red-600 transition-colors px-3 py-2 rounded-lg hover:bg-red-50"
+                            >
+                                Clear all
+                            </button>
+                            <button
+                                onClick={downloadPayoutCsv}
+                                className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-[#283593] hover:bg-[#1a237e] text-white text-sm font-bold h-11 px-6 rounded-xl transition-colors shadow-sm"
+                            >
+                                <Download className="w-4 h-4" />
+                                Download CSV
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>
@@ -887,6 +995,22 @@ export default function WithdrawalsClient() {
                                             <TableCell>
                                                 {showActions && w.status === "processing" ? (
                                                     <div className="flex items-center gap-1.5">
+                                                        {(w.method_key ?? "").toLowerCase() === "paypal" && (
+                                                            <button
+                                                                onClick={(e) => { e.stopPropagation(); addToPayoutList(w); }}
+                                                                disabled={payoutList.some(p => p.withdrawalId === w.id)}
+                                                                className={`flex items-center gap-1 text-xs font-semibold h-7 px-2.5 rounded-lg transition-colors ${
+                                                                    payoutList.some(p => p.withdrawalId === w.id)
+                                                                        ? "bg-gray-100 text-gray-400 cursor-default"
+                                                                        : "bg-[#283593] hover:bg-[#1a237e] text-white"
+                                                                }`}
+                                                            >
+                                                                {payoutList.some(p => p.withdrawalId === w.id)
+                                                                    ? <><Check className="w-3 h-3" /> Added</>
+                                                                    : <><Plus className="w-3 h-3" /> Add</>
+                                                                }
+                                                            </button>
+                                                        )}
                                                         <button
                                                             onClick={(e) => { e.stopPropagation(); openActionDialog(w, "completed"); }}
                                                             className="flex items-center gap-1 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold h-7 px-2.5 rounded-lg transition-colors"
@@ -981,8 +1105,18 @@ export default function WithdrawalsClient() {
         <div className="max-w-7xl mx-auto space-y-5">
             <Tabs value={tab} onValueChange={(v) => {
                 setTab(v);
-                if (v === "requests") { setStatusFilter("processing"); setMethodFilter("all"); setOffset(0); }
-                else if (v === "all")  { setStatusFilter("all");        setOffset(0); }
+                if (v === "dashboard") {
+                    router.push(`${BASE}/dashboard`);
+                } else if (v === "requests") {
+                    setStatusFilter("processing");
+                    setMethodFilter("all");
+                    setOffset(0);
+                    router.push(`${BASE}/pending`);
+                } else if (v === "all") {
+                    setStatusFilter("all");
+                    setOffset(0);
+                    router.push(`${BASE}/all`);
+                }
             }}>
                 {/* ── Tab Bar ── */}
                 <TabsList className="h-auto p-1 bg-white border border-gray-200 rounded-2xl shadow-sm gap-1 w-full sm:w-auto">

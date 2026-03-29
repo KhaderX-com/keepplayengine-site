@@ -304,7 +304,11 @@ export default function AdminSidebar({ isMobileMenuOpen, onCloseMobileMenu, user
                                                 const itemFilter = subItem.href.split("filter=")[1];
                                                 isActive = pathname === "/admin/tasks" && currentFilter === itemFilter;
                                             } else {
-                                                isActive = pathname === subItem.href;
+                                                // Use startsWith only for deep paths (e.g. /admin/section/sub),
+                                                // not for section roots (e.g. /admin/keepplay-engine) which
+                                                // would incorrectly match all children.
+                                                const isDeepPath = subItem.href.split("/").length > 3;
+                                                isActive = pathname === subItem.href || (isDeepPath && pathname.startsWith(subItem.href + "/"));
                                             }
 
                                             return (
