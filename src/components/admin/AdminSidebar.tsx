@@ -160,8 +160,9 @@ export default function AdminSidebar({ isMobileMenuOpen, onCloseMobileMenu, user
                 {
                     name: "Ad Revenue",
                     href: "/admin/keepplay-engine/ad-revenue",
+                    noInvert: true,
                     icon: (
-                        <Image src="https://res.cloudinary.com/destej60y/image/upload/v1774210122/coin_j3owuh.png" alt="Ad Revenue" width={20} height={20} unoptimized />
+                        <Image src="https://res.cloudinary.com/destej60y/image/upload/v1774817883/coin_1_ibq1jb.png" alt="Ad Revenue" width={20} height={20} unoptimized />
                     ),
                 },
                 {

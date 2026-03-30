@@ -95,7 +95,7 @@ export default async function AdminPage() {
             description: "Monitor advertising revenue and analytics",
             href: "/admin/keepplay-engine/ad-revenue",
             icon: (
-                <Image src="https://res.cloudinary.com/destej60y/image/upload/v1774210122/coin_j3owuh.png" alt="Ad Revenue" width={24} height={24} unoptimized />
+                <Image src="https://res.cloudinary.com/destej60y/image/upload/v1774817883/coin_1_ibq1jb.png" alt="Ad Revenue" width={24} height={24} unoptimized />
             ),
         },
         {

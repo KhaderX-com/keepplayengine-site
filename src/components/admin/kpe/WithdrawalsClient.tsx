@@ -1307,6 +1307,8 @@ export default function WithdrawalsClient({
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+            {/* Mobile bottom spacer (~half viewport height) */}
+            <div className="h-[50vh] md:hidden" />
         </div>
     );
 }
