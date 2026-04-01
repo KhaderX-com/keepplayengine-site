@@ -1,4 +1,15 @@
 {
+  "withdrawal_config": {
+    "withdrawals_enabled": true,
+    "maintenance_message": "",
+    "global_min_points": 1000,
+    "global_max_points": 100000,
+    "max_points_per_day": 500000,
+    "max_requests_per_day": 10,
+    "cooldown_enabled": true,
+    "cooldown_minutes": 2
+  },
+
   "withdrawal_methods": [
     {
       "method_key": "paypal",
