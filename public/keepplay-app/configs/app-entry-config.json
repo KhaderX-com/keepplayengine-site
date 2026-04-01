@@ -1,5 +1,5 @@
 {
-  "maintenance_mode": false,
+  "maintenance_mode": true,
   "maintenance_message": "The app is currently under maintenance. Thank you for waiting. We are working hard to bring you a better experience.",
   "maintenance_image": "https://res.cloudinary.com/destej60y/image/upload/v1775079377/exclamation_pmhq0e.png"
 }
