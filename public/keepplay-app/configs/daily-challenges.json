@@ -1,0 +1,38 @@
+{
+  "_comment_1": "Daily challenges configuration for the KeepPlay loyalty program.",
+  "_comment_2": "Set challenges_enabled to false to show the coming-soon screen.",
+  "_comment_3": "Set is_active to false on individual challenges to hide them.",
+  "_comment_4": "display_order controls the sort order (lower = first).",
+  "_comment_5": "challenge_type: earn_points | earn_points_from_game",
+
+  "challenges_enabled": true,
+  "coming_soon_title": "Coming Soon",
+  "coming_soon_message": "Daily challenges and\ncompetitions are coming.",
+
+  "challenges": [
+    {
+      "id": "earn_5000_tile_supreme",
+      "title": "Tile Supreme Fan",
+      "description": "Earn 5000 points from Tile Supreme today",
+      "icon_url": "https://res.cloudinary.com/destej60y/image/upload/v1773520975/Tile_Supreme_App_Icon_1024_1_q1vopn.png",
+      "challenge_type": "earn_points_from_game",
+      "target_game_name": "tile_supreme",
+      "target_value": 5000,
+      "reward_points": 500,
+      "is_active": true,
+      "display_order": 1
+    },
+    {
+      "id": "earn_10000_smashy_drop",
+      "title": "Smashy Drop Fan",
+      "description": "Earn 10000 points from Smashy Drop today",
+      "icon_url": "https://res.cloudinary.com/destej60y/image/upload/v1773521019/smashy-drop-icon-app_1_o8aj65.png",
+      "challenge_type": "earn_points_from_game",
+      "target_game_name": "smashy_drop",
+      "target_value": 10000,
+      "reward_points": 800,
+      "is_active": true,
+      "display_order": 2
+    }
+  ]
+}
