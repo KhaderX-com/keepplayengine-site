@@ -1,0 +1,53 @@
+{
+  "withdrawal_methods": [
+    {
+      "method_key": "paypal",
+      "display_name": "PayPal",
+      "logo_asset": "assets/payments/paypal.png",
+      "logo_url": "https://res.cloudinary.com/destej60y/image/upload/v1773610321/paypal2_mgo4dm.png",
+      "is_available": true,
+      "is_coming_soon": false,
+      "badge_text": "",
+      "min_points": 5000,
+      "sort_order": 1,
+      "fields_config": [
+        { "key": "email", "icon": "email_outlined", "type": "email", "label": "PayPal Email" }
+      ],
+      "gradient_colors": ["0xFF003087", "0xFF009CDE"],
+      "logo_color": null
+    },
+    {
+      "method_key": "binance",
+      "display_name": "Binance",
+      "logo_asset": "assets/payments/binance2.png",
+      "logo_url": "https://res.cloudinary.com/destej60y/image/upload/v1773610853/binance2_o3rgwc.png",
+      "is_available": true,
+      "is_coming_soon": false,
+      "badge_text": "",
+      "min_points": 10000,
+      "sort_order": 2,
+      "fields_config": [
+        { "key": "email", "icon": "email_outlined", "type": "email", "label": "Email" },
+        { "key": "binance_id", "icon": "badge_outlined", "type": "binance_id", "label": "Binance ID" }
+      ],
+      "gradient_colors": ["0xFF000000", "0xFF000000"],
+      "logo_color": null
+    },
+    {
+      "method_key": "coinbase",
+      "display_name": "Coinbase",
+      "logo_asset": "assets/payments/coinbase2.png",
+      "logo_url": "https://res.cloudinary.com/destej60y/image/upload/v1773610853/coinbase2_jgbvav.png",
+      "is_available": true,
+      "is_coming_soon": false,
+      "badge_text": "",
+      "min_points": 100000,
+      "sort_order": 3,
+      "fields_config": [
+        { "key": "email", "icon": "email_outlined", "type": "email", "label": "Coinbase Email" }
+      ],
+      "gradient_colors": ["0xFF0052FF", "0xFF1652F0"],
+      "logo_color": "0xFFFFFFFF"
+    }
+  ]
+}
