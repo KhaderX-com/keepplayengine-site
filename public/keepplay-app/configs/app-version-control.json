@@ -1,6 +1,6 @@
 {
   "force_update": true,
-  "minimum_version": "1.0.0",
+  "minimum_version": "1.0.2",
   "force_update_title": "Update Required",
   "force_update_message": "A new version of KeepPlay is available. Please update to continue using the app.",
   "force_update_image": "",
