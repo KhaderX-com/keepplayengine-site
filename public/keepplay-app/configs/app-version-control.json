@@ -1,0 +1,20 @@
+{
+  "force_update": true,
+  "force_update_title": "Update Required",
+  "force_update_message": "A new version of KeepPlay is available. Please update to continue using the app.",
+  "force_update_image": "",
+
+  "app_store_url": "https://apps.apple.com/app/keepplay/id000000000",
+  "play_store_url": "https://play.google.com/store/apps/details?id=com.keepplayengine.loyaltyapp",
+
+  "custom_button_text": "",
+  "custom_button_url": "",
+  "custom_button_color": "#FFFFFF",
+
+  "recommended_update": false,
+  "recommended_update_title": "Update Available",
+  "recommended_update_message": "A new version of KeepPlay is available with improvements and new features. We recommend updating.",
+  "recommended_update_image": "",
+
+  "skip_button_text": "Maybe Later"
+}
