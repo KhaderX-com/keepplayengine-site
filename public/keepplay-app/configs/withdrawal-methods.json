@@ -2,6 +2,7 @@
   "withdrawal_config": {
     "withdrawals_enabled": true,
     "maintenance_message": "",
+    "processing_notice": "Withdrawals are processed within 24 hours after verification. Minimum points required per method.",
     "global_min_points": 1000,
     "global_max_points": 100000,
     "max_points_per_day": 500000,

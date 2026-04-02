@@ -1,0 +1,17 @@
+{
+  "validation": {
+    "display_name_min_length": 2,
+    "display_name_max_length": 30,
+    "email_max_length": 254,
+    "binance_id_min_digits": 6,
+    "binance_id_max_digits": 12
+  },
+  "pagination": {
+    "transaction_page_size": 20
+  },
+  "app_info": {
+    "security_alert_email": "contact@keepplayengine.com",
+    "announcement_enabled": false,
+    "announcement_message": ""
+  }
+}
