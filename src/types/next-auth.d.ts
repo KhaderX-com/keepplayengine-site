@@ -6,6 +6,8 @@ declare module "next-auth" {
         id: string;
         role: AdminRoleType;
         image?: string | null;
+        adminSessionId?: string | null;
+        adminSessionExpiresAt?: string | null;
     }
 
     interface Session {
@@ -16,6 +18,7 @@ declare module "next-auth" {
             email?: string | null;
             image?: string | null;
         };
+        adminSessionExpiresAt?: string | null;
     }
 }
 
@@ -24,5 +27,7 @@ declare module "next-auth/jwt" {
         id: string;
         role: AdminRoleType;
         image?: string | null;
+        adminSessionId?: string | null;
+        adminSessionExpiresAt?: string | null;
     }
 }

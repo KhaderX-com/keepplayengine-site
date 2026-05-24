@@ -32,7 +32,6 @@ export default function AdminSidebar({ isMobileMenuOpen, onCloseMobileMenu, user
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [isAdminExpanded, setIsAdminExpanded] = useState(true);
     const [isTasksExpanded, setIsTasksExpanded] = useState(true);
-    const [isKpeExpanded, setIsKpeExpanded] = useState(true);
     const [isKpeiExpanded, setIsKpeiExpanded] = useState(true);
     const [isAxiomExpanded, setIsAxiomExpanded] = useState(true);
 
@@ -118,63 +117,6 @@ export default function AdminSidebar({ isMobileMenuOpen, onCloseMobileMenu, user
                         <Image src="https://res.cloudinary.com/destej60y/image/upload/v1774210122/tag_d3hn9f.png" alt="Label Management" width={20} height={20} unoptimized />
                     ),
                 }] : []),
-            ],
-        },
-        {
-            name: "KeepPlay Engine",
-            icon: (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                        d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-            ),
-            subItems: [
-                {
-                    name: "Overview",
-                    href: "/admin/keepplay-engine",
-                    icon: (
-                        <Image src="https://res.cloudinary.com/destej60y/image/upload/v1773809280/Bolt_1_jwgn1c.png" alt="Engine Overview" width={20} height={20} unoptimized />
-                    ),
-                },
-                {
-                    name: "Loyalty App",
-                    href: "/admin/keepplay-engine/loyalty-app",
-                    noInvert: true,
-                    icon: (
-                        <Image src="https://res.cloudinary.com/destej60y/image/upload/v1774210382/KeepPlay_App_Icon_rounded_n1vlqo.png" alt="Loyalty App" width={20} height={20} unoptimized />
-                    ),
-                },
-                {
-                    name: "User Management",
-                    href: "/admin/keepplay-engine/users",
-                    icon: (
-                        <Image src="https://res.cloudinary.com/destej60y/image/upload/v1774210122/multiple-users-silhouette_hu5qfy.png" alt="User Management" width={20} height={20} unoptimized />
-                    ),
-                },
-                
-                {
-                    name: "App Keys",
-                    href: "/admin/keepplay-engine/app-keys",
-                    icon: (
-                        <Image src="https://res.cloudinary.com/destej60y/image/upload/v1774210122/key_bz9dtz.png" alt="App Keys" width={20} height={20} unoptimized />
-                    ),
-                },
-                {
-                    name: "Ad Revenue",
-                    href: "/admin/keepplay-engine/ad-revenue",
-                    noInvert: true,
-                    icon: (
-                        <Image src="https://res.cloudinary.com/destej60y/image/upload/v1774817883/coin_1_ibq1jb.png" alt="Ad Revenue" width={20} height={20} unoptimized />
-                    ),
-                },
-                {
-                    name: "Withdrawals",
-                    href: "/admin/keepplay-engine/withdrawals",
-                    noInvert: true,
-                    icon: (
-                        <Image src="https://res.cloudinary.com/destej60y/image/upload/v1774211644/dollar-symbol-red_nvkotr.png" alt="Withdrawals" width={20} height={20} unoptimized />
-                    ),
-                },
             ],
         },
         {
@@ -319,9 +261,17 @@ export default function AdminSidebar({ isMobileMenuOpen, onCloseMobileMenu, user
 
                 {/* Navigation - Mobile Optimized with Touch Support */}
                 <nav className="flex-1 min-h-0 px-2 lg:px-3 py-4 lg:py-6 space-y-1 overflow-y-auto overscroll-contain">
-                    {navigation.map((item, navIndex) => {
-                        const isExpanded = navIndex === 0 ? isAdminExpanded : navIndex === 1 ? isTasksExpanded : navIndex === 2 ? isKpeExpanded : navIndex === 3 ? isKpeiExpanded : isAxiomExpanded;
-                        const setExpanded = navIndex === 0 ? setIsAdminExpanded : navIndex === 1 ? setIsTasksExpanded : navIndex === 2 ? setIsKpeExpanded : navIndex === 3 ? setIsKpeiExpanded : setIsAxiomExpanded;
+                    {navigation.map((item) => {
+                        const isExpanded =
+                            item.name === "Admin" ? isAdminExpanded :
+                            item.name === "Task Manager" ? isTasksExpanded :
+                            item.name === "KPE" ? isKpeiExpanded :
+                            isAxiomExpanded;
+                        const setExpanded =
+                            item.name === "Admin" ? setIsAdminExpanded :
+                            item.name === "Task Manager" ? setIsTasksExpanded :
+                            item.name === "KPE" ? setIsKpeiExpanded :
+                            setIsAxiomExpanded;
 
                         return (
                             <div key={item.name}>

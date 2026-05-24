@@ -533,6 +533,32 @@ export const AdminDAL = {
             .lt("expires_at", new Date().toISOString());
     },
 
+    /** Get an admin setting using service_role. */
+    async getAdminSetting(key: string) {
+        return supabaseAdmin
+            .from("admin_settings")
+            .select("value")
+            .eq("key", key)
+            .maybeSingle();
+    },
+
+    /** Upsert an admin setting using service_role. */
+    async upsertAdminSetting(data: {
+        key: string;
+        value: unknown;
+        description: string;
+        updated_by: string;
+    }) {
+        return supabaseAdmin
+            .from("admin_settings")
+            .upsert({
+                ...data,
+                updated_at: new Date().toISOString(),
+            })
+            .select("value")
+            .single();
+    },
+
     /** Log admin activity */
     async logActivity(client: SupabaseClient, data: {
         admin_user_id: string;

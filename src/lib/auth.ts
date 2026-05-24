@@ -2,6 +2,7 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { supabaseAdmin } from "@/lib/supabase";
 import { sendSecurityAlert } from "@/lib/security-alerts";
+import { getAdminSessionDurationHours, MAX_ADMIN_SESSION_DURATION_HOURS } from "@/lib/admin-settings";
 import bcrypt from "bcryptjs";
 import { randomBytes } from "crypto";
 
@@ -203,11 +204,15 @@ export const authOptions: NextAuthOptions = {
                 );
 
                 // Create session record for tracking
+                let adminSessionId: string | null = null;
+                let adminSessionExpiresAt: string | null = null;
                 try {
+                    const sessionDurationHours = await getAdminSessionDurationHours();
                     const sessionToken = randomBytes(48).toString("hex");
-                    const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000); // 2 hours
+                    const expiresAt = new Date(Date.now() + sessionDurationHours * 60 * 60 * 1000);
+                    adminSessionExpiresAt = expiresAt.toISOString();
 
-                    await supabaseAdmin
+                    const { data: sessionRecord, error: sessionInsertError } = await supabaseAdmin
                         .from('admin_sessions')
                         .insert({
                             admin_user_id: admin.id,
@@ -215,10 +220,15 @@ export const authOptions: NextAuthOptions = {
                             ip_address: ipAddress,
                             user_agent: userAgent,
                             device_info: {},
-                            expires_at: expiresAt.toISOString(),
+                            expires_at: adminSessionExpiresAt,
                             last_activity_at: new Date().toISOString(),
                             is_revoked: false
-                        });
+                        })
+                        .select("id")
+                        .single();
+
+                    if (sessionInsertError) throw sessionInsertError;
+                    adminSessionId = sessionRecord.id;
                 } catch (sessionError) {
                     console.error('Error creating session record:', sessionError);
                     // Don't fail login if session creation fails
@@ -230,13 +240,15 @@ export const authOptions: NextAuthOptions = {
                     name: admin.full_name,
                     role: admin.role,
                     image: admin.avatar_url,
+                    adminSessionId,
+                    adminSessionExpiresAt,
                 };
             },
         }),
     ],
     session: {
         strategy: "jwt",
-        maxAge: 2 * 60 * 60, // 2 hours for admin sessions
+        maxAge: MAX_ADMIN_SESSION_DURATION_HOURS * 60 * 60,
         updateAge: 30 * 60, // Update session every 30 minutes
     },
     pages: {
@@ -249,10 +261,31 @@ export const authOptions: NextAuthOptions = {
                 token.id = user.id;
                 token.role = user.role;
                 token.image = user.image;
+                token.adminSessionId = user.adminSessionId ?? null;
+                token.adminSessionExpiresAt = user.adminSessionExpiresAt ?? null;
             }
             return token;
         },
         async session({ session, token }) {
+            if (token.adminSessionExpiresAt && Date.parse(token.adminSessionExpiresAt) <= Date.now()) {
+                return { ...session, user: undefined } as unknown as typeof session;
+            }
+
+            if (token.adminSessionId) {
+                const { data: adminSession, error } = await supabaseAdmin
+                    .from("admin_sessions")
+                    .select("expires_at, is_revoked")
+                    .eq("id", token.adminSessionId)
+                    .maybeSingle();
+
+                if (error || !adminSession || adminSession.is_revoked || Date.parse(adminSession.expires_at) <= Date.now()) {
+                    return { ...session, user: undefined } as unknown as typeof session;
+                }
+
+                token.adminSessionExpiresAt = adminSession.expires_at;
+                session.adminSessionExpiresAt = adminSession.expires_at;
+            }
+
             if (session.user) {
                 session.user.id = token.id;
                 session.user.role = token.role;

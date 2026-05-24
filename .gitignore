@@ -59,6 +59,9 @@ credentials.json
 *.sqlite3
 *.db
 
+# Supabase CLI local state and fetched remote migration history
+/supabase/
+
 # Logs with potential sensitive info
 *.log
 logs/

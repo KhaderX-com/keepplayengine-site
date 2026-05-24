@@ -161,9 +161,11 @@ export async function proxy(request: NextRequest) {
 
         const isAuthenticated = !!token;
         const isLoginPage = pathname === "/admin/login";
+        const adminSessionExpiresAt = typeof token?.adminSessionExpiresAt === "string" ? token.adminSessionExpiresAt : null;
+        const isAdminSessionExpired = adminSessionExpiresAt ? Date.parse(adminSessionExpiresAt) <= Date.now() : false;
 
         // Security Layer: Redirect authenticated users away from login page
-        if (isAuthenticated && isLoginPage) {
+        if (isAuthenticated && !isAdminSessionExpired && isLoginPage) {
             const returnUrl = sanitizeReturnUrl(
                 request.nextUrl.searchParams.get("returnUrl") ||
                 request.nextUrl.searchParams.get("callbackUrl")
@@ -177,7 +179,7 @@ export async function proxy(request: NextRequest) {
         }
 
         // If not authenticated, redirect to login
-        if (!token) {
+        if (!token || isAdminSessionExpired) {
             const loginUrl = new URL("/admin/login", request.url);
             // Set returnUrl for deep linking (except root path)
             if (pathname !== "/" && pathname !== "/admin") {
@@ -284,9 +286,11 @@ export async function proxy(request: NextRequest) {
 
         const isAuthenticated = !!token;
         const isLoginPage = pathname === "/admin/login";
+        const adminSessionExpiresAt = typeof token?.adminSessionExpiresAt === "string" ? token.adminSessionExpiresAt : null;
+        const isAdminSessionExpired = adminSessionExpiresAt ? Date.parse(adminSessionExpiresAt) <= Date.now() : false;
 
         // Security Layer: Redirect authenticated users away from login page
-        if (isAuthenticated && isLoginPage) {
+        if (isAuthenticated && !isAdminSessionExpired && isLoginPage) {
             const returnUrl = sanitizeReturnUrl(
                 request.nextUrl.searchParams.get("returnUrl") ||
                 request.nextUrl.searchParams.get("callbackUrl")
@@ -300,7 +304,7 @@ export async function proxy(request: NextRequest) {
         }
 
         // If not authenticated, redirect to login
-        if (!token) {
+        if (!token || isAdminSessionExpired) {
             const loginUrl = new URL("/admin/login", request.url);
             if (pathname !== "/admin" && pathname !== "/admin/login") {
                 loginUrl.searchParams.set("returnUrl", pathname);

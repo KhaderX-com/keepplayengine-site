@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { getAdminSessionSettings } from "@/lib/admin-settings";
 import AdminPageShell from "@/components/admin/AdminPageShell";
+import AdminSessionSettingsForm from "@/components/admin/AdminSessionSettingsForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -17,13 +19,14 @@ export default async function ProfilePage() {
     }
 
     const user = session.user;
+    const settings = await getAdminSessionSettings();
     const initials = user.name
         ?.split(' ')
         .map((n: string) => n[0])
         .join('')
         .toUpperCase() || 'A';
 
-    const sessionExpiryTime = new Date(Date.now() + 2 * 60 * 60 * 1000).toLocaleString();
+    const sessionExpiryTime = new Date(session.adminSessionExpiresAt ?? session.expires).toLocaleString();
 
     return (
         <AdminPageShell
@@ -140,12 +143,24 @@ export default async function ProfilePage() {
                                                 Session expires: {sessionExpiryTime}
                                             </p>
                                             <p className="text-xs text-gray-500 mt-2">
-                                                For security reasons, your session will automatically expire after 2 hours of activity.
+                                                For security reasons, your session will automatically expire after {settings.sessionDurationHours} hours of activity.
                                             </p>
                                         </div>
                                     </div>
                                 </CardContent>
                             </Card>
+
+                            {user.role === "SUPER_ADMIN" && (
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Admin Session Settings</CardTitle>
+                                        <CardDescription>Change the session duration used for new admin logins</CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <AdminSessionSettingsForm initialDurationHours={settings.sessionDurationHours} />
+                                    </CardContent>
+                                </Card>
+                            )}
 
                             {/* Security Notice */}
                             <Card className="border-blue-200 bg-blue-50">

@@ -107,6 +107,16 @@ export default async function AdminPage() {
             ),
         },
         {
+            title: "PayPal Payouts",
+            description: "Create PayPal payout batches and inspect status",
+            href: "/admin/paypal-payouts",
+            icon: (
+                <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-2.2 0-4 .9-4 2s1.8 2 4 2 4 .9 4 2-1.8 2-4 2m0-8v8m8-4a8 8 0 11-16 0 8 8 0 0116 0z" />
+                </svg>
+            ),
+        },
+        {
             title: "Engine Overview",
             description: "High-level overview of the KeepPlay engine",
             href: "/admin/keepplay-engine",
