@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useCallback, useEffect } from 'react';
+import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { LayoutGrid, List as ListIcon, CheckSquare, Clock, CheckCircle2 } from 'lucide-react';
+import { LayoutGrid, List as ListIcon, CheckSquare, Clock, CheckCircle2, Tag } from 'lucide-react';
 import type { Task, TaskStatus, TeamMember, TaskLabel } from '@/types/tasks';
 import { useTasks, useTeamMembers, useLabels, useTaskStats } from '@/lib/tasks';
 import AdminSidebar from '@/components/admin/AdminSidebar';
@@ -189,9 +190,9 @@ export default function TaskManagerPage() {
                             </div>
 
                             {/* Bottom Row: Filter, View Toggle & Refresh */}
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
                                 {/* Assignee Filter */}
-                                <div className="relative flex-1">
+                                <div className="relative w-16 sm:w-auto sm:flex-1 min-w-0">
                                     <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
                                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -221,13 +222,13 @@ export default function TaskManagerPage() {
                                 </div>
 
                                 {/* View Toggle - Dropdown */}
-                                <div className="relative shrink-0">
+                                <div className="relative flex-1 min-w-0">
                                     <select
                                         value={view}
                                         onChange={(e) => setView(e.target.value as typeof view)}
                                         aria-label="Select view mode"
                                         title="Select view mode"
-                                        className="pl-10 pr-8 py-2.5 sm:py-3 rounded-xl 
+                                        className="w-full pl-10 pr-8 py-2.5 sm:py-3 rounded-xl 
                                             border border-gray-200 dark:border-gray-600 
                                             bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm sm:text-base
                                             focus:ring-2 focus:ring-blue-500 focus:border-transparent
@@ -252,14 +253,28 @@ export default function TaskManagerPage() {
                                     </svg>
                                 </div>
 
+                                {session?.user?.role === 'SUPER_ADMIN' && (
+                                    <Link
+                                        href="/admin/labels"
+                                        className="inline-flex h-[42px] w-11 sm:h-auto sm:w-auto items-center justify-center gap-2 px-0 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 text-sm sm:text-base font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-all shadow-sm active:scale-95 shrink-0"
+                                        title="Label Management"
+                                        aria-label="Label Management"
+                                    >
+                                        <Tag className="w-4 h-4" />
+                                        <span className="hidden xl:inline">Label Management</span>
+                                        <span className="hidden sm:inline xl:hidden">Labels</span>
+                                    </Link>
+                                )}
+
                                 {/* Refresh */}
                                 <button
                                     onClick={handleRefresh}
-                                    className="p-2.5 sm:p-3 rounded-xl border border-gray-200 dark:border-gray-600 
+                                    className="inline-flex h-[42px] w-11 sm:h-[46px] sm:w-12 sm:p-0 items-center justify-center rounded-xl border border-gray-200 dark:border-gray-600 
                                         bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400
                                         hover:bg-gray-50 dark:hover:bg-gray-800 transition-all shadow-sm
                                         active:scale-95 shrink-0"
                                     title="Refresh"
+                                    aria-label="Refresh tasks"
                                 >
                                     <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}

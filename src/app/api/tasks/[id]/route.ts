@@ -89,11 +89,14 @@ export const PATCH = createApiHandler(
             }
         }
 
+        let updatedTask = currentTask;
+
         if (Object.keys(updateData).length > 0) {
             const { data: task, error } = await TasksDAL.update(client, id, updateData);
             if (error) {
                 return NextResponse.json({ error: "Failed to update task" }, { status: 500 });
             }
+            updatedTask = task!;
 
             if (activityLogs.length > 0) {
                 await TasksDAL.logActivityBatch(client, activityLogs);
@@ -115,22 +118,24 @@ export const PATCH = createApiHandler(
                 ip_address: ctx.ip,
                 user_agent: ctx.userAgent,
             });
-
-            // Update labels if provided
-            if (body.label_ids !== undefined) {
-                await TasksDAL.setLabels(client, id, body.label_ids);
-            }
-
-            const { data: labelAssignments } = await TasksDAL.getLabels(client, [id]);
-            return NextResponse.json({
-                task: {
-                    ...task,
-                    labels: labelAssignments?.map((la: { label: unknown }) => la.label) || [],
-                },
-            });
         }
 
-        return NextResponse.json({ task: currentTask });
+        // Update labels even when no other task fields changed.
+        if (body.label_ids !== undefined) {
+            const { error: labelError } = await TasksDAL.setLabels(client, id, body.label_ids);
+            if (labelError) {
+                console.error("Failed to update task labels:", labelError);
+                return NextResponse.json({ error: "Failed to update task labels" }, { status: 500 });
+            }
+        }
+
+        const { data: labelAssignments } = await TasksDAL.getLabels(client, [id]);
+        return NextResponse.json({
+            task: {
+                ...updatedTask,
+                labels: labelAssignments?.map((la: { label: unknown }) => la.label) || [],
+            },
+        });
     }
 );
 

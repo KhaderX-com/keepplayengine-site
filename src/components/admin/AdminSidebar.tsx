@@ -26,7 +26,7 @@ interface AdminSidebarProps {
     userRole?: string;
 }
 
-export default function AdminSidebar({ isMobileMenuOpen, onCloseMobileMenu, userRole }: AdminSidebarProps) {
+export default function AdminSidebar({ isMobileMenuOpen, onCloseMobileMenu }: AdminSidebarProps) {
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const [isCollapsed, setIsCollapsed] = useState(false);
@@ -108,15 +108,7 @@ export default function AdminSidebar({ isMobileMenuOpen, onCloseMobileMenu, user
                         <Image src="https://res.cloudinary.com/destej60y/image/upload/v1774210123/flag_nml2il.png" alt="Milestones" width={20} height={20} unoptimized />
                     ),
                 },
-                // Removed 'My Tasks' and 'All Tasks' entries per UI change request
-                // Only show Label Management for SUPER_ADMIN
-                ...(userRole === 'SUPER_ADMIN' ? [{
-                    name: "Label Management",
-                    href: "/admin/labels",
-                    icon: (
-                        <Image src="https://res.cloudinary.com/destej60y/image/upload/v1774210122/tag_d3hn9f.png" alt="Label Management" width={20} height={20} unoptimized />
-                    ),
-                }] : []),
+                // Removed 'My Tasks', 'All Tasks', and 'Label Management' entries per UI change request
             ],
         },
         {
