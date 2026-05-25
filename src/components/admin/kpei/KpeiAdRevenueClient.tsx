@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -18,6 +17,9 @@ import {
     Globe,
     Activity,
     CalendarDays,
+    Check,
+    Info,
+    XCircle,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────
@@ -49,6 +51,13 @@ interface ApiResponse {
     timeRange: { startTime: string; endTime: string };
 }
 
+type DateTimeRange = {
+    startDate: string;
+    startTime: string;
+    endDate: string;
+    endTime: string;
+};
+
 // ─────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────
@@ -76,7 +85,253 @@ function parseAxiomTable(table: AxiomTable | null): Record<string, unknown>[] {
     return rows;
 }
 
+function pad2(n: number) {
+    return String(n).padStart(2, "0");
+}
 
+function localDateValue(d: Date) {
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+function localTimeValue(d: Date) {
+    return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+
+function defaultRange(): DateTimeRange {
+    const end = new Date();
+    const start = new Date(end.getTime() - 7 * 24 * 60 * 60 * 1000);
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 0, 0);
+    return {
+        startDate: localDateValue(start),
+        startTime: localTimeValue(start),
+        endDate: localDateValue(end),
+        endTime: localTimeValue(end),
+    };
+}
+
+function presetRange(preset: "today" | "yesterday" | "7d" | "30d"): DateTimeRange {
+    const end = new Date();
+    const start = new Date(end);
+
+    if (preset === "today") {
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 0, 0);
+    } else if (preset === "yesterday") {
+        start.setDate(start.getDate() - 1);
+        end.setDate(end.getDate() - 1);
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 0, 0);
+    } else {
+        start.setDate(start.getDate() - (preset === "7d" ? 6 : 29));
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 0, 0);
+    }
+
+    return {
+        startDate: localDateValue(start),
+        startTime: localTimeValue(start),
+        endDate: localDateValue(end),
+        endTime: localTimeValue(end),
+    };
+}
+
+function rangeDateTime(date: string, time: string) {
+    if (!date) return null;
+    const [hours = "0", minutes = "0"] = (time || "00:00").split(":");
+    const d = new Date(date);
+    d.setHours(Number(hours), Number(minutes), 0, 0);
+    return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function rangeToQuery(range: DateTimeRange) {
+    return {
+        start: rangeDateTime(range.startDate, range.startTime)?.toISOString(),
+        end: rangeDateTime(range.endDate, range.endTime)?.toISOString(),
+    };
+}
+
+function sameRange(a: DateTimeRange, b: DateTimeRange) {
+    return a.startDate === b.startDate
+        && a.startTime === b.startTime
+        && a.endDate === b.endDate
+        && a.endTime === b.endTime;
+}
+
+function timezoneLabel() {
+    const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const offset = new Intl.DateTimeFormat("en-GB", {
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZoneName: "shortOffset",
+    })
+        .formatToParts(new Date())
+        .find((part) => part.type === "timeZoneName")?.value;
+
+    return `${zone}${offset ? ` (${offset})` : ""}`;
+}
+
+function fmtLocal(date: string, time: string) {
+    const d = rangeDateTime(date, time);
+    if (!d) return "Not set";
+    return new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short" }).format(d);
+}
+
+function fmtUtc(date: string, time: string) {
+    const d = rangeDateTime(date, time);
+    if (!d) return "Not set";
+    return d.toISOString().replace(".000Z", "Z");
+}
+
+function DateTimeToolbar({
+    draftRange,
+    appliedRange,
+    loading,
+    onDraftChange,
+    onApply,
+    onClear,
+    onRefresh,
+}: {
+    draftRange: DateTimeRange;
+    appliedRange: DateTimeRange;
+    loading: boolean;
+    onDraftChange: (range: DateTimeRange) => void;
+    onApply: () => void;
+    onClear: () => void;
+    onRefresh: () => void;
+}) {
+    const start = rangeDateTime(draftRange.startDate, draftRange.startTime);
+    const end = rangeDateTime(draftRange.endDate, draftRange.endTime);
+    const invalid = Boolean(start && end && start > end);
+    const dirty = !sameRange(draftRange, appliedRange);
+    const update = (field: keyof DateTimeRange, value: string) => onDraftChange({ ...draftRange, [field]: value });
+
+    return (
+        <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+            <div className="grid gap-4 p-4">
+                <div className="flex flex-col gap-3 2xl:flex-row 2xl:items-start 2xl:justify-between">
+                    <div className="min-w-0 space-y-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <div className="inline-flex h-10 items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-4 text-xs font-semibold text-gray-800">
+                                <CalendarDays className="h-4 w-4 shrink-0 text-emerald-500" />
+                                <span>Choose date & time</span>
+                            </div>
+                            <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-[11px] font-semibold text-emerald-700">
+                                Europe/Brussels
+                            </span>
+                        </div>
+
+                        <div className="grid gap-3 lg:grid-cols-[minmax(280px,1fr)_auto_minmax(280px,1fr)] lg:items-center">
+                            <div className="rounded-2xl border border-gray-200 bg-white p-2 shadow-[0_1px_8px_rgba(15,23,42,0.04)]">
+                                <div className="mb-1 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">From</div>
+                                <div className="grid grid-cols-[1fr_auto_104px] items-center gap-2">
+                                    <input
+                                        type="date"
+                                        value={draftRange.startDate}
+                                        onChange={(e) => update("startDate", e.target.value)}
+                                        className="h-9 min-w-0 rounded-full bg-gray-50 px-3 text-sm font-semibold text-gray-900 outline-none ring-1 ring-gray-100 transition focus:bg-white focus:ring-gray-300"
+                                    />
+                                    <span className="h-7 w-px bg-gray-200" />
+                                    <input
+                                        type="time"
+                                        step="60"
+                                        value={draftRange.startTime}
+                                        onChange={(e) => update("startTime", e.target.value)}
+                                        className="h-9 rounded-full bg-gray-50 px-3 text-sm font-semibold text-gray-900 outline-none ring-1 ring-gray-100 transition focus:bg-white focus:ring-gray-300"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="hidden h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-gray-50 text-[11px] font-bold uppercase text-gray-400 lg:flex">
+                                to
+                            </div>
+
+                            <div className="rounded-2xl border border-gray-200 bg-white p-2 shadow-[0_1px_8px_rgba(15,23,42,0.04)]">
+                                <div className="mb-1 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">To</div>
+                                <div className="grid grid-cols-[1fr_auto_104px] items-center gap-2">
+                                    <input
+                                        type="date"
+                                        value={draftRange.endDate}
+                                        onChange={(e) => update("endDate", e.target.value)}
+                                        className="h-9 min-w-0 rounded-full bg-gray-50 px-3 text-sm font-semibold text-gray-900 outline-none ring-1 ring-gray-100 transition focus:bg-white focus:ring-gray-300"
+                                    />
+                                    <span className="h-7 w-px bg-gray-200" />
+                                    <input
+                                        type="time"
+                                        step="60"
+                                        value={draftRange.endTime}
+                                        onChange={(e) => update("endTime", e.target.value)}
+                                        className="h-9 rounded-full bg-gray-50 px-3 text-sm font-semibold text-gray-900 outline-none ring-1 ring-gray-100 transition focus:bg-white focus:ring-gray-300"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col gap-3 2xl:items-end">
+                        <div className="flex flex-wrap items-center gap-2 2xl:justify-end">
+                            {[
+                                ["today", "Today"],
+                                ["yesterday", "Yesterday"],
+                                ["7d", "7 days"],
+                                ["30d", "30 days"],
+                            ].map(([key, label]) => (
+                                <button key={key} type="button" onClick={() => onDraftChange(presetRange(key as "today" | "yesterday" | "7d" | "30d"))} className="h-9 rounded-full border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-600 transition hover:bg-gray-50">
+                                    {label}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 2xl:justify-end">
+                            <button type="button" onClick={onApply} disabled={loading || invalid} className="inline-flex h-10 items-center gap-2 rounded-full bg-black px-5 text-xs font-bold text-white transition hover:bg-gray-900 disabled:cursor-not-allowed disabled:opacity-50">
+                                <Check className="h-4 w-4 shrink-0" />
+                                Apply
+                            </button>
+                            <button type="button" onClick={onClear} disabled={loading} className="inline-flex h-10 items-center gap-2 rounded-full border border-gray-200 bg-white px-4 text-xs font-semibold text-gray-600 transition hover:bg-gray-50 disabled:opacity-50">
+                                <XCircle className="h-4 w-4 shrink-0" />
+                                Reset
+                            </button>
+                            <button type="button" onClick={onRefresh} disabled={loading} className="inline-flex h-10 items-center gap-2 rounded-full border border-gray-200 bg-white px-4 text-xs font-semibold text-gray-600 transition hover:bg-gray-50 disabled:opacity-50">
+                                <RefreshCw className={`h-4 w-4 shrink-0 ${loading ? "animate-spin" : ""}`} />
+                                Refresh
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="grid gap-3 border-t border-gray-100 pt-4 lg:grid-cols-[minmax(260px,0.75fr)_minmax(420px,1.25fr)]">
+                    <div className="flex items-start gap-3 rounded-2xl bg-gray-50 px-4 py-3">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                            <Info className="h-4 w-4" />
+                        </div>
+                        <p className="text-xs leading-5 text-gray-600">
+                            Local dashboard time is <span className="font-semibold text-gray-900">{timezoneLabel()}</span>.
+                            Axiom compares the selected range in UTC after Apply.
+                        </p>
+                    </div>
+
+                    <div className="grid gap-2 rounded-2xl bg-gray-50 p-3 sm:grid-cols-2">
+                        <div className="rounded-xl bg-white px-3 py-2 ring-1 ring-gray-100">
+                            <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">From UTC</p>
+                            <p className="break-all font-mono text-[11px] font-semibold text-gray-800">{fmtUtc(draftRange.startDate, draftRange.startTime)}</p>
+                            <p className="mt-1 text-[11px] text-gray-500">{fmtLocal(draftRange.startDate, draftRange.startTime)}</p>
+                        </div>
+                        <div className="rounded-xl bg-white px-3 py-2 ring-1 ring-gray-100">
+                            <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">To UTC</p>
+                            <p className="break-all font-mono text-[11px] font-semibold text-gray-800">{fmtUtc(draftRange.endDate, draftRange.endTime)}</p>
+                            <p className="mt-1 text-[11px] text-gray-500">{fmtLocal(draftRange.endDate, draftRange.endTime)}</p>
+                        </div>
+                    </div>
+
+                    {(dirty || invalid) && (
+                        <p className={`lg:col-span-2 rounded-xl px-3 py-2 text-[11px] font-semibold ${invalid ? "bg-red-50 text-red-600" : "bg-amber-50 text-amber-700"}`}>
+                            {invalid ? "The start date/time must be before the end date/time." : "You have unapplied changes. Data will update only after Apply is clicked."}
+                        </p>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
 
 // ─────────────────────────────────────────────
 // Stat Card
@@ -141,18 +396,17 @@ export default function KpeiAdRevenueClient() {
     const [error, setError] = useState<string | null>(null);
 
     // Time range controls
-    const defaultStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-    const defaultEnd = new Date().toISOString().slice(0, 10);
-    const [startDate, setStartDate] = useState(defaultStart);
-    const [endDate, setEndDate] = useState(defaultEnd);
+    const [draftRange, setDraftRange] = useState<DateTimeRange>(() => defaultRange());
+    const [appliedRange, setAppliedRange] = useState<DateTimeRange>(() => defaultRange());
 
-    const fetchData = useCallback(async (start?: string, end?: string) => {
+    const fetchData = useCallback(async (range: DateTimeRange) => {
         setLoading(true);
         setError(null);
         try {
             const params = new URLSearchParams();
-            if (start) params.set("startTime", new Date(start).toISOString());
-            if (end) params.set("endTime", new Date(end + "T23:59:59").toISOString());
+            const queryRange = rangeToQuery(range);
+            if (queryRange.start) params.set("startTime", queryRange.start);
+            if (queryRange.end) params.set("endTime", queryRange.end);
             const res = await fetch(`/api/kpei/ad-revenue?${params.toString()}`);
             if (!res.ok) throw new Error(`Failed: ${res.status}`);
             const json: ApiResponse = await res.json();
@@ -165,10 +419,20 @@ export default function KpeiAdRevenueClient() {
         }
     }, []);
 
-    useEffect(() => { fetchData(startDate, endDate); }, [fetchData, startDate, endDate]);
+    useEffect(() => { fetchData(appliedRange); }, [fetchData, appliedRange]);
 
-    // ── Loading ──
-    if (loading) {
+    const applyRange = () => {
+        setAppliedRange(draftRange);
+    };
+
+    const resetRange = () => {
+        const nextRange = defaultRange();
+        setDraftRange(nextRange);
+        setAppliedRange(nextRange);
+    };
+
+    // ── Initial Loading ──
+    if (loading && !data) {
         return (
             <div className="max-w-6xl mx-auto space-y-5">
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -192,7 +456,7 @@ export default function KpeiAdRevenueClient() {
                 <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-red-700">
                     <AlertTriangle className="w-5 h-5 mb-2" />
                     <p className="font-medium">{error ?? "Failed to load"}</p>
-                    <Button variant="outline" size="sm" onClick={() => fetchData(startDate, endDate)} className="mt-3 rounded-xl">
+                    <Button variant="outline" size="sm" onClick={() => fetchData(appliedRange)} className="mt-3 rounded-xl">
                         Retry
                     </Button>
                 </div>
@@ -230,32 +494,15 @@ export default function KpeiAdRevenueClient() {
     return (
         <div className="max-w-6xl mx-auto space-y-5">
             {/* ── Time Range Filter ── */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3 flex flex-wrap items-center gap-3">
-                <CalendarDays className="w-4 h-4 text-gray-400 shrink-0" />
-                <Input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="rounded-xl h-9 w-36 text-xs"
-                />
-                <span className="text-xs text-gray-400">to</span>
-                <Input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="rounded-xl h-9 w-36 text-xs"
-                />
-                <Button variant="outline" size="sm" onClick={() => fetchData(startDate, endDate)} className="rounded-xl h-9 text-xs">
-                    Apply
-                </Button>
-                <button
-                    onClick={() => fetchData(startDate, endDate)}
-                    className="ml-auto p-2 rounded-xl hover:bg-gray-100 transition-colors"
-                    title="Refresh"
-                >
-                    <RefreshCw className="w-4 h-4 text-gray-400" />
-                </button>
-            </div>
+            <DateTimeToolbar
+                draftRange={draftRange}
+                appliedRange={appliedRange}
+                loading={loading}
+                onDraftChange={setDraftRange}
+                onApply={applyRange}
+                onClear={resetRange}
+                onRefresh={() => fetchData(appliedRange)}
+            />
 
             {/* ── Section: Axiom Ad Revenue ── */}
             <div>

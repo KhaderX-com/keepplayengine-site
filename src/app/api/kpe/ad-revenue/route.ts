@@ -1,7 +1,7 @@
 /**
  * KPE Ad Revenue Analytics API Route
  *
- * GET /api/kpe/ad-revenue?view=summary|daily|by-type|by-app&from=YYYY-MM-DD&to=YYYY-MM-DD
+ * GET /api/kpe/ad-revenue?view=summary|daily|by-type|by-app&from=<ISO datetime>&to=<ISO datetime>
  */
 
 import { NextRequest, NextResponse } from "next/server";

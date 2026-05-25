@@ -18,7 +18,6 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
-    DollarSign,
     TrendingUp,
     Users,
     BarChart3,
@@ -30,6 +29,10 @@ import {
     Gift,
     Gamepad2,
     Activity,
+    Clock3,
+    Info,
+    Check,
+    RotateCcw,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────
@@ -93,6 +96,13 @@ interface ChartRow {
     users: number;
 }
 
+type DateTimeRange = {
+    fromDate: string;
+    fromTime: string;
+    toDate: string;
+    toTime: string;
+};
+
 // ─────────────────────────────────────────────
 // Constants
 // ─────────────────────────────────────────────
@@ -144,6 +154,106 @@ function fmtDateShort(d: string) {
     });
 }
 
+const EMPTY_RANGE: DateTimeRange = {
+    fromDate: "",
+    fromTime: "00:00",
+    toDate: "",
+    toTime: "23:59",
+};
+
+function pad2(n: number) {
+    return String(n).padStart(2, "0");
+}
+
+function localDateValue(d: Date) {
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+function localTimeValue(d: Date) {
+    return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+
+function rangeDateTime(date: string, time: string) {
+    if (!date) return null;
+    const [hours = "0", minutes = "0"] = (time || "00:00").split(":");
+    const d = new Date(date);
+    d.setHours(Number(hours), Number(minutes), 0, 0);
+    return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function rangeToApi(range: DateTimeRange) {
+    return {
+        from: rangeDateTime(range.fromDate, range.fromTime)?.toISOString(),
+        to: rangeDateTime(range.toDate, range.toTime)?.toISOString(),
+    };
+}
+
+function fmtUtcPreview(date: string, time: string) {
+    const d = rangeDateTime(date, time);
+    if (!d) return "Not set";
+    return d.toISOString().replace(".000Z", "Z");
+}
+
+function fmtLocalPreview(date: string, time: string) {
+    const d = rangeDateTime(date, time);
+    if (!d) return "Not set";
+    return new Intl.DateTimeFormat("en-GB", {
+        dateStyle: "medium",
+        timeStyle: "short",
+    }).format(d);
+}
+
+function timezoneLabel() {
+    const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const offset = new Intl.DateTimeFormat("en-GB", {
+        timeZoneName: "shortOffset",
+        hour: "2-digit",
+        minute: "2-digit",
+    })
+        .formatToParts(new Date())
+        .find((part) => part.type === "timeZoneName")?.value;
+
+    return `${zone}${offset ? ` (${offset})` : ""}`;
+}
+
+function presetRange(preset: "today" | "yesterday" | "7d" | "30d"): DateTimeRange {
+    const now = new Date();
+    const start = new Date(now);
+    const end = new Date(now);
+
+    if (preset === "today") {
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 0, 0);
+    } else if (preset === "yesterday") {
+        start.setDate(start.getDate() - 1);
+        start.setHours(0, 0, 0, 0);
+        end.setDate(end.getDate() - 1);
+        end.setHours(23, 59, 0, 0);
+    } else {
+        start.setDate(start.getDate() - (preset === "7d" ? 6 : 29));
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 0, 0);
+    }
+
+    return {
+        fromDate: localDateValue(start),
+        fromTime: localTimeValue(start),
+        toDate: localDateValue(end),
+        toTime: localTimeValue(end),
+    };
+}
+
+function hasRangeValue(range: DateTimeRange) {
+    return Boolean(range.fromDate || range.toDate);
+}
+
+function sameRange(a: DateTimeRange, b: DateTimeRange) {
+    return a.fromDate === b.fromDate
+        && a.fromTime === b.fromTime
+        && a.toDate === b.toDate
+        && a.toTime === b.toTime;
+}
+
 /** Bar width as % relative to max value in the set */
 function barPct(val: number, max: number) {
     if (max <= 0) return 0;
@@ -173,6 +283,160 @@ function uniqueAdTypes(data: ChartRow[]) {
     return [...new Set(data.map((r) => r.ad_type))].sort();
 }
 
+function DateTimeRangeToolbar({
+    draftRange,
+    appliedRange,
+    loading,
+    onDraftChange,
+    onApply,
+    onClear,
+    onRefresh,
+}: {
+    draftRange: DateTimeRange;
+    appliedRange: DateTimeRange;
+    loading: boolean;
+    onDraftChange: (range: DateTimeRange) => void;
+    onApply: () => void;
+    onClear: () => void;
+    onRefresh: () => void;
+}) {
+    const from = rangeDateTime(draftRange.fromDate, draftRange.fromTime);
+    const to = rangeDateTime(draftRange.toDate, draftRange.toTime);
+    const invalidRange = Boolean(from && to && from > to);
+    const dirty = !sameRange(draftRange, appliedRange);
+    const localTz = timezoneLabel();
+
+    const setField = (field: keyof DateTimeRange, value: string) => {
+        onDraftChange({ ...draftRange, [field]: value });
+    };
+
+    return (
+        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-950">
+            <div className="flex flex-col gap-4 p-3 lg:flex-row lg:items-center lg:justify-between">
+                <div className="flex min-w-0 flex-1 flex-col gap-3 xl:flex-row xl:items-center">
+                    <div className="inline-flex w-fit items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
+                        <Calendar className="h-4 w-4 text-emerald-500" />
+                        Choose date & time
+                    </div>
+
+                    <div className="grid min-w-0 flex-1 grid-cols-1 gap-2 md:grid-cols-[1fr_auto_1fr] md:items-center">
+                        <div className="flex min-w-0 items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-2 shadow-[0_1px_8px_rgba(15,23,42,0.04)] dark:border-gray-800 dark:bg-gray-950">
+                            <span className="shrink-0 text-[11px] font-bold uppercase tracking-wider text-gray-400">From</span>
+                            <input
+                                type="date"
+                                value={draftRange.fromDate}
+                                onChange={(e) => setField("fromDate", e.target.value)}
+                                className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-gray-900 outline-none [color-scheme:light] dark:text-gray-100 dark:[color-scheme:dark]"
+                                title="Start date"
+                            />
+                            <span className="h-5 w-px bg-gray-200 dark:bg-gray-800" />
+                            <Clock3 className="h-3.5 w-3.5 text-gray-400" />
+                            <input
+                                type="time"
+                                step="60"
+                                value={draftRange.fromTime}
+                                onChange={(e) => setField("fromTime", e.target.value)}
+                                className="w-[82px] bg-transparent text-sm font-semibold text-gray-900 outline-none [color-scheme:light] dark:text-gray-100 dark:[color-scheme:dark]"
+                                title="Start time"
+                            />
+                        </div>
+
+                        <span className="hidden text-center text-[11px] font-bold uppercase tracking-wider text-gray-400 md:block">to</span>
+
+                        <div className="flex min-w-0 items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-2 shadow-[0_1px_8px_rgba(15,23,42,0.04)] dark:border-gray-800 dark:bg-gray-950">
+                            <span className="shrink-0 text-[11px] font-bold uppercase tracking-wider text-gray-400">To</span>
+                            <input
+                                type="date"
+                                value={draftRange.toDate}
+                                onChange={(e) => setField("toDate", e.target.value)}
+                                className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-gray-900 outline-none [color-scheme:light] dark:text-gray-100 dark:[color-scheme:dark]"
+                                title="End date"
+                            />
+                            <span className="h-5 w-px bg-gray-200 dark:bg-gray-800" />
+                            <Clock3 className="h-3.5 w-3.5 text-gray-400" />
+                            <input
+                                type="time"
+                                step="60"
+                                value={draftRange.toTime}
+                                onChange={(e) => setField("toTime", e.target.value)}
+                                className="w-[82px] bg-transparent text-sm font-semibold text-gray-900 outline-none [color-scheme:light] dark:text-gray-100 dark:[color-scheme:dark]"
+                                title="End time"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+                    {[
+                        ["today", "Today"],
+                        ["yesterday", "Yesterday"],
+                        ["7d", "7 days"],
+                        ["30d", "30 days"],
+                    ].map(([key, label]) => (
+                        <button
+                            key={key}
+                            type="button"
+                            onClick={() => onDraftChange(presetRange(key as "today" | "yesterday" | "7d" | "30d"))}
+                            className="rounded-full border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300 dark:hover:bg-gray-900"
+                        >
+                            {label}
+                        </button>
+                    ))}
+                    <button
+                        type="button"
+                        onClick={onApply}
+                        disabled={loading || invalidRange || !hasRangeValue(draftRange)}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-black px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-gray-900 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-gray-100"
+                    >
+                        <Check className="h-3.5 w-3.5" />
+                        Apply
+                    </button>
+                    {hasRangeValue(appliedRange) && (
+                        <button
+                            type="button"
+                            onClick={onClear}
+                            disabled={loading}
+                            className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300 dark:hover:bg-gray-900"
+                        >
+                            <XCircle className="h-3.5 w-3.5" />
+                            Clear
+                        </button>
+                    )}
+                    <button
+                        type="button"
+                        onClick={onRefresh}
+                        disabled={loading}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300 dark:hover:bg-gray-900"
+                    >
+                        <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
+                        Refresh
+                    </button>
+                </div>
+            </div>
+
+            <div className="grid gap-2 border-t border-gray-100 px-3 py-3 text-xs text-gray-500 dark:border-gray-900 lg:grid-cols-[1fr_auto] lg:items-center">
+                <div className="flex items-start gap-2 rounded-xl bg-gray-50 px-3 py-2 dark:bg-gray-900/70">
+                    <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500" />
+                    <p>
+                        Local dashboard time: <span className="font-semibold text-gray-800 dark:text-gray-200">{localTz}</span>.
+                        Axiom/Supabase timestamps are compared in UTC after you click Apply.
+                    </p>
+                </div>
+                <div className="grid gap-1 rounded-xl bg-gray-50 px-3 py-2 font-mono text-[11px] text-gray-600 dark:bg-gray-900/70 dark:text-gray-300 sm:grid-cols-2 lg:min-w-[520px]">
+                    <span>From: {fmtLocalPreview(draftRange.fromDate, draftRange.fromTime)} = {fmtUtcPreview(draftRange.fromDate, draftRange.fromTime)}</span>
+                    <span>To: {fmtLocalPreview(draftRange.toDate, draftRange.toTime)} = {fmtUtcPreview(draftRange.toDate, draftRange.toTime)}</span>
+                </div>
+                {(dirty || invalidRange) && (
+                    <p className={`lg:col-span-2 flex items-center gap-1.5 px-1 text-[11px] font-semibold ${invalidRange ? "text-red-600" : "text-amber-600"}`}>
+                        <RotateCcw className="h-3.5 w-3.5" />
+                        {invalidRange ? "The start date/time must be before the end date/time." : "You have unapplied changes. Data will not update until Apply is clicked."}
+                    </p>
+                )}
+            </div>
+        </div>
+    );
+}
+
 // ─────────────────────────────────────────────
 // Component
 // ─────────────────────────────────────────────
@@ -187,9 +451,9 @@ export default function AdRevenueClient() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Date range filter
-    const [fromDate, setFromDate] = useState("");
-    const [toDate, setToDate] = useState("");
+    // Date/time range filter. Draft changes stay local until Apply is clicked.
+    const [draftRange, setDraftRange] = useState<DateTimeRange>(EMPTY_RANGE);
+    const [appliedRange, setAppliedRange] = useState<DateTimeRange>(EMPTY_RANGE);
 
     // Games config map: app_key_name → GameConfig (for icon + title lookup)
     const [gameInfoMap, setGameInfoMap] = useState<Map<string, GameConfig>>(new Map());
@@ -269,13 +533,20 @@ export default function AdRevenueClient() {
     }, [fetchAll]);
 
     const handleFilter = () => {
-        fetchAll(fromDate || undefined, toDate || undefined);
+        const apiRange = rangeToApi(draftRange);
+        setAppliedRange(draftRange);
+        fetchAll(apiRange.from, apiRange.to);
     };
 
     const clearFilter = () => {
-        setFromDate("");
-        setToDate("");
+        setDraftRange(EMPTY_RANGE);
+        setAppliedRange(EMPTY_RANGE);
         fetchAll();
+    };
+
+    const refreshAppliedRange = () => {
+        const apiRange = rangeToApi(appliedRange);
+        fetchAll(apiRange.from, apiRange.to);
     };
 
     // ── Render ───────────────────────────────
@@ -326,54 +597,15 @@ export default function AdRevenueClient() {
                 </div>
             )}
 
-            {/* Date filter toolbar */}
-            <div className="flex items-center gap-2 flex-wrap">
-                <div className="flex items-center divide-x divide-gray-200 rounded-full border border-gray-200 bg-white shadow-sm overflow-hidden">
-                    <div className="flex items-center gap-1.5 px-3 py-1.5">
-                        <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">From</span>
-                        <input
-                            type="date"
-                            value={fromDate}
-                            onChange={(e) => setFromDate(e.target.value)}
-                            title="From date"
-                            className="text-xs text-gray-800 bg-transparent border-0 outline-none w-30 cursor-pointer"
-                        />
-                    </div>
-                    <div className="flex items-center gap-1.5 px-3 py-1.5">
-                        <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">To</span>
-                        <input
-                            type="date"
-                            value={toDate}
-                            onChange={(e) => setToDate(e.target.value)}
-                            title="To date"
-                            className="text-xs text-gray-800 bg-transparent border-0 outline-none w-30 cursor-pointer"
-                        />
-                    </div>
-                </div>
-                <button
-                    onClick={handleFilter}
-                    className="flex items-center gap-1.5 bg-black text-white text-xs font-semibold px-3 py-1.5 rounded-full hover:bg-gray-900 transition-colors"
-                >
-                    <Calendar className="w-3.5 h-3.5" />
-                    Filter
-                </button>
-                {(fromDate || toDate) && (
-                    <button
-                        onClick={clearFilter}
-                        className="flex items-center gap-1.5 bg-white text-gray-600 text-xs font-medium px-3 py-1.5 rounded-full border border-gray-200 hover:bg-gray-50 transition-colors"
-                    >
-                        <XCircle className="w-3.5 h-3.5" />
-                        Clear
-                    </button>
-                )}
-                <button
-                    onClick={() => fetchAll(fromDate || undefined, toDate || undefined)}
-                    className="flex items-center gap-1.5 bg-white text-gray-600 text-xs font-medium px-3 py-1.5 rounded-full border border-gray-200 hover:bg-gray-50 transition-colors"
-                >
-                    <RefreshCw className="w-3.5 h-3.5" />
-                    Refresh
-                </button>
-            </div>
+            <DateTimeRangeToolbar
+                draftRange={draftRange}
+                appliedRange={appliedRange}
+                loading={loading}
+                onDraftChange={setDraftRange}
+                onApply={handleFilter}
+                onClear={clearFilter}
+                onRefresh={refreshAppliedRange}
+            />
 
             {/* ── Summary Cards ──────────────── */}
             {summary && (
