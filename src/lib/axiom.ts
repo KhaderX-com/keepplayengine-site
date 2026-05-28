@@ -1,9 +1,10 @@
 /**
  * Axiom API Client — Server-side only
  *
- * Queries the two KeepPlay datasets:
+ * Queries the KeepPlay datasets:
  *   - keepplay-logs: All server-side events (16 types)
  *   - game-side-reports: Game SDK ad reports (write-only from SDK, read here)
+ *   - earn-apps-logs: Earn Apps infra events
  *
  * Uses APL (Axiom Processing Language) for queries.
  * Token is stored in AXIOM_API_TOKEN env var — never exposed to the client.
@@ -12,7 +13,7 @@
 const AXIOM_API_URL = "https://api.axiom.co/v1/datasets/_apl";
 const AXIOM_DATASETS_URL = "https://api.axiom.co/v1/datasets";
 
-const VALID_DATASETS = ["keepplay-logs", "game-side-reports"] as const;
+const VALID_DATASETS = ["keepplay-logs", "game-side-reports", "earn-apps-logs"] as const;
 export type AxiomDataset = (typeof VALID_DATASETS)[number];
 
 export function isValidDataset(name: string): name is AxiomDataset {
@@ -476,6 +477,76 @@ export async function getFraudIntegrityByUser(startTime: string, endTime: string
         | extend pass_rate = iff(total_sessions > 0, (toreal(passed) / toreal(total_sessions)) * 100.0, 0.0)
         | order by pass_rate asc
         | take 200`,
+        startTime,
+        endTime,
+    );
+}
+
+// ─────────────────────────────────────────────
+// Earn Apps analytics
+// ─────────────────────────────────────────────
+
+export async function getEarnAppsEventsByName(startTime: string, endTime: string) {
+    return queryAxiom(
+        `['earn-apps-logs']
+        | summarize count = count() by event
+        | order by count desc`,
+        startTime,
+        endTime,
+    );
+}
+
+export async function getEarnAppsRevenueSummary(startTime: string, endTime: string) {
+    return queryAxiom(
+        `['earn-apps-logs']
+        | where event == "ad_revenue_applied"
+        | summarize
+            total_events = count(),
+            total_revenue = sum(toreal(revenue_usd)),
+            total_points = sum(tolong(points_awarded)),
+            avg_revenue = avg(toreal(revenue_usd)),
+            unique_users = dcount(user_id)`,
+        startTime,
+        endTime,
+    );
+}
+
+export async function getEarnAppsRevenueByApp(startTime: string, endTime: string) {
+    return queryAxiom(
+        `['earn-apps-logs']
+        | where event == "ad_revenue_applied"
+        | summarize
+            events = count(),
+            revenue = sum(toreal(revenue_usd)),
+            points = sum(tolong(points_awarded)),
+            users = dcount(user_id)
+        by app_id
+        | order by revenue desc`,
+        startTime,
+        endTime,
+    );
+}
+
+export async function getEarnAppsEventsOverTime(startTime: string, endTime: string) {
+    return queryAxiom(
+        `['earn-apps-logs']
+        | where event == "ad_revenue_applied"
+        | summarize
+            events = count(),
+            revenue = sum(toreal(revenue_usd))
+        by bin(_time, 1h)
+        | order by _time asc`,
+        startTime,
+        endTime,
+    );
+}
+
+export async function getEarnAppsRecentEvents(startTime: string, endTime: string) {
+    return queryAxiom(
+        `['earn-apps-logs']
+        | order by _time desc
+        | take 50
+        | project _time, event, severity, source, app_id, user_id, ad_id_last4, install_id_last4, revenue_usd, points_awarded, points_balance, amount_usd, points_spent, payout_method, request_status`,
         startTime,
         endTime,
     );

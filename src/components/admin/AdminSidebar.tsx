@@ -33,6 +33,7 @@ export default function AdminSidebar({ isMobileMenuOpen, onCloseMobileMenu }: Ad
     const [isAdminExpanded, setIsAdminExpanded] = useState(true);
     const [isTasksExpanded, setIsTasksExpanded] = useState(true);
     const [isKpeiExpanded, setIsKpeiExpanded] = useState(true);
+    const [isEarnAppsExpanded, setIsEarnAppsExpanded] = useState(true);
     const [isAxiomExpanded, setIsAxiomExpanded] = useState(true);
 
     // Lock body scroll when mobile menu is open
@@ -138,6 +139,40 @@ export default function AdminSidebar({ isMobileMenuOpen, onCloseMobileMenu }: Ad
                 {
                     name: "Withdrawals",
                     href: "/admin/kpe/withdrawals",
+                    noInvert: true,
+                    icon: (
+                        <Image src="https://res.cloudinary.com/destej60y/image/upload/v1774211644/dollar-symbol-red_nvkotr.png" alt="Withdrawals" width={20} height={20} unoptimized />
+                    ),
+                },
+            ],
+        },
+        {
+            name: "Earn Apps",
+            icon: (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            ),
+            subItems: [
+                {
+                    name: "User Management",
+                    href: "/admin/earn-apps/users",
+                    icon: (
+                        <Image src="https://res.cloudinary.com/destej60y/image/upload/v1774210122/multiple-users-silhouette_hu5qfy.png" alt="User Management" width={20} height={20} unoptimized />
+                    ),
+                },
+                {
+                    name: "Ad Revenue",
+                    href: "/admin/earn-apps/ad-revenue",
+                    noInvert: true,
+                    icon: (
+                        <Image src="https://res.cloudinary.com/destej60y/image/upload/v1774817883/coin_1_ibq1jb.png" alt="Ad Revenue" width={20} height={20} unoptimized />
+                    ),
+                },
+                {
+                    name: "Withdrawals",
+                    href: "/admin/earn-apps/withdrawals",
                     noInvert: true,
                     icon: (
                         <Image src="https://res.cloudinary.com/destej60y/image/upload/v1774211644/dollar-symbol-red_nvkotr.png" alt="Withdrawals" width={20} height={20} unoptimized />
@@ -258,11 +293,13 @@ export default function AdminSidebar({ isMobileMenuOpen, onCloseMobileMenu }: Ad
                             item.name === "Admin" ? isAdminExpanded :
                             item.name === "Task Manager" ? isTasksExpanded :
                             item.name === "KPE" ? isKpeiExpanded :
+                            item.name === "Earn Apps" ? isEarnAppsExpanded :
                             isAxiomExpanded;
                         const setExpanded =
                             item.name === "Admin" ? setIsAdminExpanded :
                             item.name === "Task Manager" ? setIsTasksExpanded :
                             item.name === "KPE" ? setIsKpeiExpanded :
+                            item.name === "Earn Apps" ? setIsEarnAppsExpanded :
                             setIsAxiomExpanded;
 
                         return (

@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     const { dataset } = body;
     if (!dataset || !isValidDataset(dataset)) {
         return NextResponse.json(
-            { error: "Invalid dataset. Allowed: keepplay-logs, game-side-reports" },
+            { error: "Invalid dataset. Allowed: keepplay-logs, game-side-reports, earn-apps-logs" },
             { status: 400 },
         );
     }
