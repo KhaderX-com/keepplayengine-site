@@ -9,6 +9,22 @@ import {
     getEarnAppsRevenueSummary,
 } from "@/lib/axiom";
 
+type AxiomLoadResult<T> = {
+    data: T | null;
+    error: string | null;
+};
+
+async function loadAxiom<T>(loader: () => Promise<T>): Promise<AxiomLoadResult<T>> {
+    try {
+        return { data: await loader(), error: null };
+    } catch (error) {
+        return {
+            data: null,
+            error: error instanceof Error ? error.message : "Unknown Axiom error",
+        };
+    }
+}
+
 export const GET = createKpeiApiHandler(
     {
         auditResource: "earn-apps:ad-revenue",
@@ -33,11 +49,11 @@ export const GET = createKpeiApiHandler(
         ] = await Promise.all([
             EarnAppsUsersDAL.stats(context.kpei),
             EarnAppsWithdrawalsDAL.stats(context.kpei),
-            getEarnAppsRevenueSummary(startTime, endTime).catch(() => null),
-            getEarnAppsRevenueByApp(startTime, endTime).catch(() => null),
-            getEarnAppsEventsOverTime(startTime, endTime).catch(() => null),
-            getEarnAppsEventsByName(startTime, endTime).catch(() => null),
-            getEarnAppsRecentEvents(startTime, endTime).catch(() => null),
+            loadAxiom(() => getEarnAppsRevenueSummary(startTime, endTime)),
+            loadAxiom(() => getEarnAppsRevenueByApp(startTime, endTime)),
+            loadAxiom(() => getEarnAppsEventsOverTime(startTime, endTime)),
+            loadAxiom(() => getEarnAppsEventsByName(startTime, endTime)),
+            loadAxiom(() => getEarnAppsRecentEvents(startTime, endTime)),
         ]);
 
         if (usersStats.error || withdrawalsStats.error) {
@@ -51,11 +67,18 @@ export const GET = createKpeiApiHandler(
                 withdrawals: withdrawalsStats.data,
             },
             axiom: {
-                revenueSummary: revenueSummary?.tables?.[0] ?? null,
-                revenueByApp: revenueByApp?.tables?.[0] ?? null,
-                eventsOverTime: eventsOverTime?.tables?.[0] ?? null,
-                eventsByName: eventsByName?.tables?.[0] ?? null,
-                recentEvents: recentEvents?.tables?.[0] ?? null,
+                revenueSummary: revenueSummary.data?.tables?.[0] ?? null,
+                revenueByApp: revenueByApp.data?.tables?.[0] ?? null,
+                eventsOverTime: eventsOverTime.data?.tables?.[0] ?? null,
+                eventsByName: eventsByName.data?.tables?.[0] ?? null,
+                recentEvents: recentEvents.data?.tables?.[0] ?? null,
+            },
+            axiomErrors: {
+                revenueSummary: revenueSummary.error,
+                revenueByApp: revenueByApp.error,
+                eventsOverTime: eventsOverTime.error,
+                eventsByName: eventsByName.error,
+                recentEvents: recentEvents.error,
             },
             timeRange: { startTime, endTime },
         });

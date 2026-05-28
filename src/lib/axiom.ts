@@ -67,7 +67,16 @@ export async function queryAxiom(
     startTime?: string,
     endTime?: string,
 ): Promise<AxiomQueryResult> {
-    const token = getAxiomToken(inferDatasetFromApl(apl));
+    return queryAxiomDataset(inferDatasetFromApl(apl), apl, startTime, endTime);
+}
+
+export async function queryAxiomDataset(
+    dataset: AxiomDataset,
+    apl: string,
+    startTime?: string,
+    endTime?: string,
+): Promise<AxiomQueryResult> {
+    const token = getAxiomToken(dataset);
 
     const body: Record<string, unknown> = { apl };
     if (startTime) body.startTime = startTime;
@@ -502,7 +511,8 @@ export async function getFraudIntegrityByUser(startTime: string, endTime: string
 // ─────────────────────────────────────────────
 
 export async function getEarnAppsEventsByName(startTime: string, endTime: string) {
-    return queryAxiom(
+    return queryAxiomDataset(
+        "earn-apps-logs",
         `['earn-apps-logs']
         | summarize count = count() by event
         | order by count desc`,
@@ -512,7 +522,8 @@ export async function getEarnAppsEventsByName(startTime: string, endTime: string
 }
 
 export async function getEarnAppsRevenueSummary(startTime: string, endTime: string) {
-    return queryAxiom(
+    return queryAxiomDataset(
+        "earn-apps-logs",
         `['earn-apps-logs']
         | where event == "ad_revenue_applied"
         | summarize
@@ -527,7 +538,8 @@ export async function getEarnAppsRevenueSummary(startTime: string, endTime: stri
 }
 
 export async function getEarnAppsRevenueByApp(startTime: string, endTime: string) {
-    return queryAxiom(
+    return queryAxiomDataset(
+        "earn-apps-logs",
         `['earn-apps-logs']
         | where event == "ad_revenue_applied"
         | summarize
@@ -543,7 +555,8 @@ export async function getEarnAppsRevenueByApp(startTime: string, endTime: string
 }
 
 export async function getEarnAppsEventsOverTime(startTime: string, endTime: string) {
-    return queryAxiom(
+    return queryAxiomDataset(
+        "earn-apps-logs",
         `['earn-apps-logs']
         | where event == "ad_revenue_applied"
         | summarize
@@ -557,7 +570,8 @@ export async function getEarnAppsEventsOverTime(startTime: string, endTime: stri
 }
 
 export async function getEarnAppsRecentEvents(startTime: string, endTime: string) {
-    return queryAxiom(
+    return queryAxiomDataset(
+        "earn-apps-logs",
         `['earn-apps-logs']
         | order by _time desc
         | take 50

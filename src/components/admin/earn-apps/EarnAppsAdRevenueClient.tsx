@@ -48,6 +48,7 @@ type ApiResponse = {
         eventsByName: AxiomTable | null;
         recentEvents: AxiomTable | null;
     };
+    axiomErrors?: Record<string, string | null>;
 };
 
 type DateTimeRange = {
@@ -227,6 +228,7 @@ export default function EarnAppsAdRevenueClient() {
     const uniqueUsers = Number(summary.unique_users ?? 0);
     const withdrawals = data.economy.withdrawals;
     const users = data.economy.users;
+    const axiomErrors = Object.values(data.axiomErrors ?? {}).filter(Boolean);
 
     return (
         <div className="mx-auto max-w-7xl space-y-4 sm:space-y-5">
@@ -288,6 +290,13 @@ export default function EarnAppsAdRevenueClient() {
                         : "border-emerald-200 bg-emerald-50 text-emerald-700"
                 }`}>
                     {deleteError ?? deleteResult}
+                </div>
+            )}
+
+            {axiomErrors.length > 0 && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+                    <p className="font-semibold">Earn Apps Axiom queries are failing</p>
+                    <p className="mt-1 break-words font-mono text-xs">{axiomErrors[0]}</p>
                 </div>
             )}
 
