@@ -7,7 +7,9 @@
  *   - earn-apps-logs: Earn Apps infra events
  *
  * Uses APL (Axiom Processing Language) for queries.
- * Token is stored in AXIOM_API_TOKEN env var — never exposed to the client.
+ * KPE token is stored in AXIOM_API_TOKEN.
+ * Earn Apps token is stored in AXIOM_EARN_APPS_API_TOKEN.
+ * Tokens are never exposed to the client.
  */
 
 const AXIOM_API_URL = "https://api.axiom.co/v1/datasets/_apl";
@@ -20,12 +22,25 @@ export function isValidDataset(name: string): name is AxiomDataset {
     return (VALID_DATASETS as readonly string[]).includes(name);
 }
 
-function getAxiomToken(): string {
-    const token = process.env.AXIOM_API_TOKEN;
+function getAxiomToken(dataset: AxiomDataset): string {
+    const envName = dataset === "earn-apps-logs"
+        ? "AXIOM_EARN_APPS_API_TOKEN"
+        : "AXIOM_API_TOKEN";
+    const token = process.env[envName];
     if (!token) {
-        throw new Error("AXIOM_API_TOKEN environment variable is not set");
+        throw new Error(`${envName} environment variable is not set`);
     }
     return token;
+}
+
+function inferDatasetFromApl(apl: string): AxiomDataset {
+    if (apl.includes("['earn-apps-logs']") || apl.includes('["earn-apps-logs"]')) {
+        return "earn-apps-logs";
+    }
+    if (apl.includes("['game-side-reports']") || apl.includes('["game-side-reports"]')) {
+        return "game-side-reports";
+    }
+    return "keepplay-logs";
 }
 
 export type AxiomQueryResult = {
@@ -52,7 +67,7 @@ export async function queryAxiom(
     startTime?: string,
     endTime?: string,
 ): Promise<AxiomQueryResult> {
-    const token = getAxiomToken();
+    const token = getAxiomToken(inferDatasetFromApl(apl));
 
     const body: Record<string, unknown> = { apl };
     if (startTime) body.startTime = startTime;
@@ -562,7 +577,7 @@ export async function getEarnAppsRecentEvents(startTime: string, endTime: string
  * everything older than 1 second — effectively a full purge.
  */
 export async function trimDataset(dataset: AxiomDataset): Promise<{ trimmedBlocksCount: number }> {
-    const token = getAxiomToken();
+    const token = getAxiomToken(dataset);
 
     const res = await fetch(`${AXIOM_DATASETS_URL}/${encodeURIComponent(dataset)}/trim`, {
         method: "POST",
