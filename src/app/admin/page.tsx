@@ -3,13 +3,28 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import AdminPageShell from "@/components/admin/AdminPageShell";
 import Link from "next/link";
-import Image from "next/image";
+import {
+    Activity,
+    BarChart3,
+    ChevronRight,
+    DollarSign,
+    ShieldCheck,
+    Users,
+    WalletCards,
+} from "lucide-react";
 
 interface NavCard {
     title: string;
     description: string;
     href: string;
     icon: React.ReactNode;
+    accent: string;
+}
+
+interface DashboardSection {
+    title: string;
+    description: string;
+    cards: NavCard[];
 }
 
 export default async function AdminPage() {
@@ -21,116 +36,80 @@ export default async function AdminPage() {
     const user = session.user;
     const userRole = user.role || "ADMIN";
 
-    const navCards: NavCard[] = [
+    const sections: DashboardSection[] = [
         {
-            title: "System Monitoring",
-            description: "View audit logs and track system activities",
-            href: "/admin/dashboard?tab=audit",
-            icon: (
-                <Image src="https://res.cloudinary.com/destej60y/image/upload/v1774210139/monitoring_wmdiob.png" alt="System Monitoring" width={24} height={24} unoptimized />
-            ),
+            title: "KPE",
+            description: "New KeepPlay Engine infrastructure",
+            cards: [
+                {
+                    title: "Users",
+                    description: "Manage KPE accounts and user records",
+                    href: "/admin/kpe/users",
+                    icon: <Users className="h-5 w-5" />,
+                    accent: "bg-black text-white",
+                },
+                {
+                    title: "Ad Revenue",
+                    description: "Review KPE revenue analytics",
+                    href: "/admin/kpe/ad-revenue",
+                    icon: <DollarSign className="h-5 w-5" />,
+                    accent: "bg-emerald-100 text-emerald-700",
+                },
+                {
+                    title: "Withdrawals",
+                    description: "Process KPE payout requests",
+                    href: "/admin/kpe/withdrawals",
+                    icon: <WalletCards className="h-5 w-5" />,
+                    accent: "bg-red-100 text-red-700",
+                },
+            ],
         },
         {
-            title: "Task Board",
-            description: "Manage tasks with kanban board view",
-            href: "/admin/tasks",
-            icon: (
-                <Image src="https://res.cloudinary.com/destej60y/image/upload/v1774210123/task_kkioyb.png" alt="Task Board" width={24} height={24} unoptimized />
-            ),
+            title: "Earn Apps",
+            description: "Earn Apps users, revenue, and payouts",
+            cards: [
+                {
+                    title: "Users",
+                    description: "Manage Earn Apps accounts",
+                    href: "/admin/earn-apps/users",
+                    icon: <Users className="h-5 w-5" />,
+                    accent: "bg-gray-900 text-white",
+                },
+                {
+                    title: "Ad Revenue",
+                    description: "Inspect Earn Apps Axiom revenue",
+                    href: "/admin/earn-apps/ad-revenue",
+                    icon: <BarChart3 className="h-5 w-5" />,
+                    accent: "bg-cyan-100 text-cyan-700",
+                },
+                {
+                    title: "Withdrawals",
+                    description: "Review Earn Apps withdrawal requests",
+                    href: "/admin/earn-apps/withdrawals",
+                    icon: <WalletCards className="h-5 w-5" />,
+                    accent: "bg-amber-100 text-amber-700",
+                },
+            ],
         },
         {
-            title: "Milestones",
-            description: "Track project milestones and progress",
-            href: "/admin/milestones",
-            icon: (
-                <Image src="https://res.cloudinary.com/destej60y/image/upload/v1774210123/flag_nml2il.png" alt="Milestones" width={24} height={24} unoptimized />
-            ),
-        },
-        {
-            title: "Notifications",
-            description: "Send and manage system notifications",
-            href: "/admin/notifications",
-            icon: (
-                <Image src="https://res.cloudinary.com/destej60y/image/upload/v1774210122/notification_ropjzw.png" alt="Notifications" width={24} height={24} unoptimized />
-            ),
-        },
-        ...(userRole === "SUPER_ADMIN"
-            ? [
-                  {
-                      title: "Label Management",
-                      description: "Create and organize task labels",
-                      href: "/admin/labels",
-                      icon: (
-                          <Image src="https://res.cloudinary.com/destej60y/image/upload/v1774210122/tag_d3hn9f.png" alt="Label Management" width={24} height={24} unoptimized />
-                      ),
-                  } as NavCard,
-              ]
-            : []),
-        {
-            title: "User Management",
-            description: "Manage platform users and permissions",
-            href: "/admin/keepplay-engine/users",
-            icon: (
-                <Image src="https://res.cloudinary.com/destej60y/image/upload/v1774210122/multiple-users-silhouette_hu5qfy.png" alt="User Management" width={24} height={24} unoptimized />
-            ),
-        },
-        {
-            title: "Loyalty App",
-            description: "Manage loyalty programs and rewards",
-            href: "/admin/keepplay-engine/loyalty-app",
-            icon: (
-                <Image src="https://res.cloudinary.com/destej60y/image/upload/v1774210382/KeepPlay_App_Icon_rounded_n1vlqo.png" alt="Loyalty App" width={24} height={24} unoptimized />
-            ),
-        },
-        {
-            title: "App Keys",
-            description: "Manage API keys and integrations",
-            href: "/admin/keepplay-engine/app-keys",
-            icon: (
-                <Image src="https://res.cloudinary.com/destej60y/image/upload/v1774210122/key_bz9dtz.png" alt="App Keys" width={24} height={24} unoptimized />
-            ),
-        },
-        {
-            title: "Ad Revenue",
-            description: "Monitor advertising revenue and analytics",
-            href: "/admin/keepplay-engine/ad-revenue",
-            icon: (
-                <Image src="https://res.cloudinary.com/destej60y/image/upload/v1774817883/coin_1_ibq1jb.png" alt="Ad Revenue" width={24} height={24} unoptimized />
-            ),
-        },
-        {
-            title: "Withdrawals",
-            description: "Process and review withdrawal requests",
-            href: "/admin/keepplay-engine/withdrawals",
-            icon: (
-                <Image src="https://res.cloudinary.com/destej60y/image/upload/v1774211644/dollar-symbol-red_nvkotr.png" alt="Withdrawals" width={24} height={24} unoptimized />
-            ),
-        },
-        {
-            title: "PayPal Payouts",
-            description: "Create PayPal payout batches and inspect status",
-            href: "/admin/paypal-payouts",
-            icon: (
-                <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-2.2 0-4 .9-4 2s1.8 2 4 2 4 .9 4 2-1.8 2-4 2m0-8v8m8-4a8 8 0 11-16 0 8 8 0 0116 0z" />
-                </svg>
-            ),
-        },
-        {
-            title: "Engine Overview",
-            description: "High-level overview of the KeepPlay engine",
-            href: "/admin/keepplay-engine",
-            icon: (
-                <Image src="https://res.cloudinary.com/destej60y/image/upload/v1773809280/Bolt_1_jwgn1c.png" alt="Engine Overview" width={24} height={24} unoptimized />
-            ),
-        },
-        {
-            title: "Profile Settings",
-            description: "Manage your account and preferences",
-            href: "/admin/profile",
-            icon: (
-                <Image src="https://res.cloudinary.com/destej60y/image/upload/v1774210122/setting_3_xikq8v.png" alt="Profile Settings" width={24} height={24} unoptimized />
-            ),
+            title: "Axiom Analytics",
+            description: "Operational analytics and fraud monitoring",
+            cards: [
+                {
+                    title: "Overview",
+                    description: "Track events, sessions, revenue, and countries",
+                    href: "/admin/axiom",
+                    icon: <Activity className="h-5 w-5" />,
+                    accent: "bg-indigo-100 text-indigo-700",
+                },
+                {
+                    title: "Anti-Fraud",
+                    description: "Investigate suspicious revenue and integrity events",
+                    href: "/admin/axiom/anti-fraud",
+                    icon: <ShieldCheck className="h-5 w-5" />,
+                    accent: "bg-rose-100 text-rose-700",
+                },
+            ],
         },
     ];
 
@@ -143,54 +122,48 @@ export default async function AdminPage() {
             className="flex-1 overflow-y-auto bg-white overscroll-contain"
         >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-36 sm:pb-10 lg:py-12">
-                {/* Header */}
-                <div className="mb-10">
-                    <h1 className="text-3xl sm:text-4xl lg:text-5xl text-gray-900 font-(family-name:--font-lilita-one) leading-tight">
+                <div className="mb-8">
+                    <h1 className="text-3xl sm:text-4xl text-gray-900 font-(family-name:--font-lilita-one) leading-tight">
                         Hello, {user.name || "Admin"}
                     </h1>
-                    <p className="text-gray-500 mt-2 text-base">
-                        Select a section below to get started.
-                    </p>
+                    <p className="text-gray-500 mt-2 text-base">Choose the platform area you want to manage.</p>
                 </div>
 
-                {/* Quick Navigation Grid */}
-                <div>
-                    <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-4">
-                        Quick Navigation
-                    </h2>
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                        {navCards.map((card, index) => (
-                            <Link
-                                key={index}
-                                href={card.href}
-                                className="group"
-                            >
-                                <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-gray-200 transition-all duration-200 h-full flex flex-col gap-3">
-                                    <div className="flex items-center justify-between gap-2">
-                                        <div className="flex items-center gap-3 min-w-0">
-                                            <div className="p-2 bg-gray-50 rounded-xl group-hover:bg-gray-100 transition-colors shrink-0">
-                                                {card.icon}
+                <div className="space-y-8">
+                    {sections.map((section) => (
+                        <section key={section.title} className="space-y-3">
+                            <div>
+                                <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400">
+                                    {section.title}
+                                </h2>
+                                <p className="text-sm text-gray-500 mt-1">{section.description}</p>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
+                                {section.cards.map((card) => (
+                                    <Link key={card.href} href={card.href} className="group">
+                                        <div className="h-full bg-white border border-gray-100 rounded-lg p-5 shadow-sm hover:shadow-md hover:border-gray-200 transition-all duration-200">
+                                            <div className="flex items-start justify-between gap-4">
+                                                <div className="flex items-start gap-3 min-w-0">
+                                                    <div className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 ${card.accent}`}>
+                                                        {card.icon}
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="text-xl text-gray-900 font-(family-name:--font-lilita-one) leading-tight">
+                                                            {card.title}
+                                                        </p>
+                                                        <p className="text-sm text-gray-500 leading-snug mt-2">
+                                                            {card.description}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <ChevronRight className="h-4 w-4 text-gray-300 group-hover:text-gray-500 group-hover:translate-x-0.5 transition-all shrink-0 mt-3" />
                                             </div>
-                                            <p className="text-lg sm:text-xl text-gray-900 font-(family-name:--font-lilita-one) leading-tight">
-                                                {card.title}
-                                            </p>
                                         </div>
-                                        <svg
-                                            className="hidden sm:block w-4 h-4 text-gray-300 group-hover:text-gray-500 group-hover:translate-x-0.5 transition-all shrink-0"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                        </svg>
-                                    </div>
-                                    <p className="text-xs text-gray-500 leading-snug">
-                                        {card.description}
-                                    </p>
-                                </div>
-                            </Link>
-                        ))}
-                    </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        </section>
+                    ))}
                 </div>
             </div>
         </AdminPageShell>

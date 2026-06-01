@@ -10,7 +10,7 @@ function safeCompare(a: string, b: string): boolean {
 
 /**
  * GET /api/cron/cleanup-logs
- * Automated audit log rotation — deletes logs older than 365 days.
+ * Automated audit log rotation — deletes logs older than 2 days.
  * Called by Vercel Cron (daily at 2 AM UTC).
  */
 export async function GET(request: NextRequest) {
@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const retentionDays = 730;
+    const retentionDays = 2;
     const cutoffDate = new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000).toISOString();
 
     // Use a service-level client — cron has no user context
