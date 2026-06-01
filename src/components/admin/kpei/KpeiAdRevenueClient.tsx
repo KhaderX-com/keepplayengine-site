@@ -16,10 +16,10 @@ import {
     Clock,
     Globe,
     Activity,
-    CalendarDays,
     Check,
     Info,
     XCircle,
+    ChevronDown,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────
@@ -110,7 +110,9 @@ function defaultRange(): DateTimeRange {
     };
 }
 
-function presetRange(preset: "today" | "yesterday" | "7d" | "30d"): DateTimeRange {
+type PresetRange = "today" | "yesterday" | "7d" | "30d" | "60d";
+
+function presetRange(preset: PresetRange): DateTimeRange {
     const end = new Date();
     const start = new Date(end);
 
@@ -123,7 +125,7 @@ function presetRange(preset: "today" | "yesterday" | "7d" | "30d"): DateTimeRang
         start.setHours(0, 0, 0, 0);
         end.setHours(23, 59, 0, 0);
     } else {
-        start.setDate(start.getDate() - (preset === "7d" ? 6 : 29));
+        start.setDate(start.getDate() - (preset === "7d" ? 6 : preset === "30d" ? 29 : 59));
         start.setHours(0, 0, 0, 0);
         end.setHours(23, 59, 0, 0);
     }
@@ -204,126 +206,152 @@ function DateTimeToolbar({
     const end = rangeDateTime(draftRange.endDate, draftRange.endTime);
     const invalid = Boolean(start && end && start > end);
     const dirty = !sameRange(draftRange, appliedRange);
-    const update = (field: keyof DateTimeRange, value: string) => onDraftChange({ ...draftRange, [field]: value });
+    const [detailsOpen, setDetailsOpen] = useState(false);
+    const [selectedPreset, setSelectedPreset] = useState<PresetRange | "">("");
+    const presetOptions: Array<{ value: PresetRange; label: string }> = [
+        { value: "today", label: "Today" },
+        { value: "yesterday", label: "Yesterday" },
+        { value: "7d", label: "7 days" },
+        { value: "30d", label: "30 days" },
+        { value: "60d", label: "60 days" },
+    ];
+    const update = (field: keyof DateTimeRange, value: string) => {
+        setSelectedPreset("");
+        onDraftChange({ ...draftRange, [field]: value });
+    };
+    const handlePresetChange = (value: string) => {
+        if (!value) return;
+        const preset = value as PresetRange;
+        setSelectedPreset(preset);
+        onDraftChange(presetRange(preset));
+    };
+    const handleClear = () => {
+        setSelectedPreset("");
+        onClear();
+    };
 
     return (
-        <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-            <div className="grid gap-4 p-4">
-                <div className="flex flex-col gap-3 2xl:flex-row 2xl:items-start 2xl:justify-between">
-                    <div className="min-w-0 space-y-3">
-                        <div className="flex flex-wrap items-center gap-2">
-                            <div className="inline-flex h-10 items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-4 text-xs font-semibold text-gray-800">
-                                <CalendarDays className="h-4 w-4 shrink-0 text-emerald-500" />
-                                <span>Choose date & time</span>
-                            </div>
-                            <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-[11px] font-semibold text-emerald-700">
-                                Europe/Brussels
-                            </span>
-                        </div>
-
-                        <div className="grid gap-3 lg:grid-cols-[minmax(280px,1fr)_auto_minmax(280px,1fr)] lg:items-center">
-                            <div className="rounded-2xl border border-gray-200 bg-white p-2 shadow-[0_1px_8px_rgba(15,23,42,0.04)]">
-                                <div className="mb-1 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">From</div>
-                                <div className="grid grid-cols-[1fr_auto_104px] items-center gap-2">
-                                    <input
-                                        type="date"
-                                        value={draftRange.startDate}
-                                        onChange={(e) => update("startDate", e.target.value)}
-                                        className="h-9 min-w-0 rounded-full bg-gray-50 px-3 text-sm font-semibold text-gray-900 outline-none ring-1 ring-gray-100 transition focus:bg-white focus:ring-gray-300"
-                                    />
-                                    <span className="h-7 w-px bg-gray-200" />
-                                    <input
-                                        type="time"
-                                        step="60"
-                                        value={draftRange.startTime}
-                                        onChange={(e) => update("startTime", e.target.value)}
-                                        className="h-9 rounded-full bg-gray-50 px-3 text-sm font-semibold text-gray-900 outline-none ring-1 ring-gray-100 transition focus:bg-white focus:ring-gray-300"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="hidden h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-gray-50 text-[11px] font-bold uppercase text-gray-400 lg:flex">
-                                to
-                            </div>
-
-                            <div className="rounded-2xl border border-gray-200 bg-white p-2 shadow-[0_1px_8px_rgba(15,23,42,0.04)]">
-                                <div className="mb-1 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">To</div>
-                                <div className="grid grid-cols-[1fr_auto_104px] items-center gap-2">
-                                    <input
-                                        type="date"
-                                        value={draftRange.endDate}
-                                        onChange={(e) => update("endDate", e.target.value)}
-                                        className="h-9 min-w-0 rounded-full bg-gray-50 px-3 text-sm font-semibold text-gray-900 outline-none ring-1 ring-gray-100 transition focus:bg-white focus:ring-gray-300"
-                                    />
-                                    <span className="h-7 w-px bg-gray-200" />
-                                    <input
-                                        type="time"
-                                        step="60"
-                                        value={draftRange.endTime}
-                                        onChange={(e) => update("endTime", e.target.value)}
-                                        className="h-9 rounded-full bg-gray-50 px-3 text-sm font-semibold text-gray-900 outline-none ring-1 ring-gray-100 transition focus:bg-white focus:ring-gray-300"
-                                    />
-                                </div>
-                            </div>
-                        </div>
+        <div className="w-full max-w-full overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+            <div className="grid gap-2 p-3">
+                <div className="grid min-w-0 gap-2">
+                    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2 lg:grid-cols-[minmax(0,1fr)_minmax(86px,96px)_minmax(0,1fr)_minmax(86px,96px)]">
+                        <label className="min-w-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-50 px-2.5 py-2 ring-1 ring-transparent transition focus-within:bg-white focus-within:ring-gray-300">
+                            <span className="block text-[10px] font-bold uppercase tracking-wider text-gray-400">From date</span>
+                            <input
+                                type="date"
+                                value={draftRange.startDate}
+                                onChange={(e) => update("startDate", e.target.value)}
+                                className="h-7 w-full min-w-0 max-w-full appearance-none bg-transparent text-sm font-semibold text-gray-900 outline-none [color-scheme:light]"
+                            />
+                        </label>
+                        <label className="min-w-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-50 px-2.5 py-2 ring-1 ring-transparent transition focus-within:bg-white focus-within:ring-gray-300 lg:order-2">
+                            <span className="block text-[10px] font-bold uppercase tracking-wider text-gray-400">To date</span>
+                            <input
+                                type="date"
+                                value={draftRange.endDate}
+                                onChange={(e) => update("endDate", e.target.value)}
+                                className="h-7 w-full min-w-0 max-w-full appearance-none bg-transparent text-sm font-semibold text-gray-900 outline-none [color-scheme:light]"
+                            />
+                        </label>
+                        <label className="min-w-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-50 px-2.5 py-2 ring-1 ring-transparent transition focus-within:bg-white focus-within:ring-gray-300 lg:order-1">
+                            <span className="block text-[10px] font-bold uppercase tracking-wider text-gray-400">From time</span>
+                            <input
+                                type="time"
+                                step="60"
+                                value={draftRange.startTime}
+                                onChange={(e) => update("startTime", e.target.value)}
+                                className="h-7 w-full min-w-0 max-w-full appearance-none bg-transparent text-sm font-semibold text-gray-900 outline-none [color-scheme:light]"
+                            />
+                        </label>
+                        <label className="min-w-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-50 px-2.5 py-2 ring-1 ring-transparent transition focus-within:bg-white focus-within:ring-gray-300 lg:order-3">
+                            <span className="block text-[10px] font-bold uppercase tracking-wider text-gray-400">To time</span>
+                            <input
+                                type="time"
+                                step="60"
+                                value={draftRange.endTime}
+                                onChange={(e) => update("endTime", e.target.value)}
+                                className="h-7 w-full min-w-0 max-w-full appearance-none bg-transparent text-sm font-semibold text-gray-900 outline-none [color-scheme:light]"
+                            />
+                        </label>
                     </div>
 
-                    <div className="flex flex-col gap-3 2xl:items-end">
-                        <div className="flex flex-wrap items-center gap-2 2xl:justify-end">
-                            {[
-                                ["today", "Today"],
-                                ["yesterday", "Yesterday"],
-                                ["7d", "7 days"],
-                                ["30d", "30 days"],
-                            ].map(([key, label]) => (
-                                <button key={key} type="button" onClick={() => onDraftChange(presetRange(key as "today" | "yesterday" | "7d" | "30d"))} className="h-9 rounded-full border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-600 transition hover:bg-gray-50">
-                                    {label}
-                                </button>
-                            ))}
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2 2xl:justify-end">
-                            <button type="button" onClick={onApply} disabled={loading || invalid} className="inline-flex h-10 items-center gap-2 rounded-full bg-black px-5 text-xs font-bold text-white transition hover:bg-gray-900 disabled:cursor-not-allowed disabled:opacity-50">
-                                <Check className="h-4 w-4 shrink-0" />
-                                Apply
-                            </button>
-                            <button type="button" onClick={onClear} disabled={loading} className="inline-flex h-10 items-center gap-2 rounded-full border border-gray-200 bg-white px-4 text-xs font-semibold text-gray-600 transition hover:bg-gray-50 disabled:opacity-50">
-                                <XCircle className="h-4 w-4 shrink-0" />
-                                Reset
-                            </button>
-                            <button type="button" onClick={onRefresh} disabled={loading} className="inline-flex h-10 items-center gap-2 rounded-full border border-gray-200 bg-white px-4 text-xs font-semibold text-gray-600 transition hover:bg-gray-50 disabled:opacity-50">
-                                <RefreshCw className={`h-4 w-4 shrink-0 ${loading ? "animate-spin" : ""}`} />
-                                Refresh
-                            </button>
-                        </div>
+                    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto_auto] sm:items-center">
+                        <label className="relative col-span-2 sm:col-span-1">
+                            <span className="sr-only">Quick range</span>
+                            <select
+                                value={selectedPreset}
+                                onChange={(e) => handlePresetChange(e.target.value)}
+                                className="h-10 w-full min-w-0 appearance-none rounded-full border border-gray-200 bg-white px-3 pr-8 text-xs font-semibold text-gray-700 outline-none transition hover:bg-gray-50 focus:ring-2 focus:ring-gray-200"
+                            >
+                                <option value="" disabled>Quick range</option>
+                                {presetOptions.map((option) => (
+                                    <option key={option.value} value={option.value}>{option.label}</option>
+                                ))}
+                            </select>
+                            <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+                        </label>
+                        <button type="button" onClick={onApply} disabled={loading || invalid} className="inline-flex h-10 min-w-0 items-center justify-center gap-2 rounded-full bg-black px-3 text-xs font-bold text-white transition hover:bg-gray-900 disabled:cursor-not-allowed disabled:opacity-50">
+                            <Check className="h-4 w-4 shrink-0" />
+                            <span className="truncate">Apply</span>
+                        </button>
+                        <button type="button" onClick={handleClear} disabled={loading} className="inline-flex h-10 min-w-0 items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-600 transition hover:bg-gray-50 disabled:opacity-50">
+                            <XCircle className="h-4 w-4 shrink-0" />
+                            <span className="truncate">Reset</span>
+                        </button>
+                        <button type="button" onClick={onRefresh} disabled={loading} className="col-span-2 inline-flex h-10 min-w-0 items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-600 transition hover:bg-gray-50 disabled:opacity-50 sm:col-span-1">
+                            <RefreshCw className={`h-4 w-4 shrink-0 ${loading ? "animate-spin" : ""}`} />
+                            <span className="truncate">Refresh</span>
+                        </button>
                     </div>
                 </div>
 
-                <div className="grid gap-3 border-t border-gray-100 pt-4 lg:grid-cols-[minmax(260px,0.75fr)_minmax(420px,1.25fr)]">
-                    <div className="flex items-start gap-3 rounded-2xl bg-gray-50 px-4 py-3">
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-                            <Info className="h-4 w-4" />
+                <div className="border-t border-gray-100 pt-2">
+                    <div className="flex min-w-0 flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                        <button
+                            type="button"
+                            onClick={() => setDetailsOpen((open) => !open)}
+                            className="inline-flex w-fit max-w-full items-center gap-2 rounded-full bg-gray-50 px-3 py-1.5 text-xs font-semibold text-gray-700 transition hover:bg-gray-100"
+                            aria-expanded={detailsOpen}
+                        >
+                            <Info className="h-3.5 w-3.5 text-emerald-500" />
+                            <span>{detailsOpen ? "Hide UTC details" : "Show UTC details"}</span>
+                            <ChevronDown className={`h-3.5 w-3.5 transition-transform ${detailsOpen ? "rotate-180" : ""}`} />
+                        </button>
+
+                        <div className="hidden w-full min-w-0 max-w-full truncate rounded-full bg-gray-50 px-3 py-1.5 font-mono text-[11px] text-gray-600 sm:block lg:w-auto">
+                            <span className="font-sans font-semibold text-gray-800">{timezoneLabel()}</span>
+                            <span className="px-2 text-gray-300">|</span>
+                            <span>UTC {fmtUtc(draftRange.startDate, draftRange.startTime)} {"->"} {fmtUtc(draftRange.endDate, draftRange.endTime)}</span>
                         </div>
-                        <p className="text-xs leading-5 text-gray-600">
-                            Local dashboard time is <span className="font-semibold text-gray-900">{timezoneLabel()}</span>.
-                            Axiom compares the selected range in UTC after Apply.
-                        </p>
                     </div>
 
-                    <div className="grid gap-2 rounded-2xl bg-gray-50 p-3 sm:grid-cols-2">
-                        <div className="rounded-xl bg-white px-3 py-2 ring-1 ring-gray-100">
-                            <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">From UTC</p>
-                            <p className="break-all font-mono text-[11px] font-semibold text-gray-800">{fmtUtc(draftRange.startDate, draftRange.startTime)}</p>
-                            <p className="mt-1 text-[11px] text-gray-500">{fmtLocal(draftRange.startDate, draftRange.startTime)}</p>
+                    {detailsOpen && (
+                        <div className="mt-2 grid min-w-0 gap-2 rounded-xl bg-gray-50 p-2 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)]">
+                            <div className="flex min-w-0 items-start gap-2 rounded-lg bg-white px-3 py-2 ring-1 ring-gray-100">
+                                <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500" />
+                                <p className="text-xs leading-5 text-gray-600">
+                                    Local dashboard time is <span className="font-semibold text-gray-900">{timezoneLabel()}</span>.
+                                    Axiom compares the selected range in UTC after Apply.
+                                </p>
+                            </div>
+
+                            <div className="grid min-w-0 gap-2 sm:grid-cols-2">
+                                <div className="min-w-0 rounded-lg bg-white px-3 py-2 ring-1 ring-gray-100">
+                                    <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">From UTC</p>
+                                    <p className="break-all font-mono text-[11px] font-semibold text-gray-800">{fmtUtc(draftRange.startDate, draftRange.startTime)}</p>
+                                    <p className="mt-1 text-[11px] text-gray-500">{fmtLocal(draftRange.startDate, draftRange.startTime)}</p>
+                                </div>
+                                <div className="min-w-0 rounded-lg bg-white px-3 py-2 ring-1 ring-gray-100">
+                                    <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">To UTC</p>
+                                    <p className="break-all font-mono text-[11px] font-semibold text-gray-800">{fmtUtc(draftRange.endDate, draftRange.endTime)}</p>
+                                    <p className="mt-1 text-[11px] text-gray-500">{fmtLocal(draftRange.endDate, draftRange.endTime)}</p>
+                                </div>
+                            </div>
                         </div>
-                        <div className="rounded-xl bg-white px-3 py-2 ring-1 ring-gray-100">
-                            <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">To UTC</p>
-                            <p className="break-all font-mono text-[11px] font-semibold text-gray-800">{fmtUtc(draftRange.endDate, draftRange.endTime)}</p>
-                            <p className="mt-1 text-[11px] text-gray-500">{fmtLocal(draftRange.endDate, draftRange.endTime)}</p>
-                        </div>
-                    </div>
+                    )}
 
                     {(dirty || invalid) && (
-                        <p className={`lg:col-span-2 rounded-xl px-3 py-2 text-[11px] font-semibold ${invalid ? "bg-red-50 text-red-600" : "bg-amber-50 text-amber-700"}`}>
+                        <p className={`mt-2 rounded-xl px-3 py-2 text-[11px] font-semibold ${invalid ? "bg-red-50 text-red-600" : "bg-amber-50 text-amber-700"}`}>
                             {invalid ? "The start date/time must be before the end date/time." : "You have unapplied changes. Data will update only after Apply is clicked."}
                         </p>
                     )}
@@ -361,14 +389,14 @@ function StatCard({
     const a = accents[accent] ?? accents.blue;
 
     return (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-            <div className="flex items-center gap-2 mb-2">
-                <div className={`w-8 h-8 rounded-xl ${a.bg} flex items-center justify-center ${a.icon}`}>
+        <div className="rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
+            <div className="mb-1.5 flex items-center gap-2">
+                <div className={`flex h-7 w-7 items-center justify-center rounded-lg ${a.bg} ${a.icon}`}>
                     {icon}
                 </div>
                 <p className="text-xs font-medium text-gray-500 leading-tight">{label}</p>
             </div>
-            <p className="text-xl font-bold text-gray-900 font-mono">{value}</p>
+            <p className="font-mono text-lg font-bold text-gray-900">{value}</p>
             {sub && <p className="text-[11px] text-gray-400 mt-0.5">{sub}</p>}
         </div>
     );
@@ -382,6 +410,63 @@ function MiniBar({ pct }: { pct: number }) {
     return (
         <div className="w-full bg-gray-100 rounded-full h-1.5">
             <div className="bg-blue-400 h-1.5 rounded-full transition-all" style={{ width: `${Math.max(2, pct)}%` }} />
+        </div>
+    );
+}
+
+function EventsOverTimeChart({ values }: { values: number[] }) {
+    const width = 640;
+    const height = 96;
+    const max = Math.max(1, ...values);
+    const count = Math.max(1, values.length);
+    const gap = count > 80 ? 0.25 : count > 40 ? 0.45 : 0.8;
+    const slot = width / count;
+    const barWidth = Math.max(1.25, slot - gap);
+
+    return (
+        <div className="w-full max-w-full overflow-hidden rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
+            <div className="mb-2 flex min-w-0 items-center justify-between gap-3">
+                <p className="flex min-w-0 items-center gap-1.5 truncate text-xs font-medium text-gray-500">
+                    <Activity className="h-3.5 w-3.5 shrink-0 text-blue-400" />
+                    <span className="truncate">Events Over Time</span>
+                </p>
+                <span className="shrink-0 rounded-full bg-blue-50 px-2 py-1 text-[10px] font-semibold text-blue-600">
+                    {values.length} points
+                </span>
+            </div>
+
+            {values.length > 0 ? (
+                <svg
+                    viewBox={`0 0 ${width} ${height}`}
+                    className="block h-24 w-full max-w-full"
+                    preserveAspectRatio="none"
+                    role="img"
+                    aria-label="Events over time bar chart"
+                >
+                    <line x1="0" y1={height - 1} x2={width} y2={height - 1} stroke="#e5e7eb" strokeWidth="1" />
+                    {values.map((value, index) => {
+                        const barHeight = Math.max(4, (value / max) * (height - 8));
+                        const x = index * slot + gap / 2;
+                        const y = height - barHeight;
+
+                        return (
+                            <rect
+                                key={`${index}-${value}`}
+                                x={x}
+                                y={y}
+                                width={barWidth}
+                                height={barHeight}
+                                rx="1.8"
+                                fill="#60a5fa"
+                            >
+                                <title>{`${value} events`}</title>
+                            </rect>
+                        );
+                    })}
+                </svg>
+            ) : (
+                <p className="py-8 text-center text-xs text-gray-400">No event data</p>
+            )}
         </div>
     );
 }
@@ -479,6 +564,7 @@ export default function KpeiAdRevenueClient() {
     const axiomAdEvents = Number(adSummary.total_events ?? 0);
     const axiomAdRevenue = Number(adSummary.total_revenue ?? 0);
     const axiomAvgRevenue = Number(adSummary.avg_revenue ?? 0);
+    const axiomComputedEcpm = axiomAdEvents > 0 ? (axiomAdRevenue / axiomAdEvents) * 1000 : 0;
     const axiomAdCoins = Number(adSummary.total_coins ?? 0);
     const axiomSessions = Number(sessions.sessions ?? 0);
     const axiomUniqueUsers = Number(sessions.unique_users ?? 0);
@@ -489,10 +575,9 @@ export default function KpeiAdRevenueClient() {
 
     // Events-over-time sparkline data
     const sparkValues = eventsRows.map((r) => Number(r.count ?? 0));
-    const sparkMax = Math.max(1, ...sparkValues);
 
     return (
-        <div className="max-w-6xl mx-auto space-y-5">
+        <div className="max-w-6xl mx-auto space-y-4">
             {/* ── Time Range Filter ── */}
             <DateTimeToolbar
                 draftRange={draftRange}
@@ -506,10 +591,10 @@ export default function KpeiAdRevenueClient() {
 
             {/* ── Section: Axiom Ad Revenue ── */}
             <div>
-                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <h3 className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
                     <Activity className="w-3.5 h-3.5" /> Ad Revenue (Axiom Logs)
                 </h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                     <StatCard
                         icon={<DollarSign className="w-4 h-4" />}
                         label="Ad Revenue"
@@ -525,41 +610,28 @@ export default function KpeiAdRevenueClient() {
                         accent="blue"
                     />
                     <StatCard
+                        icon={<DollarSign className="w-4 h-4" />}
+                        label="Computed eCPM"
+                        value={`$${axiomComputedEcpm.toFixed(4)}`}
+                        sub="Revenue per 1,000 ad events"
+                        accent="green"
+                    />
+                    <StatCard
                         icon={<Users className="w-4 h-4" />}
                         label="Sessions"
                         value={axiomSessions.toLocaleString()}
                         sub={`${axiomUniqueUsers.toLocaleString()} unique users`}
                         accent="indigo"
                     />
-                    {/* Sparkline card */}
-                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 col-span-2 sm:col-span-2">
-                        <p className="text-xs font-medium text-gray-500 mb-2 flex items-center gap-1.5">
-                            <Activity className="w-3.5 h-3.5 text-blue-400" /> Events Over Time
-                        </p>
-                        {sparkValues.length > 0 ? (
-                            <div className="flex items-end gap-px h-12">
-                                {sparkValues.map((v, i) => (
-                                    <div
-                                        key={i}
-                                        className="flex-1 bg-blue-400 rounded-t-sm min-w-0.5 transition-all"
-                                        style={{ height: `${Math.max(4, (v / sparkMax) * 100)}%` }}
-                                        title={`${v} events`}
-                                    />
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="text-xs text-gray-400">No event data</p>
-                        )}
-                    </div>
                 </div>
             </div>
 
             {/* ── Section: On-Chain Economy (Supabase) ── */}
             <div>
-                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <h3 className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
                     <Coins className="w-3.5 h-3.5" /> Coin Economy (Supabase)
                 </h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
                     <StatCard
                         icon={<Wallet className="w-4 h-4" />}
                         label="Coins in Circulation"
@@ -588,6 +660,9 @@ export default function KpeiAdRevenueClient() {
                         sub={withdrawals ? `${withdrawals.totalPaidCoins.toLocaleString()} coins · ${withdrawals.paidCount} payouts` : undefined}
                         accent="green"
                     />
+                </div>
+                <div className="mt-2">
+                    <EventsOverTimeChart values={sparkValues} />
                 </div>
             </div>
 

@@ -26,9 +26,9 @@ export default function AdminHeader({ user, onToggleMobileMenu, title = "Dashboa
     return (
         <>
         <header className="h-14 sm:h-16 lg:h-20 bg-white border-b border-gray-200 sticky top-0 z-10">
-            <div className="h-full px-3 sm:px-4 lg:px-6 flex items-center justify-between">
+            <div className="flex h-full min-w-0 items-center justify-between px-3 sm:px-4 lg:px-6">
                 {/* Left Section - Mobile Menu + Title */}
-                <div className="flex items-center space-x-2 sm:space-x-3">
+                <div className="flex min-w-0 items-center space-x-2 sm:space-x-3">
                     {/* Mobile Menu Button */}
                     <button
                         type="button"
@@ -46,14 +46,14 @@ export default function AdminHeader({ user, onToggleMobileMenu, title = "Dashboa
                     </button>
 
                     {/* Page Title / Breadcrumb - Responsive */}
-                    <div>
-                        <h2 className="text-base sm:text-lg lg:text-2xl font-bold text-gray-900">{title}</h2>
+                    <div className="min-w-0">
+                        <h2 className="truncate text-base font-bold text-gray-900 sm:text-lg lg:text-2xl">{title}</h2>
                         {subtitle && <p className="hidden sm:block text-xs lg:text-sm text-gray-500 mt-0.5">{subtitle}</p>}
                     </div>
                 </div>
 
                 {/* Right Section - PWA Optimized */}
-                <div className="flex items-center space-x-2 sm:space-x-3 lg:space-x-4">
+                <div className="flex shrink-0 items-center space-x-1 sm:space-x-3 lg:space-x-4">
                     {/* Security badge removed per request */}
 
                     {/* Notifications - Using the new NotificationBell component */}

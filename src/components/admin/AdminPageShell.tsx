@@ -42,20 +42,20 @@ export default function AdminPageShell({
     }, []);
 
     return (
-        <div className="flex h-screen bg-gray-50 overflow-hidden">
+        <div className="flex h-screen min-w-0 overflow-hidden bg-gray-50">
             <AdminSidebar
                 isMobileMenuOpen={isMobileMenuOpen}
                 onCloseMobileMenu={handleCloseMobileMenu}
                 userRole={userRole}
             />
-            <div className="flex-1 flex flex-col lg:ml-64 overflow-hidden">
+            <div className="flex min-w-0 flex-1 flex-col overflow-hidden lg:ml-64">
                 <AdminHeader
                     user={user}
                     onToggleMobileMenu={handleToggleMobileMenu}
                     title={title}
                     subtitle={subtitle}
                 />
-                <main className={className}>
+                <main className={`${className} min-w-0 overflow-x-hidden`}>
                     {children}
                 </main>
             </div>

@@ -33,6 +33,7 @@ import {
     Info,
     Check,
     RotateCcw,
+    ChevronDown,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────
@@ -305,6 +306,7 @@ function DateTimeRangeToolbar({
     const invalidRange = Boolean(from && to && from > to);
     const dirty = !sameRange(draftRange, appliedRange);
     const localTz = timezoneLabel();
+    const [detailsOpen, setDetailsOpen] = useState(false);
 
     const setField = (field: keyof DateTimeRange, value: string) => {
         onDraftChange({ ...draftRange, [field]: value });
@@ -312,7 +314,7 @@ function DateTimeRangeToolbar({
 
     return (
         <div className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-950">
-            <div className="flex flex-col gap-4 p-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center lg:justify-between">
                 <div className="flex min-w-0 flex-1 flex-col gap-3 xl:flex-row xl:items-center">
                     <div className="inline-flex w-fit items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
                         <Calendar className="h-4 w-4 text-emerald-500" />
@@ -414,20 +416,52 @@ function DateTimeRangeToolbar({
                 </div>
             </div>
 
-            <div className="grid gap-2 border-t border-gray-100 px-3 py-3 text-xs text-gray-500 dark:border-gray-900 lg:grid-cols-[1fr_auto] lg:items-center">
-                <div className="flex items-start gap-2 rounded-xl bg-gray-50 px-3 py-2 dark:bg-gray-900/70">
-                    <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500" />
-                    <p>
-                        Local dashboard time: <span className="font-semibold text-gray-800 dark:text-gray-200">{localTz}</span>.
-                        Axiom/Supabase timestamps are compared in UTC after you click Apply.
-                    </p>
+            <div className="border-t border-gray-100 px-3 py-2 text-xs text-gray-500 dark:border-gray-900">
+                <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                    <button
+                        type="button"
+                        onClick={() => setDetailsOpen((open) => !open)}
+                        className="inline-flex w-fit items-center gap-2 rounded-full bg-gray-50 px-3 py-1.5 text-xs font-semibold text-gray-700 transition hover:bg-gray-100 dark:bg-gray-900/70 dark:text-gray-200 dark:hover:bg-gray-900"
+                        aria-expanded={detailsOpen}
+                    >
+                        <Info className="h-3.5 w-3.5 text-emerald-500" />
+                        <span>{detailsOpen ? "Hide UTC details" : "Show UTC details"}</span>
+                        <ChevronDown className={`h-3.5 w-3.5 transition-transform ${detailsOpen ? "rotate-180" : ""}`} />
+                    </button>
+
+                    <div className="min-w-0 truncate rounded-full bg-gray-50 px-3 py-1.5 font-mono text-[11px] text-gray-600 dark:bg-gray-900/70 dark:text-gray-300">
+                        <span className="font-sans font-semibold text-gray-700 dark:text-gray-200">{localTz}</span>
+                        <span className="px-2 text-gray-300">|</span>
+                        <span>UTC {fmtUtcPreview(draftRange.fromDate, draftRange.fromTime)} {"->"} {fmtUtcPreview(draftRange.toDate, draftRange.toTime)}</span>
+                    </div>
                 </div>
-                <div className="grid gap-1 rounded-xl bg-gray-50 px-3 py-2 font-mono text-[11px] text-gray-600 dark:bg-gray-900/70 dark:text-gray-300 sm:grid-cols-2 lg:min-w-[520px]">
-                    <span>From: {fmtLocalPreview(draftRange.fromDate, draftRange.fromTime)} = {fmtUtcPreview(draftRange.fromDate, draftRange.fromTime)}</span>
-                    <span>To: {fmtLocalPreview(draftRange.toDate, draftRange.toTime)} = {fmtUtcPreview(draftRange.toDate, draftRange.toTime)}</span>
-                </div>
+
+                {detailsOpen && (
+                    <div className="mt-2 grid gap-2 rounded-xl bg-gray-50 p-2 dark:bg-gray-900/70 lg:grid-cols-[minmax(220px,0.8fr)_1fr] lg:items-stretch">
+                        <div className="flex items-start gap-2 rounded-lg bg-white px-3 py-2 dark:bg-gray-950">
+                            <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500" />
+                            <p>
+                                Local dashboard time is <span className="font-semibold text-gray-800 dark:text-gray-200">{localTz}</span>.
+                                Axiom compares the selected range in UTC after Apply.
+                            </p>
+                        </div>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                            <div className="rounded-lg bg-white px-3 py-2 ring-1 ring-gray-100 dark:bg-gray-950 dark:ring-gray-800">
+                                <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">From UTC</p>
+                                <p className="break-all font-mono text-[11px] font-semibold text-gray-800 dark:text-gray-200">{fmtUtcPreview(draftRange.fromDate, draftRange.fromTime)}</p>
+                                <p className="mt-1 text-[11px] text-gray-500">{fmtLocalPreview(draftRange.fromDate, draftRange.fromTime)}</p>
+                            </div>
+                            <div className="rounded-lg bg-white px-3 py-2 ring-1 ring-gray-100 dark:bg-gray-950 dark:ring-gray-800">
+                                <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">To UTC</p>
+                                <p className="break-all font-mono text-[11px] font-semibold text-gray-800 dark:text-gray-200">{fmtUtcPreview(draftRange.toDate, draftRange.toTime)}</p>
+                                <p className="mt-1 text-[11px] text-gray-500">{fmtLocalPreview(draftRange.toDate, draftRange.toTime)}</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {(dirty || invalidRange) && (
-                    <p className={`lg:col-span-2 flex items-center gap-1.5 px-1 text-[11px] font-semibold ${invalidRange ? "text-red-600" : "text-amber-600"}`}>
+                    <p className={`mt-2 flex items-center gap-1.5 px-1 text-[11px] font-semibold ${invalidRange ? "text-red-600" : "text-amber-600"}`}>
                         <RotateCcw className="h-3.5 w-3.5" />
                         {invalidRange ? "The start date/time must be before the end date/time." : "You have unapplied changes. Data will not update until Apply is clicked."}
                     </p>
@@ -585,7 +619,7 @@ export default function AdRevenueClient() {
     const maxChartRevenue = Math.max(0, ...chart.map((r) => r.revenue));
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-5">
             {/* Error */}
             {error && (
                 <div className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4 flex items-start gap-3">
@@ -609,11 +643,11 @@ export default function AdRevenueClient() {
 
             {/* ── Summary Cards ──────────────── */}
             {summary && (
-                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 md:gap-4">
+                <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
                     <Card className="bg-black border-0 shadow-xl overflow-hidden relative col-span-2 md:col-span-1">
                         {/* subtle radial glow */}
                         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(74,222,128,0.12),transparent_70%)]" />
-                        <CardContent className="px-4 pb-4 pt-4 md:px-5 md:pb-5 md:pt-5 flex flex-col gap-3 relative z-10">
+                        <CardContent className="relative z-10 flex flex-col gap-2.5 px-4 py-4">
                             {/* label row */}
                             <p className="text-[14px] font-(family-name:--font-lilita-one) uppercase text-[#14ff00]">
                                 Total Revenue
@@ -628,7 +662,7 @@ export default function AdRevenueClient() {
                                     height={42}
                                     className="w-9 h-9 md:w-11 md:h-11 object-contain shrink-0 drop-shadow-[0_0_8px_rgba(74,222,128,0.5)]"
                                 />
-                                <p className="text-4xl md:text-5xl leading-none text-white tracking-tight font-(family-name:--font-lilita-one)">
+                                <p className="text-4xl leading-none text-white tracking-tight font-(family-name:--font-lilita-one)">
                                     {fmt$(summary.total_revenue).slice(1)}
                                 </p>
                             </div>
@@ -636,11 +670,11 @@ export default function AdRevenueClient() {
                     </Card>
 
                     <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-1 md:pb-2 px-3 md:px-6 pt-3 md:pt-6">
+                        <CardHeader className="flex flex-row items-center justify-between px-3 pb-1 pt-3">
                             <CardDescription className="text-xs md:text-sm font-medium">Total Ads</CardDescription>
                             <Activity className="w-4 h-4 md:w-5 md:h-5 text-orange-500 shrink-0" />
                         </CardHeader>
-                        <CardContent className="px-3 pb-3 md:px-6 md:pb-6">
+                        <CardContent className="px-3 pb-3">
                             <p className="text-lg md:text-2xl font-bold text-orange-700 dark:text-orange-400">
                                 {fmtInt(summary.total_events)}
                             </p>
@@ -653,11 +687,11 @@ export default function AdRevenueClient() {
                     
 
                     <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-1 md:pb-2 px-3 md:px-6 pt-3 md:pt-6">
+                        <CardHeader className="flex flex-row items-center justify-between px-3 pb-1 pt-3">
                             <CardDescription className="text-xs md:text-sm font-medium">eCPM</CardDescription>
                             <Gamepad2 className="w-4 h-4 md:w-5 md:h-5 text-teal-500 shrink-0" />
                         </CardHeader>
-                        <CardContent className="px-3 pb-3 md:px-6 md:pb-6">
+                        <CardContent className="px-3 pb-3">
                             <p className="text-lg md:text-2xl font-bold text-teal-700 dark:text-teal-400">
                                 {fmt$(summary.avg_revenue_per_event * 1000)}
                             </p>
@@ -668,11 +702,11 @@ export default function AdRevenueClient() {
                     </Card>
 
                     <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-1 md:pb-2 px-3 md:px-6 pt-3 md:pt-6">
+                        <CardHeader className="flex flex-row items-center justify-between px-3 pb-1 pt-3">
                             <CardDescription className="text-xs md:text-sm font-medium">Avg / Ad</CardDescription>
                             <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-blue-500 shrink-0" />
                         </CardHeader>
-                        <CardContent className="px-3 pb-3 md:px-6 md:pb-6">
+                        <CardContent className="px-3 pb-3">
                             <p className="text-lg md:text-2xl font-bold text-blue-700 dark:text-blue-400">
                                 {fmt$(summary.avg_revenue_per_event)}
                             </p>
@@ -683,11 +717,11 @@ export default function AdRevenueClient() {
                     </Card>
 
                     <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-1 md:pb-2 px-3 md:px-6 pt-3 md:pt-6">
+                        <CardHeader className="flex flex-row items-center justify-between px-3 pb-1 pt-3">
                             <CardDescription className="text-xs md:text-sm font-medium">Unique Users</CardDescription>
                             <Users className="w-4 h-4 md:w-5 md:h-5 text-indigo-500 shrink-0" />
                         </CardHeader>
-                        <CardContent className="px-3 pb-3 md:px-6 md:pb-6">
+                        <CardContent className="px-3 pb-3">
                             <p className="text-lg md:text-2xl font-bold text-indigo-700 dark:text-indigo-400">
                                 {fmtInt(summary.unique_users)}
                             </p>
@@ -698,11 +732,11 @@ export default function AdRevenueClient() {
                     </Card>
 
                     <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-1 md:pb-2 px-3 md:px-6 pt-3 md:pt-6">
+                        <CardHeader className="flex flex-row items-center justify-between px-3 pb-1 pt-3">
                             <CardDescription className="text-xs md:text-sm font-medium">Days Active</CardDescription>
                             <BarChart3 className="w-4 h-4 md:w-5 md:h-5 text-purple-500 shrink-0" />
                         </CardHeader>
-                        <CardContent className="px-3 pb-3 md:px-6 md:pb-6">
+                        <CardContent className="px-3 pb-3">
                             <p className="text-lg md:text-2xl font-bold text-purple-700 dark:text-purple-400">
                                 {summary.days_active}
                             </p>
