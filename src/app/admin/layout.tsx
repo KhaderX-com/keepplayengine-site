@@ -58,7 +58,7 @@ export default async function AdminLayout({
     // Only enforce role check for non-login pages.
     // Login page must remain accessible to unauthenticated users.
     // We detect login by checking if session is absent (unauthenticated → going to login).
-    if (session && !isAuthorizedRole) {
+    if (session?.user && !isAuthorizedRole) {
         redirect("/admin/login");
     }
 

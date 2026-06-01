@@ -2,6 +2,34 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
+const AUTH_COOKIE_NAMES = [
+    "next-auth.session-token",
+    "__Secure-next-auth.session-token",
+    "next-auth.session-token.0",
+    "next-auth.session-token.1",
+    "next-auth.session-token.2",
+    "__Secure-next-auth.session-token.0",
+    "__Secure-next-auth.session-token.1",
+    "__Secure-next-auth.session-token.2",
+    "next-auth.callback-url",
+    "__Secure-next-auth.callback-url",
+    "next-auth.csrf-token",
+    "__Host-next-auth.csrf-token",
+];
+
+function clearAuthCookies(response: NextResponse): NextResponse {
+    for (const cookieName of AUTH_COOKIE_NAMES) {
+        response.cookies.delete(cookieName);
+    }
+    return response;
+}
+
+function isExpiredOrLegacyAdminSession(expiresAt: unknown): boolean {
+    if (typeof expiresAt !== "string") return true;
+    const expiresAtTime = Date.parse(expiresAt);
+    return !Number.isFinite(expiresAtTime) || expiresAtTime <= Date.now();
+}
+
 // ─── C-04 Fix: Sanitize returnUrl to prevent open redirects ───
 function sanitizeReturnUrl(raw: string | null): string {
     if (!raw) return "/admin";
@@ -161,8 +189,7 @@ export async function proxy(request: NextRequest) {
 
         const isAuthenticated = !!token;
         const isLoginPage = pathname === "/admin/login";
-        const adminSessionExpiresAt = typeof token?.adminSessionExpiresAt === "string" ? token.adminSessionExpiresAt : null;
-        const isAdminSessionExpired = adminSessionExpiresAt ? Date.parse(adminSessionExpiresAt) <= Date.now() : false;
+        const isAdminSessionExpired = token ? isExpiredOrLegacyAdminSession(token.adminSessionExpiresAt) : false;
 
         // Security Layer: Redirect authenticated users away from login page
         if (isAuthenticated && !isAdminSessionExpired && isLoginPage) {
@@ -178,6 +205,11 @@ export async function proxy(request: NextRequest) {
             return NextResponse.next();
         }
 
+        // If a stale admin token reaches the login page, clear it and render login.
+        if (isAuthenticated && isAdminSessionExpired && isLoginPage) {
+            return clearAuthCookies(NextResponse.next());
+        }
+
         // If not authenticated, redirect to login
         if (!token || isAdminSessionExpired) {
             const loginUrl = new URL("/admin/login", request.url);
@@ -185,7 +217,7 @@ export async function proxy(request: NextRequest) {
             if (pathname !== "/" && pathname !== "/admin") {
                 loginUrl.searchParams.set("returnUrl", pathname);
             }
-            return NextResponse.redirect(loginUrl);
+            return clearAuthCookies(NextResponse.redirect(loginUrl));
         }
 
         // If authenticated and on root path, redirect to /admin dashboard
@@ -286,8 +318,7 @@ export async function proxy(request: NextRequest) {
 
         const isAuthenticated = !!token;
         const isLoginPage = pathname === "/admin/login";
-        const adminSessionExpiresAt = typeof token?.adminSessionExpiresAt === "string" ? token.adminSessionExpiresAt : null;
-        const isAdminSessionExpired = adminSessionExpiresAt ? Date.parse(adminSessionExpiresAt) <= Date.now() : false;
+        const isAdminSessionExpired = token ? isExpiredOrLegacyAdminSession(token.adminSessionExpiresAt) : false;
 
         // Security Layer: Redirect authenticated users away from login page
         if (isAuthenticated && !isAdminSessionExpired && isLoginPage) {
@@ -303,13 +334,18 @@ export async function proxy(request: NextRequest) {
             return NextResponse.next();
         }
 
+        // If a stale admin token reaches the login page, clear it and render login.
+        if (isAuthenticated && isAdminSessionExpired && isLoginPage) {
+            return clearAuthCookies(NextResponse.next());
+        }
+
         // If not authenticated, redirect to login
         if (!token || isAdminSessionExpired) {
             const loginUrl = new URL("/admin/login", request.url);
             if (pathname !== "/admin" && pathname !== "/admin/login") {
                 loginUrl.searchParams.set("returnUrl", pathname);
             }
-            return NextResponse.redirect(loginUrl);
+            return clearAuthCookies(NextResponse.redirect(loginUrl));
         }
 
         // Verify user has admin role

@@ -268,7 +268,9 @@ export const authOptions: NextAuthOptions = {
         },
         async session({ session, token }) {
             if (token.adminSessionExpiresAt && Date.parse(token.adminSessionExpiresAt) <= Date.now()) {
-                return { ...session, user: undefined } as unknown as typeof session;
+                session.user = undefined as unknown as typeof session.user;
+                session.adminSessionExpiresAt = null;
+                return session;
             }
 
             if (token.adminSessionId) {
@@ -279,7 +281,9 @@ export const authOptions: NextAuthOptions = {
                     .maybeSingle();
 
                 if (error || !adminSession || adminSession.is_revoked || Date.parse(adminSession.expires_at) <= Date.now()) {
-                    return { ...session, user: undefined } as unknown as typeof session;
+                    session.user = undefined as unknown as typeof session.user;
+                    session.adminSessionExpiresAt = null;
+                    return session;
                 }
 
                 token.adminSessionExpiresAt = adminSession.expires_at;

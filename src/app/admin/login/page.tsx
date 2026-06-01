@@ -21,7 +21,7 @@ const FINGERPRINT_LOTTIE_URL =
 export default function AdminLoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { status } = useSession();
+  const { data: session, status } = useSession();
 
   // Get return URL from query params, sanitized to prevent open redirects (C-04)
   const returnUrl = (() => {
@@ -81,14 +81,14 @@ export default function AdminLoginPage() {
 
   // Redirect authenticated users away from login page
   useEffect(() => {
-    if (status === "authenticated") {
+    if (status === "authenticated" && session?.user) {
       router.replace(returnUrl);
       const timeoutId = setTimeout(() => {
         window.location.href = returnUrl;
       }, 500);
       return () => clearTimeout(timeoutId);
     }
-  }, [status, router, returnUrl]);
+  }, [status, session?.user, router, returnUrl]);
 
   // Check biometric availability and config on mount
   useEffect(() => {
@@ -399,7 +399,7 @@ export default function AdminLoginPage() {
     );
   }
 
-  if (status === "authenticated") {
+  if (status === "authenticated" && session?.user) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
