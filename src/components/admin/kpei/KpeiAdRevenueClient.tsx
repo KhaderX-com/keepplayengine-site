@@ -275,8 +275,8 @@ function DateTimeToolbar({
                         </label>
                     </div>
 
-                    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto_auto] sm:items-center">
-                        <label className="relative col-span-2 sm:col-span-1">
+                    <div className="grid min-w-0 grid-cols-3 gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto_auto] sm:items-center">
+                        <label className="relative col-span-3 sm:col-span-1">
                             <span className="sr-only">Quick range</span>
                             <select
                                 value={selectedPreset}
@@ -298,7 +298,7 @@ function DateTimeToolbar({
                             <XCircle className="h-4 w-4 shrink-0" />
                             <span className="truncate">Reset</span>
                         </button>
-                        <button type="button" onClick={onRefresh} disabled={loading} className="col-span-2 inline-flex h-10 min-w-0 items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-600 transition hover:bg-gray-50 disabled:opacity-50 sm:col-span-1">
+                        <button type="button" onClick={onRefresh} disabled={loading} className="inline-flex h-10 min-w-0 items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-600 transition hover:bg-gray-50 disabled:opacity-50 sm:col-span-1">
                             <RefreshCw className={`h-4 w-4 shrink-0 ${loading ? "animate-spin" : ""}`} />
                             <span className="truncate">Refresh</span>
                         </button>
@@ -398,6 +398,39 @@ function StatCard({
             </div>
             <p className="font-mono text-lg font-bold text-gray-900">{value}</p>
             {sub && <p className="text-[11px] text-gray-400 mt-0.5">{sub}</p>}
+        </div>
+    );
+}
+
+function RevenueStatCard({
+    value,
+    sub,
+}: {
+    value: string;
+    sub?: string;
+}) {
+    return (
+        <div className="relative overflow-hidden rounded-xl border border-black bg-black p-3 shadow-sm">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(20,255,0,0.12),transparent_65%)]" />
+            <div className="relative z-10">
+                <p className="mb-2 text-[13px] uppercase leading-none text-[#14ff00] font-(family-name:--font-lilita-one)">
+                    Total Revenue
+                </p>
+                <div className="flex min-w-0 items-center gap-1.5">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                        src="https://res.cloudinary.com/destej60y/image/upload/v1774828614/dollar-symbol_2_h0hrku.png"
+                        alt="Revenue"
+                        width={34}
+                        height={34}
+                        className="h-8 w-8 shrink-0 object-contain drop-shadow-[0_0_8px_rgba(20,255,0,0.45)]"
+                    />
+                    <p className="min-w-0 truncate text-3xl leading-none text-white font-(family-name:--font-lilita-one)">
+                        {value.replace(/^\$/, "")}
+                    </p>
+                </div>
+                {sub && <p className="mt-2 truncate text-[11px] text-emerald-200/70">{sub}</p>}
+            </div>
         </div>
     );
 }
@@ -595,12 +628,9 @@ export default function KpeiAdRevenueClient() {
                     <Activity className="w-3.5 h-3.5" /> Ad Revenue (Axiom Logs)
                 </h3>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                    <StatCard
-                        icon={<DollarSign className="w-4 h-4" />}
-                        label="Ad Revenue"
+                    <RevenueStatCard
                         value={`$${axiomAdRevenue.toFixed(4)}`}
                         sub={`Avg $${axiomAvgRevenue.toFixed(6)}/event`}
-                        accent="green"
                     />
                     <StatCard
                         icon={<TrendingUp className="w-4 h-4" />}
