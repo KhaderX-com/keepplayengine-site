@@ -64,9 +64,8 @@ export default function CookiePolicyPage() {
               Cookie Policy
             </h1>
             <p className="text-gray-300 text-sm sm:text-base max-w-2xl mx-auto">
-              This policy explains how KeepPlay Engine and RAVADO TECH LTD use
-              cookies and similar tracking technologies when you visit or
-              interact with our Service.
+              This policy explains how KeepPlay Engine uses cookies and similar
+              tracking technologies when you visit or interact with our Service.
             </p>
             <p className="mt-4 text-xs text-gray-400">
               Last updated: March 18, 2026
@@ -109,7 +108,7 @@ export default function CookiePolicyPage() {
           {/* -------------------------------------------------------- */}
           <Section id="introduction" title="1. Introduction">
             <p>
-              This Cookie Policy explains how <strong>RAVADO TECH LTD</strong>{" "}
+              This Cookie Policy explains how <strong>KeepPlay Engine</strong>{" "}
               (&ldquo;we&rdquo;, &ldquo;us&rdquo;, &ldquo;our&rdquo;), the
               operator of the <strong>KeepPlay Engine</strong> platform, website,
               and progressive web application (collectively the
@@ -828,7 +827,7 @@ export default function CookiePolicyPage() {
             </p>
             <div className="rounded-xl border border-gray-200 bg-gray-50 p-6 mt-4 space-y-2">
               <p>
-                <strong>RAVADO TECH LTD</strong>
+                <strong>KeepPlay Engine</strong>
               </p>
               <p>71–75 Shelton Street, Covent Garden</p>
               <p>London, WC2H 9JQ, United Kingdom</p>

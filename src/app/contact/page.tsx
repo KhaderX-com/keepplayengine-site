@@ -61,7 +61,7 @@ export default function ContactPage() {
                 Address
               </p>
               <address className="not-italic text-sm leading-relaxed text-gray-300">
-                RAVADO TECH LTD
+                KeepPlay Engine
                 <br />
                 71–75 Shelton Street, Covent Garden
                 <br />

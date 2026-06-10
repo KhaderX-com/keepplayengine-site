@@ -64,8 +64,7 @@ export default function TermsOfServicePage() {
             </h1>
             <p className="text-gray-300 text-sm sm:text-base max-w-2xl mx-auto">
               These Terms of Service govern your access to and use of the
-              KeepPlay Engine application and all related services operated by
-              RAVADO TECH LTD.
+              KeepPlay Engine application and all related services.
             </p>
             <p className="mt-4 text-xs text-gray-400">
               Last updated: March 18, 2026
@@ -119,7 +118,7 @@ export default function TermsOfServicePage() {
             <p>
               These Terms constitute a legally binding agreement between you
               (&ldquo;User&rdquo;, &ldquo;you&rdquo;, or &ldquo;your&rdquo;)
-              and <strong>RAVADO TECH LTD</strong> (&ldquo;Company&rdquo;,
+              and <strong>KeepPlay Engine</strong> (&ldquo;Company&rdquo;,
               &ldquo;we&rdquo;, &ldquo;us&rdquo;, or &ldquo;our&rdquo;), a
               company registered in England &amp; Wales with its registered
               office at 71–75 Shelton Street, Covent Garden, London, WC2H 9JQ,
@@ -380,7 +379,7 @@ export default function TermsOfServicePage() {
               All content, features, and functionality of the Services —
               including but not limited to text, graphics, logos, icons, images,
               audio, video, software, algorithms, and the overall design — are
-              the exclusive property of RAVADO TECH LTD or our licensors and are
+              the exclusive property of KeepPlay Engine or our licensors and are
               protected by copyright, trademark, trade secret, and other
               intellectual-property laws.
             </p>
@@ -406,7 +405,7 @@ export default function TermsOfServicePage() {
             <p>
               The &ldquo;KeepPlay Engine&rdquo; name, logo, and all related
               names, logos, product and service names, designs, and slogans are
-              trademarks of RAVADO TECH LTD. You may not use them without our
+              trademarks of KeepPlay Engine. You may not use them without our
               prior written permission.
             </p>
           </Section>
@@ -547,7 +546,7 @@ export default function TermsOfServicePage() {
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-5 text-sm">
               <p>
                 TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT
-                SHALL RAVADO TECH LTD, ITS DIRECTORS, EMPLOYEES, PARTNERS,
+                SHALL KEEPPLAY ENGINE, ITS DIRECTORS, EMPLOYEES, PARTNERS,
                 AGENTS, SUPPLIERS, OR AFFILIATES BE LIABLE FOR ANY INDIRECT,
                 INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES,
                 INCLUDING BUT NOT LIMITED TO LOSS OF PROFITS, DATA, USE,
@@ -575,7 +574,7 @@ export default function TermsOfServicePage() {
           {/* -------------------------------------------------------- */}
           <Section id="indemnification" title="15. Indemnification">
             <p>
-              You agree to indemnify, defend, and hold harmless RAVADO TECH LTD
+              You agree to indemnify, defend, and hold harmless KeepPlay Engine
               and its officers, directors, employees, and agents from and
               against any claims, damages, obligations, losses, liabilities,
               costs, or expenses (including reasonable legal fees) arising from:
@@ -749,8 +748,8 @@ export default function TermsOfServicePage() {
                 Privacy Policy
               </a>{" "}
               and any other legal notices or policies published by us on the
-              Services, constitute the entire agreement between you and RAVADO
-              TECH LTD regarding the use of the Services and supersede all prior
+              Services, constitute the entire agreement between you and KeepPlay Engine
+              regarding the use of the Services and supersede all prior
               and contemporaneous understandings, agreements, representations,
               and warranties, both written and oral.
             </p>
@@ -771,7 +770,7 @@ export default function TermsOfServicePage() {
               Service, please contact us:
             </p>
             <address className="not-italic bg-gray-50 border border-gray-200 rounded-lg p-4 text-sm">
-              <strong>RAVADO TECH LTD</strong>
+              <strong>KeepPlay Engine</strong>
               <br />
               71–75 Shelton Street, Covent Garden
               <br />

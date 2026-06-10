@@ -5,7 +5,7 @@ import Footer from "@/components/Footer";
 export const metadata: Metadata = {
   title: "Imprint | KeepPlay Engine",
   description:
-    "Legal entity information and contact details for RAVADO TECH LTD, the company behind KeepPlay Engine.",
+    "Legal entity information and contact details for KeepPlay Engine.",
 };
 
 /* ------------------------------------------------------------------ */
@@ -47,7 +47,7 @@ export default function ImprintPage() {
         <article className="max-w-4xl mx-auto px-6 sm:px-8">
           {/* Company Name */}
           <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 text-center mb-10 tracking-tight">
-            RAVADO TECH LTD
+            KeepPlay Engine
           </h2>
 
           {/* ---- Company Details Table ---- */}
@@ -55,9 +55,9 @@ export default function ImprintPage() {
             <table className="w-full text-left">
               <tbody>
                 <Row label="Legal Entity Name">
-                  <strong>RAVADO TECH LTD</strong>
+                  <strong>KeepPlay Engine</strong>
                 </Row>
-                <Row label="Trading As">Ravado Tech</Row>
+                <Row label="Trading As">KeepPlay</Row>
                 <Row label="Entity Type">Private Limited Company (UK)</Row>
                 <Row label="Company Registration Number">17051903</Row>
                 <Row label="D.U.N.S® Number">354606066</Row>
@@ -70,20 +70,20 @@ export default function ImprintPage() {
                 </Row>
                 <Row label="Contact Email">
                   <a
-                    href="mailto:support@ravadotech.com"
+                    href="mailto:support@keepplayengine.com"
                     className="text-[#0BCC0E] hover:underline font-medium"
                   >
-                    support@ravadotech.com
+                    support@keepplayengine.com
                   </a>
                 </Row>
                 <Row label="Website">
                   <a
-                    href="https://ravadotech.com"
+                    href="https://keepplayengine.com"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-[#0BCC0E] hover:underline font-medium"
                   >
-                    ravadotech.com
+                    keepplayengine.com
                   </a>
                 </Row>
               </tbody>
@@ -100,23 +100,23 @@ export default function ImprintPage() {
               {[
                 {
                   title: "General Support",
-                  email: "support@ravadotech.com",
+                  email: "support@keepplayengine.com",
                 },
                 {
                   title: "Legal Enquiries",
-                  email: "legal@ravadotech.com",
+                  email: "legal@keepplayengine.com",
                 },
                 {
                   title: "Office",
-                  email: "office@ravadotech.com",
+                  email: "office@keepplayengine.com",
                 },
                 {
                   title: "CEO",
-                  email: "ceo@ravadotech.com",
+                  email: "ceo@keepplayengine.com",
                 },
                 {
                   title: "Business",
-                  email: "business@ravadotech.com",
+                  email: "business@keepplayengine.com",
                 },
               ].map(({ title, email }) => (
                 <div key={email}>
@@ -141,12 +141,11 @@ export default function ImprintPage() {
             </h2>
             <div className="space-y-4 text-gray-700 leading-relaxed">
               <p>
-                <strong className="text-gray-900">RAVADO TECH LTD</strong> is
+                <strong className="text-gray-900">KeepPlay Engine</strong> is
                 registered with Companies House (England and Wales) under company
                 number <strong className="text-gray-900">17051903</strong>. The
                 company is subject to the laws and regulations of England and
-                Wales and operates as a private limited company. Our D‑U‑N‑S®
-                Number is <strong className="text-gray-900">354606066</strong>.
+                Wales and operates as a private limited company.
               </p>
               <p>
                 We are committed to complying with all applicable regulations
@@ -160,7 +159,7 @@ export default function ImprintPage() {
 
           {/* ---- Copyright ---- */}
           <div className="text-center text-sm text-gray-400 pt-6 border-t border-gray-200">
-            © 2026 RAVADO TECH LTD. All rights reserved.
+            © 2026 KeepPlay Engine. All rights reserved.
           </div>
         </article>
       </main>

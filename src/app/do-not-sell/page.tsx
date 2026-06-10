@@ -50,7 +50,7 @@ export default function DoNotSellPage() {
             </h2>
             <div className="rounded-xl border border-gray-200 bg-gray-50 p-6 text-gray-700 leading-relaxed space-y-3">
               <p>
-                RAVADO TECH LTD does not sell your personal information in the
+                KeepPlay Engine does not sell your personal information in the
                 traditional sense (i.e., in exchange for monetary
                 consideration).
               </p>

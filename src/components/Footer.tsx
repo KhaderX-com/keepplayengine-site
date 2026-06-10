@@ -81,7 +81,7 @@ export default function Footer() {
                 <div className="mt-10 sm:mt-14 border-t border-gray-800 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                     {/* Copyright */}
                     <p className="text-xs text-gray-500">
-                        © 2026 RAVADO TECH LTD. All rights reserved.
+                        © 2026 KeepPlay Engine. All rights reserved.
                     </p>
 
                     {/* Social icons */}
@@ -116,7 +116,7 @@ export default function Footer() {
 
                 {/* Address */}
                 <p className="mt-4 text-center text-xs text-white">
-                    RAVADO TECH LTD. 71–75 Shelton Street, Covent Garden, London, WC2H 9JQ, United Kingdom.
+                    KeepPlay Engine. 71–75 Shelton Street, Covent Garden, London, WC2H 9JQ, United Kingdom.
                 </p>
             </div>
         </footer>

@@ -33,13 +33,10 @@ export default function AboutUsPage() {
               Who We Are
             </h2>
             <p className="text-gray-700 leading-relaxed">
-              KeepPlay Engine is a product of{" "}
-              <span className="font-semibold text-gray-900">
-                RAVADO TECH LTD
-              </span>
-              , a technology company registered in England &amp; Wales
-              (Company No. 17051903). We are based at 71–75 Shelton Street,
-              Covent Garden, London, WC2H 9JQ, United Kingdom.
+              KeepPlay Engine is a loyalty-based rewards platform built for
+              gamers. We are registered in England &amp; Wales and based at
+              71–75 Shelton Street, Covent Garden, London, WC2H 9JQ, United
+              Kingdom.
             </p>
           </section>
 
