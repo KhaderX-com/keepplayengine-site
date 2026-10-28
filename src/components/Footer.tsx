@@ -1,124 +1,84 @@
-import Link from "next/link";
-import { Lilita_One } from "next/font/google";
+﻿import Link from "next/link";
+import Image from "next/image";
+import { ArrowUpRight } from "lucide-react";
 
-const lilitaOne = Lilita_One({ weight: "400", subsets: ["latin"] });
-
+const columns = [
+  {
+    title: "Explore",
+    links: [
+      { label: "The studio", href: "/#studio" },
+      { label: "Our playground", href: "/#playground" },
+      { label: "Publishing", href: "/#publishing" },
+      { label: "Contact", href: "/contact" },
+    ],
+  },
+  {
+    title: "The essentials",
+    links: [
+      { label: "Privacy policy", href: "/privacy-policy" },
+      { label: "Terms of service", href: "/terms-of-service" },
+      { label: "Cookie policy", href: "/cookie-policy" },
+    ],
+  },
+  {
+    title: "Your privacy",
+    links: [
+      { label: "Do not sell or share", href: "/do-not-sell" },
+      { label: "Data & account deletion", href: "/delete-my-account" },
+      { label: "Cookie settings", href: "/cookie-settings" },
+    ],
+  },
+];
 export default function Footer() {
-    const columns = [
-        {
-            heading: "COMPANY",
-            links: [
-                { label: "Home", href: "/" },
-                { label: "About Us", href: "/about-us" },
-                { label: "Contact", href: "/contact" },
-                { label: "Loyalty Program", href: "/loyalty-program" },
-            ],
-        },
-        {
-            heading: "LEGAL",
-            links: [
-                { label: "Privacy Policy", href: "/privacy-policy" },
-                { label: "Terms of Service", href: "/terms-of-service" },
-                { label: "Imprint", href: "/imprint" },
-            ],
-        },
-        {
-            heading: "PRIVACY TOOLS",
-            links: [
-                { label: "Cookie Policy", href: "/cookie-policy" },
-                { label: "Do Not Sell", href: "/do-not-sell" },
-                { label: "Delete My Account", href: "/delete-my-account" },
-                { label: "Cookie Settings", href: "/cookie-settings" },
-            ],
-        },
-    ];
-
-    return (
-        <footer className={`bg-black text-gray-300 ${lilitaOne.className}`}>
-            <div className="max-w-7xl mx-auto px-8 sm:px-12 lg:px-16 py-10 sm:py-14">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 sm:gap-12">
-                    {/* Brand Section */}
-                    <div className="lg:col-span-1">
-                        <Link href="/" className="flex items-center space-x-2 mb-4">
-                            <img
-                                src="https://res.cloudinary.com/destej60y/image/upload/v1773809464/Bolt_2_xqr9so.png"
-                                alt="KeepPlay Engine Logo"
-                                width={36}
-                                height={36}
-                                loading="eager"
-                                className="h-9 w-auto"
-                            />
-                            <span className="text-base font-bold text-white">KeepPlay Engine</span>
-                        </Link>
-                        <p className="text-sm text-gray-400 leading-relaxed max-w-xs">
-                            Building the future of Play-to-Earn ecosystems | technology that keeps players engaged and rewards flowing endlessly.
-                        </p>
-                    </div>
-
-                    {/* Link Columns */}
-                    {columns.map((col) => (
-                        <div key={col.heading}>
-                            <h3 className="text-white font-bold text-xl tracking-widest uppercase mb-5">
-                                {col.heading}
-                            </h3>
-                            <ul className="space-y-4">
-                                {col.links.map((link) => (
-                                    <li key={link.label}>
-                                        <Link
-                                            href={link.href}
-                                            className="text-sm text-white hover:underline transition-colors"
-                                        >
-                                            {link.label}
-                                        </Link>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    ))}
-                </div>
-
-                {/* Bottom bar */}
-                <div className="mt-10 sm:mt-14 border-t border-gray-800 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-                    {/* Copyright */}
-                    <p className="text-xs text-gray-500">
-                        © 2026 KeepPlay Engine. All rights reserved.
-                    </p>
-
-                    {/* Social icons */}
-                    <div className="flex items-center gap-3">
-                        {/* LinkedIn icon */}
-                        <a
-                            href="https://www.linkedin.com/company/keepplay-engine/"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label="LinkedIn"
-                            className="h-9 w-9 rounded-full border border-gray-700 flex items-center justify-center text-gray-400 hover:text-white hover:border-gray-500 transition-colors"
-                        >
-                            <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 448 512">
-                                <path d="M100.28 448H7.4V148.9h92.88zM53.79 108.1C24.09 108.1 0 83.5 0 53.8a53.79 53.79 0 0 1 107.58 0c0 29.7-24.1 54.3-53.79 54.3zM447.9 448h-92.68V302.4c0-34.7-.7-79.2-48.29-79.2-48.29 0-55.69 37.7-55.69 76.7V448h-92.78V148.9h89.08v40.8h1.3c12.4-23.5 42.69-48.3 87.88-48.3 94 0 111.28 61.9 111.28 142.3V448z" />
-                            </svg>
-                        </a>
-
-                        {/* YouTube icon */}
-                        <a
-                            href="https://www.youtube.com/@KeepPlayEngine"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label="YouTube"
-                            className="h-9 w-9 rounded-full border border-gray-700 flex items-center justify-center text-gray-400 hover:text-white hover:border-gray-500 transition-colors"
-                        >
-                            <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 576 512">
-                                <path d="M549.655 124.083c-6.281-23.65-24.787-42.276-48.284-48.597C458.781 64 288 64 288 64S117.22 64 74.629 75.486c-23.497 6.322-42.003 24.947-48.284 48.597C14.786 166.95 14.786 256 14.786 256s0 89.05 11.559 131.917c6.281 23.65 24.787 41.5 48.284 47.821C117.22 448 288 448 288 448s170.78 0 213.371-12.262c23.497-6.321 42.003-24.171 48.284-47.821C561.214 345.05 561.214 256 561.214 256s0-89.05-11.559-131.917zM232.145 337.591V174.409L374.884 256 232.145 337.591z" />
-                            </svg>
-                        </a>
-                    </div>
-                </div>
-
-                {/* Address */}
-                <p className="mt-4 text-center text-xs text-white">
-                    KeepPlay Engine. 71–75 Shelton Street, Covent Garden, London, WC2H 9JQ, United Kingdom.
-                </p>
+  return (
+    <footer className="kpe-footer">
+      <div className="kpe-container">
+        <div className="kpe-footer-grid">
+          <div className="kpe-footer-brand">
+            <Link
+              href="/"
+              className="kpe-brand"
+              aria-label="KeepPlay Engine home"
+            >
+              <Image
+                src="/KPE_Banner_v3.png"
+                alt="KeepPlay Engine"
+                width={1024}
+                height={500}
+                className="kpe-banner-logo"
+                sizes="(max-width: 520px) 145px, 220px"
+              />
+            </Link>
+            <p>
+              Big ideas. Small screens.
+              <br />
+              Mobile games development &amp; publishing.
+            </p>
+            <a href="mailto:business@keepplayengine.com">
+              Let&rsquo;s make games{" "}
+              <ArrowUpRight size={17} aria-hidden="true" />
+            </a>
+          </div>
+          {columns.map((column) => (
+            <div key={column.title}>
+              <h2>{column.title}</h2>
+              <ul>
+                {column.links.map((link) => (
+                  <li key={link.href}>
+                    <Link href={link.href}>{link.label}</Link>
+                  </li>
+                ))}
+              </ul>
             </div>
-        </footer>
-    );
+          ))}
+        </div>
+        <div className="kpe-footer-bottom">
+          <p>
+            © {new Date().getFullYear()} KeepPlay Engine. All rights reserved.
+          </p>
+          <span>Made with a little extra play.</span>
+        </div>
+      </div>
+    </footer>
+  );
 }

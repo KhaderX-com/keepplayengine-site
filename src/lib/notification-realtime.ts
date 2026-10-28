@@ -107,8 +107,8 @@ function showBrowserNotification(title: string, body: string, actionUrl?: string
 
     const notification = new Notification(title, {
         body,
-        icon: '/keepplay-logo2.png',
-        badge: '/keepplay-logo2.png',
+        icon: '/KPE_icon_v3.png',
+        badge: '/KPE_icon_v3.png',
         tag: 'admin-notification',
         requireInteraction: false,
         silent: false

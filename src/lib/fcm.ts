@@ -148,8 +148,8 @@ export async function sendFcmPush(
                                 Urgency: "high",
                             },
                             notification: {
-                                icon: "/keepplay-logo2.png",
-                                badge: "/keepplay-logo2.png",
+                                icon: "/KPE_icon_v3.png",
+                                badge: "/KPE_icon_v3.png",
                                 requireInteraction: true,
                             },
                             fcm_options: {

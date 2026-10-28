@@ -81,25 +81,25 @@ export default function CookiePolicyPage() {
               Table of Contents
             </h2>
             <ol className="list-decimal list-inside space-y-1 text-sm text-gray-600">
-              <li><a href="#introduction" className="hover:text-[#0BCC0E]">Introduction</a></li>
-              <li><a href="#what-are-cookies" className="hover:text-[#0BCC0E]">What Are Cookies</a></li>
-              <li><a href="#how-we-use-cookies" className="hover:text-[#0BCC0E]">How We Use Cookies</a></li>
-              <li><a href="#essential-cookies" className="hover:text-[#0BCC0E]">Essential Cookies</a></li>
-              <li><a href="#functional-cookies" className="hover:text-[#0BCC0E]">Functional Cookies</a></li>
-              <li><a href="#analytics-cookies" className="hover:text-[#0BCC0E]">Analytics Cookies</a></li>
-              <li><a href="#advertising-cookies" className="hover:text-[#0BCC0E]">Advertising &amp; Marketing Cookies</a></li>
-              <li><a href="#third-party-cookies" className="hover:text-[#0BCC0E]">Third-Party Cookies</a></li>
-              <li><a href="#cookie-duration" className="hover:text-[#0BCC0E]">Cookie Duration</a></li>
-              <li><a href="#managing-cookies" className="hover:text-[#0BCC0E]">Managing Your Cookie Preferences</a></li>
-              <li><a href="#browser-controls" className="hover:text-[#0BCC0E]">Browser Cookie Controls</a></li>
-              <li><a href="#mobile-app-tracking" className="hover:text-[#0BCC0E]">Mobile App &amp; SDK Tracking</a></li>
-              <li><a href="#local-storage" className="hover:text-[#0BCC0E]">Local Storage &amp; Similar Technologies</a></li>
-              <li><a href="#gdpr-compliance" className="hover:text-[#0BCC0E]">GDPR &amp; UK GDPR Compliance</a></li>
-              <li><a href="#ccpa-compliance" className="hover:text-[#0BCC0E]">CCPA / CPRA Compliance</a></li>
-              <li><a href="#do-not-track" className="hover:text-[#0BCC0E]">Do Not Track Signals</a></li>
-              <li><a href="#children" className="hover:text-[#0BCC0E]">Children &amp; Cookies</a></li>
-              <li><a href="#updates" className="hover:text-[#0BCC0E]">Updates to This Policy</a></li>
-              <li><a href="#contact" className="hover:text-[#0BCC0E]">Contact Us</a></li>
+              <li><a href="#introduction" className="hover:text-[#2D32FF]">Introduction</a></li>
+              <li><a href="#what-are-cookies" className="hover:text-[#2D32FF]">What Are Cookies</a></li>
+              <li><a href="#how-we-use-cookies" className="hover:text-[#2D32FF]">How We Use Cookies</a></li>
+              <li><a href="#essential-cookies" className="hover:text-[#2D32FF]">Essential Cookies</a></li>
+              <li><a href="#functional-cookies" className="hover:text-[#2D32FF]">Functional Cookies</a></li>
+              <li><a href="#analytics-cookies" className="hover:text-[#2D32FF]">Analytics Cookies</a></li>
+              <li><a href="#advertising-cookies" className="hover:text-[#2D32FF]">Advertising &amp; Marketing Cookies</a></li>
+              <li><a href="#third-party-cookies" className="hover:text-[#2D32FF]">Third-Party Cookies</a></li>
+              <li><a href="#cookie-duration" className="hover:text-[#2D32FF]">Cookie Duration</a></li>
+              <li><a href="#managing-cookies" className="hover:text-[#2D32FF]">Managing Your Cookie Preferences</a></li>
+              <li><a href="#browser-controls" className="hover:text-[#2D32FF]">Browser Cookie Controls</a></li>
+              <li><a href="#mobile-app-tracking" className="hover:text-[#2D32FF]">Mobile App &amp; SDK Tracking</a></li>
+              <li><a href="#local-storage" className="hover:text-[#2D32FF]">Local Storage &amp; Similar Technologies</a></li>
+              <li><a href="#gdpr-compliance" className="hover:text-[#2D32FF]">GDPR &amp; UK GDPR Compliance</a></li>
+              <li><a href="#ccpa-compliance" className="hover:text-[#2D32FF]">CCPA / CPRA Compliance</a></li>
+              <li><a href="#do-not-track" className="hover:text-[#2D32FF]">Do Not Track Signals</a></li>
+              <li><a href="#children" className="hover:text-[#2D32FF]">Children &amp; Cookies</a></li>
+              <li><a href="#updates" className="hover:text-[#2D32FF]">Updates to This Policy</a></li>
+              <li><a href="#contact" className="hover:text-[#2D32FF]">Contact Us</a></li>
             </ol>
           </nav>
 
@@ -121,7 +121,7 @@ export default function CookiePolicyPage() {
               our{" "}
               <Link
                 href="/cookie-settings"
-                className="text-[#0BCC0E] hover:underline font-medium"
+                className="text-[#2D32FF] hover:underline font-medium"
               >
                 Cookie Settings
               </Link>{" "}
@@ -224,14 +224,14 @@ export default function CookiePolicyPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   <tr>
-                    <td className="p-3 font-mono text-[#0BCC0E] text-xs">
+                    <td className="p-3 font-mono text-[#2D32FF] text-xs">
                       keepplay-session
                     </td>
                     <td className="p-3">Maintains your authenticated session</td>
                     <td className="p-3">Session</td>
                   </tr>
                   <tr>
-                    <td className="p-3 font-mono text-[#0BCC0E] text-xs">
+                    <td className="p-3 font-mono text-[#2D32FF] text-xs">
                       keepplay-cookie-consent
                     </td>
                     <td className="p-3">
@@ -240,14 +240,14 @@ export default function CookiePolicyPage() {
                     <td className="p-3">365 days</td>
                   </tr>
                   <tr>
-                    <td className="p-3 font-mono text-[#0BCC0E] text-xs">
+                    <td className="p-3 font-mono text-[#2D32FF] text-xs">
                       sb-*-auth-token
                     </td>
                     <td className="p-3">Authentication token (Supabase)</td>
                     <td className="p-3">Session / 7 days</td>
                   </tr>
                   <tr>
-                    <td className="p-3 font-mono text-[#0BCC0E] text-xs">
+                    <td className="p-3 font-mono text-[#2D32FF] text-xs">
                       csrf-token
                     </td>
                     <td className="p-3">
@@ -290,7 +290,7 @@ export default function CookiePolicyPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   <tr>
-                    <td className="p-3 font-mono text-[#0BCC0E] text-xs">
+                    <td className="p-3 font-mono text-[#2D32FF] text-xs">
                       keepplay-theme
                     </td>
                     <td className="p-3">
@@ -299,14 +299,14 @@ export default function CookiePolicyPage() {
                     <td className="p-3">365 days</td>
                   </tr>
                   <tr>
-                    <td className="p-3 font-mono text-[#0BCC0E] text-xs">
+                    <td className="p-3 font-mono text-[#2D32FF] text-xs">
                       keepplay-locale
                     </td>
                     <td className="p-3">Stores your language preference</td>
                     <td className="p-3">365 days</td>
                   </tr>
                   <tr>
-                    <td className="p-3 font-mono text-[#0BCC0E] text-xs">
+                    <td className="p-3 font-mono text-[#2D32FF] text-xs">
                       keepplay-notification-pref
                     </td>
                     <td className="p-3">
@@ -353,7 +353,7 @@ export default function CookiePolicyPage() {
                 <tbody className="divide-y divide-gray-100">
                   <tr>
                     <td className="p-3">Google Analytics</td>
-                    <td className="p-3 font-mono text-[#0BCC0E] text-xs">
+                    <td className="p-3 font-mono text-[#2D32FF] text-xs">
                       _ga, _ga_*
                     </td>
                     <td className="p-3">
@@ -363,7 +363,7 @@ export default function CookiePolicyPage() {
                   </tr>
                   <tr>
                     <td className="p-3">Vercel Analytics</td>
-                    <td className="p-3 font-mono text-[#0BCC0E] text-xs">
+                    <td className="p-3 font-mono text-[#2D32FF] text-xs">
                       va_*
                     </td>
                     <td className="p-3">
@@ -379,7 +379,7 @@ export default function CookiePolicyPage() {
               opt out through our{" "}
               <Link
                 href="/cookie-settings"
-                className="text-[#0BCC0E] hover:underline font-medium"
+                className="text-[#2D32FF] hover:underline font-medium"
               >
                 Cookie Settings
               </Link>
@@ -417,7 +417,7 @@ export default function CookiePolicyPage() {
                 <tbody className="divide-y divide-gray-100">
                   <tr>
                     <td className="p-3">Google Ads</td>
-                    <td className="p-3 font-mono text-[#0BCC0E] text-xs">
+                    <td className="p-3 font-mono text-[#2D32FF] text-xs">
                       _gcl_*, IDE, NID
                     </td>
                     <td className="p-3">
@@ -427,7 +427,7 @@ export default function CookiePolicyPage() {
                   </tr>
                   <tr>
                     <td className="p-3">Meta Pixel</td>
-                    <td className="p-3 font-mono text-[#0BCC0E] text-xs">
+                    <td className="p-3 font-mono text-[#2D32FF] text-xs">
                       _fbp, _fbc
                     </td>
                     <td className="p-3">
@@ -521,7 +521,7 @@ export default function CookiePolicyPage() {
                 any time via our{" "}
                 <Link
                   href="/cookie-settings"
-                  className="text-[#0BCC0E] hover:underline font-medium"
+                  className="text-[#2D32FF] hover:underline font-medium"
                 >
                   Cookie Settings
                 </Link>{" "}
@@ -538,7 +538,7 @@ export default function CookiePolicyPage() {
                   href="https://tools.google.com/dlpage/gaoptout"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[#0BCC0E] hover:underline font-medium"
+                  className="text-[#2D32FF] hover:underline font-medium"
                 >
                   Google Analytics Opt-Out
                 </a>
@@ -561,7 +561,7 @@ export default function CookiePolicyPage() {
                   href="https://support.google.com/chrome/answer/95647"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[#0BCC0E] hover:underline font-medium"
+                  className="text-[#2D32FF] hover:underline font-medium"
                 >
                   Google Chrome
                 </a>
@@ -571,7 +571,7 @@ export default function CookiePolicyPage() {
                   href="https://support.mozilla.org/en-US/kb/enhanced-tracking-protection-firefox-desktop"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[#0BCC0E] hover:underline font-medium"
+                  className="text-[#2D32FF] hover:underline font-medium"
                 >
                   Mozilla Firefox
                 </a>
@@ -581,7 +581,7 @@ export default function CookiePolicyPage() {
                   href="https://support.apple.com/en-gb/guide/safari/sfri11471/mac"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[#0BCC0E] hover:underline font-medium"
+                  className="text-[#2D32FF] hover:underline font-medium"
                 >
                   Apple Safari
                 </a>
@@ -591,7 +591,7 @@ export default function CookiePolicyPage() {
                   href="https://support.microsoft.com/en-us/microsoft-edge/delete-cookies-in-microsoft-edge-63947406-40ac-c3b8-57b9-2a946a29ae09"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[#0BCC0E] hover:underline font-medium"
+                  className="text-[#2D32FF] hover:underline font-medium"
                 >
                   Microsoft Edge
                 </a>
@@ -693,7 +693,7 @@ export default function CookiePolicyPage() {
                 You may withdraw consent at any time through our{" "}
                 <Link
                   href="/cookie-settings"
-                  className="text-[#0BCC0E] hover:underline font-medium"
+                  className="text-[#2D32FF] hover:underline font-medium"
                 >
                   Cookie Settings
                 </Link>{" "}
@@ -730,7 +730,7 @@ export default function CookiePolicyPage() {
                 advertising cookies. Visit our{" "}
                 <Link
                   href="/do-not-sell"
-                  className="text-[#0BCC0E] hover:underline font-medium"
+                  className="text-[#2D32FF] hover:underline font-medium"
                 >
                   Do Not Sell My Personal Information
                 </Link>{" "}
@@ -781,7 +781,7 @@ export default function CookiePolicyPage() {
               please contact us at{" "}
               <a
                 href="mailto:privacy@keepplayengine.com"
-                className="text-[#0BCC0E] hover:underline font-medium"
+                className="text-[#2D32FF] hover:underline font-medium"
               >
                 privacy@keepplayengine.com
               </a>
@@ -829,13 +829,11 @@ export default function CookiePolicyPage() {
               <p>
                 <strong>KeepPlay Engine</strong>
               </p>
-              <p>71–75 Shelton Street, Covent Garden</p>
-              <p>London, WC2H 9JQ, United Kingdom</p>
               <p className="pt-2">
                 Email:{" "}
                 <a
                   href="mailto:privacy@keepplayengine.com"
-                  className="text-[#0BCC0E] hover:underline font-medium"
+                  className="text-[#2D32FF] hover:underline font-medium"
                 >
                   privacy@keepplayengine.com
                 </a>
@@ -844,7 +842,7 @@ export default function CookiePolicyPage() {
                 Cookie Settings:{" "}
                 <Link
                   href="/cookie-settings"
-                  className="text-[#0BCC0E] hover:underline font-medium"
+                  className="text-[#2D32FF] hover:underline font-medium"
                 >
                   keepplayengine.com/cookie-settings
                 </Link>

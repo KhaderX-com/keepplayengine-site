@@ -35,7 +35,7 @@ export default function LoyaltyProgramPage() {
                 href="https://play.google.com/store/apps/details?id=com.keepplayengine.loyaltyapp"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-block bg-[#0BCC0E] hover:bg-[#0aa80c] text-white font-semibold px-6 py-3 rounded-xl transition-colors"
+                className="inline-block bg-[#2D32FF] hover:bg-[#2226CC] text-white font-semibold px-6 py-3 rounded-xl transition-colors"
               >
                 Get the App
               </a>
@@ -82,7 +82,7 @@ export default function LoyaltyProgramPage() {
                   key={item.step}
                   className="rounded-xl border border-gray-200 bg-gray-50 p-6"
                 >
-                  <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#0BCC0E] text-white text-sm font-bold mb-3">
+                  <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#2D32FF] text-white text-sm font-bold mb-3">
                     {item.step}
                   </span>
                   <h3 className="text-gray-900 font-semibold mb-1">
@@ -156,7 +156,7 @@ export default function LoyaltyProgramPage() {
               href="https://play.google.com/store/apps/details?id=com.keepplayengine.loyaltyapp"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block bg-[#0BCC0E] hover:bg-[#0aa80c] text-white font-semibold px-8 py-3 rounded-xl transition-colors"
+              className="inline-block bg-[#2D32FF] hover:bg-[#2226CC] text-white font-semibold px-8 py-3 rounded-xl transition-colors"
             >
               Download KeepPlay
             </a>

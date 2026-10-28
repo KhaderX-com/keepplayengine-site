@@ -30,7 +30,11 @@ const klaroConfig: Record<string, any> = {
    * If true, Klaro will render its own stylesheet.
    */
   styling: {
-    theme: ["light", "top", "wide"],
+    theme: ["light", "bottom", "wide"],
+    green1: "#2D32FF",
+    green2: "#2226CC",
+    green3: "#2D32FF",
+    "button-text-color": "#FFFFFF",
   },
 
   /**
@@ -135,7 +139,7 @@ const klaroConfig: Record<string, any> = {
       description:
         "Aggregated usage data to help us understand App performance and user behaviour.",
       cookies: [
-        /^_ga/,   // Google Analytics (if used)
+        /^_ga/, // Google Analytics (if used)
         /^_gid/,
       ],
       default: false,

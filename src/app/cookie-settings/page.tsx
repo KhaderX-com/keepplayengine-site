@@ -75,7 +75,7 @@ export default function CookieSettingsPage() {
             </p>
             <button
               onClick={openKlaroManager}
-              className="inline-flex items-center gap-2 bg-[#0BCC0E] hover:bg-[#0aa80c] text-white font-semibold px-6 py-3 rounded-xl transition-colors cursor-pointer"
+              className="inline-flex items-center gap-2 bg-[#2D32FF] hover:bg-[#2226CC] text-white font-semibold px-6 py-3 rounded-xl transition-colors cursor-pointer"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -111,7 +111,7 @@ export default function CookieSettingsPage() {
                       and consent storage.
                     </p>
                   </div>
-                  <span className="shrink-0 text-xs font-semibold bg-[#0BCC0E]/10 text-[#0BCC0E] px-3 py-1 rounded-full">
+                  <span className="shrink-0 text-xs font-semibold bg-[#2D32FF]/10 text-[#2D32FF] px-3 py-1 rounded-full">
                     Always Active
                   </span>
                 </div>
@@ -159,7 +159,7 @@ export default function CookieSettingsPage() {
               purposes, and durations, please review our{" "}
               <Link
                 href="/cookie-policy"
-                className="text-[#0BCC0E] hover:underline font-medium"
+                className="text-[#2D32FF] hover:underline font-medium"
               >
                 Cookie Policy
               </Link>
@@ -170,7 +170,7 @@ export default function CookieSettingsPage() {
               data, see our{" "}
               <Link
                 href="/privacy-policy"
-                className="text-[#0BCC0E] hover:underline font-medium"
+                className="text-[#2D32FF] hover:underline font-medium"
               >
                 Privacy Policy
               </Link>
@@ -181,7 +181,7 @@ export default function CookieSettingsPage() {
               at{" "}
               <a
                 href="mailto:privacy@keepplayengine.com"
-                className="text-[#0BCC0E] hover:underline font-medium"
+                className="text-[#2D32FF] hover:underline font-medium"
               >
                 privacy@keepplayengine.com
               </a>

@@ -1,102 +1,82 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { ArrowUpRight, Gamepad2, Handshake, ShieldCheck } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
   title: "Contact | KeepPlay Engine",
   description:
-    "Get in touch with the KeepPlay Engine team. We'd love to hear from you.",
+    "Talk to KeepPlay Engine about mobile game publishing, player support, or privacy.",
 };
-
+const contacts = [
+  {
+    title: "Let's make games",
+    text: "Ideas, prototypes, collaborations, and publishing conversations.",
+    email: "business@keepplayengine.com",
+    icon: Handshake,
+  },
+  {
+    title: "Player support",
+    text: "Need a hand? Include the game title, platform, and a description of the issue.",
+    email: "support@keepplayengine.com",
+    icon: Gamepad2,
+  },
+  {
+    title: "Your privacy",
+    text: "Questions about your data, advertising choices, or a privacy request.",
+    email: "privacy@keepplayengine.com",
+    icon: ShieldCheck,
+  },
+];
 export default function ContactPage() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <>
       <Navbar />
-
-      <main
-        className="grow pt-16 sm:pt-20 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage:
-            "url('https://res.cloudinary.com/destej60y/image/upload/v1770941675/background_4_whua18.png')",
-        }}
-      >
-        {/* Hero */}
-        <section className="py-20 sm:py-32 text-center">
-          <div className="max-w-3xl mx-auto px-6">
-            <h1 className="text-5xl sm:text-7xl font-black text-gray-900 tracking-tight mb-4">
-              Get in touch.
-            </h1>
-            <p className="text-lg sm:text-xl font-bold text-gray-900">
-              We&apos;d love to hear from you.
-            </p>
-          </div>
-        </section>
-
-        {/* Contact Card */}
-        <section className="relative -mt-8 sm:-mt-12 pb-20 sm:pb-28 px-6">
-          <div className="max-w-xl mx-auto rounded-2xl bg-gray-900 text-white shadow-2xl p-8 sm:p-12 text-center">
-            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2">
-              Contact Information
-            </h2>
-
-            {/* Accent bar */}
-            <div className="mx-auto mt-3 mb-8 h-1 w-12 rounded-full bg-[#0FFF12]" />
-
-            {/* Email */}
-            <div className="mb-8">
-              <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-3">
-                Email
-              </p>
-              <a
-                href="mailto:support@keepplayengine.com"
-                className="inline-block rounded-full bg-white px-8 py-3 text-base font-semibold text-gray-900 shadow-sm transition hover:shadow-md hover:scale-[1.02] active:scale-[0.98]"
+      <main className="bg-white">
+        <article className="kpe-legal">
+          <p className="kpe-eyebrow mb-5">SAY HELLO</p>
+          <h1>
+            Good things start
+            <br />
+            with a conversation.
+          </h1>
+          <p className="mt-6">
+            Whether you're building your next game or need help with one of
+            ours, we'd love to hear from you.
+          </p>
+          <div className="mt-10 grid gap-5">
+            {contacts.map(({ title, text, email, icon: Icon }) => (
+              <section
+                key={email}
+                className="!mt-0 rounded-2xl border border-gray-200 bg-gray-50 p-6 sm:p-8"
               >
-                support@keepplayengine.com
-              </a>
-            </div>
-
-            {/* Address */}
-            <div className="mb-8">
-              <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-3">
-                Address
-              </p>
-              <address className="not-italic text-sm leading-relaxed text-gray-300">
-                KeepPlay Engine
-                <br />
-                71–75 Shelton Street, Covent Garden
-                <br />
-                London, WC2H 9JQ
-                <br />
-                United Kingdom
-              </address>
-            </div>
-
-            {/* Additional emails */}
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-3">
-                Other Enquiries
-              </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <Icon
+                  className="mb-4 text-[#2D32FF]"
+                  size={28}
+                  aria-hidden="true"
+                />
+                <h2>{title}</h2>
+                <p>{text}</p>
                 <a
-                  href="mailto:privacy@keepplayengine.com"
-                  className="text-sm text-[#0FFF12] hover:underline"
+                  className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-semibold"
+                  href={`mailto:${email}`}
                 >
-                  privacy@keepplayengine.com
+                  {email}
+                  <ArrowUpRight size={16} aria-hidden="true" />
                 </a>
-                <span className="hidden sm:inline text-gray-600">|</span>
-                <a
-                  href="mailto:legal@keepplayengine.com"
-                  className="text-sm text-[#0FFF12] hover:underline"
-                >
-                  legal@keepplayengine.com
-                </a>
-              </div>
-            </div>
+              </section>
+            ))}
           </div>
-        </section>
+          <p className="mt-8 text-sm">
+            You can request{" "}
+            <Link href="/delete-my-account">data and account deletion</Link>{" "}
+            without reinstalling a game. Please never send passwords or full
+            payment-card details.
+          </p>
+        </article>
       </main>
-
       <Footer />
-    </div>
+    </>
   );
 }

@@ -82,7 +82,7 @@ export default function DoNotSellPage() {
                   Visit our{" "}
                   <Link
                     href="/cookie-settings"
-                    className="text-[#0BCC0E] hover:underline font-medium"
+                    className="text-[#2D32FF] hover:underline font-medium"
                   >
                     Cookie Settings
                   </Link>{" "}
@@ -98,7 +98,7 @@ export default function DoNotSellPage() {
                   Send an email to{" "}
                   <a
                     href="mailto:privacy@keepplayengine.com"
-                    className="text-[#0BCC0E] hover:underline font-medium"
+                    className="text-[#2D32FF] hover:underline font-medium"
                   >
                     privacy@keepplayengine.com
                   </a>{" "}
@@ -169,7 +169,7 @@ export default function DoNotSellPage() {
               see our{" "}
               <Link
                 href="/privacy-policy"
-                className="text-[#0BCC0E] hover:underline font-medium"
+                className="text-[#2D32FF] hover:underline font-medium"
               >
                 Privacy Policy
               </Link>
@@ -177,7 +177,7 @@ export default function DoNotSellPage() {
             </p>
             <a
               href="mailto:privacy@keepplayengine.com"
-              className="text-[#0BCC0E] hover:underline font-medium"
+              className="text-[#2D32FF] hover:underline font-medium"
             >
               privacy@keepplayengine.com
             </a>

@@ -104,7 +104,7 @@ const nextConfig: NextConfig = {
       beforeFiles: [
         {
           source: '/favicon.ico',
-          destination: '/keepplay-logo2.png',
+          destination: '/KPE_icon_v3.png',
         },
       ],
       afterFiles: [],

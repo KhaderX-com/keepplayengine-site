@@ -1,110 +1,88 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
-import { Lilita_One } from "next/font/google";
+import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
+import { ArrowUpRight, Menu, X } from "lucide-react";
 
-const lilitaOne = Lilita_One({ weight: "400", subsets: ["latin"] });
+const links = [
+  { href: "/#studio", label: "The studio" },
+  { href: "/#playground", label: "Our playground" },
+  { href: "/#publishing", label: "Publishing" },
+  { href: "/privacy-policy", label: "Privacy" },
+];
 
 export default function Navbar() {
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [isScrolled, setIsScrolled] = useState(false);
-
-    useEffect(() => {
-        const handleScroll = () => {
-            setIsScrolled(window.scrollY > window.innerHeight * 0.85);
-        };
-        window.addEventListener("scroll", handleScroll, { passive: true });
-        return () => window.removeEventListener("scroll", handleScroll);
-    }, []);
-
-    const navLinks = [
-        { href: "/privacy-policy", label: "Privacy Policy" },
-        { href: "/terms-of-service", label: "Terms of Service" },
-        { href: "/contact", label: "Contact" },
-    ];
-
-    return (
-        <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${lilitaOne.className} ${isScrolled ? "bg-white shadow-md" : "bg-transparent shadow-none"}`}>
-            <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between h-16 sm:h-20">
-                    {/* Logo */}
-                    <Link href="/" className="flex items-center space-x-2 sm:space-x-3">
-                        <img
-                            src="https://res.cloudinary.com/destej60y/image/upload/v1773809280/Bolt_1_jwgn1c.png"
-                            alt="KeepPlay Engine Logo"
-                            width={50}
-                            height={50}
-                            loading="eager"
-                            className="h-8 sm:h-10 w-auto"
-                        />
-                        <span className="text-base sm:text-xl text-black">KeepPlay Engine</span>
-                    </Link>
-
-                    {/* Desktop Navigation */}
-                    <div className="hidden md:flex items-center space-x-8">
-                        {navLinks.map((link) => (
-                            <Link
-                                key={link.href}
-                                href={link.href}
-                                className="text-black hover:underline transition-colors duration-200"
-                            >
-                                {link.label}
-                            </Link>
-                        ))}
-                    </div>
-
-                    {/* Mobile Menu Button */}
-                    <button
-                        className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-black hover:text-white hover:bg-[#0BCC0E] focus:outline-none"
-                        onClick={() => setIsMenuOpen(!isMenuOpen)}
-                        {...({ "aria-expanded": isMenuOpen })}
-                        aria-label="Toggle menu"
-                    >
-                        <svg
-                            className="h-6 w-6"
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            {isMenuOpen ? (
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M6 18L18 6M6 6l12 12"
-                                />
-                            ) : (
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M4 6h16M4 12h16M4 18h16"
-                                />
-                            )}
-                        </svg>
-                    </button>
-                </div>
-            </div>
-
-            {/* Mobile Menu */}
-            {isMenuOpen && (
-                <div className={`md:hidden border-t border-[#0BCC0E] ${isScrolled ? "bg-white" : "bg-white/90"}`}>
-                    <div className="px-4 pt-2 pb-3 space-y-1">
-                        {navLinks.map((link) => (
-                            <Link
-                                key={link.href}
-                                href={link.href}
-                                className="block px-3 py-2 rounded-md text-base text-black hover:text-white hover:bg-[#0BCC0E] transition-colors duration-200"
-                                onClick={() => setIsMenuOpen(false)}
-                            >
-                                {link.label}
-                            </Link>
-                        ))}
-                    </div>
-                </div>
+  const [open, setOpen] = useState(false);
+  const toggle = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+        toggle.current?.focus();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open]);
+  return (
+    <header className="kpe-header">
+      <nav className="kpe-container kpe-nav" aria-label="Main navigation">
+        <Link
+          href="/"
+          className="kpe-brand"
+          onClick={() => setOpen(false)}
+          aria-label="KeepPlay Engine home"
+        >
+          <Image
+            src="/KPE_Banner_v3.png"
+            alt="KeepPlay Engine"
+            width={1024}
+            height={500}
+            className="kpe-banner-logo"
+            sizes="(max-width: 520px) 145px, 220px"
+            priority
+          />
+        </Link>
+        <div className="kpe-desktop-nav">
+          {links.map((link) => (
+            <Link href={link.href} key={link.href}>
+              {link.label}
+            </Link>
+          ))}
+        </div>
+        <Link href="/contact" className="kpe-nav-contact">
+          Let&rsquo;s talk <ArrowUpRight size={17} aria-hidden="true" />
+        </Link>
+        <button
+          ref={toggle}
+          type="button"
+          className="kpe-menu-toggle"
+          aria-label={open ? "Close menu" : "Open menu"}
+          aria-expanded={open}
+          aria-controls="kpe-mobile-menu"
+          onClick={() => setOpen(!open)}
+        >
+          {open ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
+        </button>
+        {open && (
+          <div id="kpe-mobile-menu" className="kpe-mobile-nav">
+            {[...links, { href: "/contact", label: "Let’s talk" }].map(
+              (link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setOpen(false)}
+                >
+                  {link.label}
+                  <ArrowUpRight size={18} aria-hidden="true" />
+                </Link>
+              ),
             )}
-        </nav>
-    );
+          </div>
+        )}
+      </nav>
+    </header>
+  );
 }

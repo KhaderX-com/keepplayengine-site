@@ -103,7 +103,7 @@ export async function proxy(request: NextRequest) {
 
     // Intercept favicon.ico to guarantee the KeepPlay Engine logo is used everywhere, ignoring any Next.js default Vercel logs
     if (pathname === "/favicon.ico") {
-        const resp = NextResponse.rewrite(new URL("/keepplay-logo2.png", request.url));
+        const resp = NextResponse.rewrite(new URL("/KPE_icon_v3.png", request.url));
         resp.headers.set("X-Request-ID", requestId);
         return resp;
     }

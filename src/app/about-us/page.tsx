@@ -1,102 +1,69 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
-  title: "About Us — KeepPlay Engine",
+  title: "About the studio | KeepPlay Engine",
   description:
-    "Learn about KeepPlay Engine and the team behind the loyalty-based rewards experience for gamers.",
+    "Meet KeepPlay Engine, a mobile games development and publishing studio built around the joy of play.",
 };
-
 export default function AboutUsPage() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <>
       <Navbar />
-
-      <main className="grow pt-20 sm:pt-24 pb-16 bg-white">
-        {/* Header */}
-        <div className="bg-linear-to-br from-gray-900 to-gray-800 text-white py-14 sm:py-20 mb-12">
-          <div className="max-w-4xl mx-auto px-6 sm:px-8 text-center">
-            <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight mb-4">
-              About Us
-            </h1>
-            <p className="text-gray-300 text-sm sm:text-base max-w-2xl mx-auto">
-              The team and vision behind KeepPlay Engine.
-            </p>
+      <main className="bg-white">
+        <article className="kpe-legal">
+          <p className="kpe-eyebrow mb-5">THE STUDIO</p>
+          <h1>
+            Big ideas.
+            <br />
+            Small screens.
+          </h1>
+          <div className="kpe-legal-summary">
+            KeepPlay Engine is a mobile games development and publishing studio.
+            We bring playful ideas to life through simple mechanics, satisfying
+            controls, and thoughtful details.
           </div>
-        </div>
-
-        <article className="max-w-4xl mx-auto px-6 sm:px-8">
-          {/* Who We Are */}
-          <section className="mb-12">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
-              Who We Are
-            </h2>
-            <p className="text-gray-700 leading-relaxed">
-              KeepPlay Engine is a loyalty-based rewards platform built for
-              gamers. We are registered in England &amp; Wales and based at
-              71–75 Shelton Street, Covent Garden, London, WC2H 9JQ, United
-              Kingdom.
+          <section>
+            <h2>Play comes first.</h2>
+            <p>
+              Our ambition is to make everyday moments a little more fun. We
+              focus on casual mobile experiences that are easy to pick up and
+              feel great to play, whether you have a few minutes or a little
+              longer.
             </p>
           </section>
-
-          {/* Our Mission */}
-          <section className="mb-12">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
-              Our Mission
-            </h2>
-            <p className="text-gray-700 leading-relaxed">
-              We are building a loyalty-based rewards experience that makes
-              mobile gameplay more engaging and rewarding. KeepPlay connects
-              players with participating games and gives them a simple way to
-              earn loyalty coins, complete challenges, track progress, and
-              access rewards — all in one app.
+          <section>
+            <h2>From spark to screen.</h2>
+            <p>
+              We think about the whole journey: the first prototype, the feel of
+              a level, testing on real devices, store presentation, launch, and
+              the feedback that helps a game grow. Development and publishing
+              are parts of the same creative process.
             </p>
           </section>
-
-          {/* What We Do */}
-          <section className="mb-12">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
-              What We Do
-            </h2>
-            <ul className="list-disc pl-5 space-y-2 text-gray-700 leading-relaxed">
-              <li>
-                Develop and maintain the KeepPlay loyalty platform
-              </li>
-              <li>
-                Partner with game developers to bring titles into the loyalty
-                program
-              </li>
-              <li>
-                Provide players with a transparent, progress-based rewards
-                experience
-              </li>
-              <li>
-                Continuously improve the app based on user feedback and
-                engagement insights
-              </li>
-            </ul>
-          </section>
-
-          {/* Get in Touch */}
-          <section className="rounded-xl border border-gray-200 bg-gray-50 p-6 text-center">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3">
-              Get in Touch
-            </h2>
-            <p className="text-gray-700 leading-relaxed mb-4">
-              Have questions or want to work with us?
+          <section>
+            <h2>Built with care.</h2>
+            <p>
+              Clear controls, good performance, and respect for players matter.
+              Our <Link href="/privacy-policy">Privacy Policy</Link> explains
+              information practices and your choices.
             </p>
-            <a
-              href="mailto:support@keepplayengine.com"
-              className="text-[#0BCC0E] hover:underline font-medium"
-            >
-              support@keepplayengine.com
-            </a>
+          </section>
+          <section>
+            <h2>Let's create something playful.</h2>
+            <p>
+              Have a prototype, an idea, or a publishing question? Email{" "}
+              <a href="mailto:business@keepplayengine.com">
+                business@keepplayengine.com
+              </a>{" "}
+              or <Link href="/contact">get in touch</Link>.
+            </p>
           </section>
         </article>
       </main>
-
       <Footer />
-    </div>
+    </>
   );
 }

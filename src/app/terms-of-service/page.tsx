@@ -80,27 +80,111 @@ export default function TermsOfServicePage() {
               Table of Contents
             </h2>
             <ol className="list-decimal list-inside space-y-1 text-sm text-gray-600">
-              <li><a href="#acceptance" className="hover:text-[#0BCC0E]">Acceptance of Terms</a></li>
-              <li><a href="#eligibility" className="hover:text-[#0BCC0E]">Eligibility</a></li>
-              <li><a href="#account" className="hover:text-[#0BCC0E]">Account Registration &amp; Security</a></li>
-              <li><a href="#services" className="hover:text-[#0BCC0E]">Description of Services</a></li>
-              <li><a href="#loyalty-rewards" className="hover:text-[#0BCC0E]">Loyalty Rewards &amp; Virtual Currency</a></li>
-              <li><a href="#payouts" className="hover:text-[#0BCC0E]">Payouts &amp; Redemption</a></li>
-              <li><a href="#user-conduct" className="hover:text-[#0BCC0E]">User Conduct &amp; Acceptable Use</a></li>
-              <li><a href="#ip" className="hover:text-[#0BCC0E]">Intellectual Property</a></li>
-              <li><a href="#user-content" className="hover:text-[#0BCC0E]">User Content</a></li>
-              <li><a href="#third-party" className="hover:text-[#0BCC0E]">Third-Party Services &amp; Links</a></li>
-              <li><a href="#advertising" className="hover:text-[#0BCC0E]">Advertising</a></li>
-              <li><a href="#privacy" className="hover:text-[#0BCC0E]">Privacy</a></li>
-              <li><a href="#disclaimers" className="hover:text-[#0BCC0E]">Disclaimers</a></li>
-              <li><a href="#limitation" className="hover:text-[#0BCC0E]">Limitation of Liability</a></li>
-              <li><a href="#indemnification" className="hover:text-[#0BCC0E]">Indemnification</a></li>
-              <li><a href="#termination" className="hover:text-[#0BCC0E]">Termination &amp; Suspension</a></li>
-              <li><a href="#modifications" className="hover:text-[#0BCC0E]">Modifications to the Service &amp; Terms</a></li>
-              <li><a href="#governing-law" className="hover:text-[#0BCC0E]">Governing Law &amp; Dispute Resolution</a></li>
-              <li><a href="#severability" className="hover:text-[#0BCC0E]">Severability</a></li>
-              <li><a href="#entire-agreement" className="hover:text-[#0BCC0E]">Entire Agreement</a></li>
-              <li><a href="#contact" className="hover:text-[#0BCC0E]">Contact Us</a></li>
+              <li>
+                <a href="#acceptance" className="hover:text-[#2D32FF]">
+                  Acceptance of Terms
+                </a>
+              </li>
+              <li>
+                <a href="#eligibility" className="hover:text-[#2D32FF]">
+                  Eligibility
+                </a>
+              </li>
+              <li>
+                <a href="#account" className="hover:text-[#2D32FF]">
+                  Account Registration &amp; Security
+                </a>
+              </li>
+              <li>
+                <a href="#services" className="hover:text-[#2D32FF]">
+                  Description of Services
+                </a>
+              </li>
+              <li>
+                <a href="#loyalty-rewards" className="hover:text-[#2D32FF]">
+                  Loyalty Rewards &amp; Virtual Currency
+                </a>
+              </li>
+              <li>
+                <a href="#payouts" className="hover:text-[#2D32FF]">
+                  Payouts &amp; Redemption
+                </a>
+              </li>
+              <li>
+                <a href="#user-conduct" className="hover:text-[#2D32FF]">
+                  User Conduct &amp; Acceptable Use
+                </a>
+              </li>
+              <li>
+                <a href="#ip" className="hover:text-[#2D32FF]">
+                  Intellectual Property
+                </a>
+              </li>
+              <li>
+                <a href="#user-content" className="hover:text-[#2D32FF]">
+                  User Content
+                </a>
+              </li>
+              <li>
+                <a href="#third-party" className="hover:text-[#2D32FF]">
+                  Third-Party Services &amp; Links
+                </a>
+              </li>
+              <li>
+                <a href="#advertising" className="hover:text-[#2D32FF]">
+                  Advertising
+                </a>
+              </li>
+              <li>
+                <a href="#privacy" className="hover:text-[#2D32FF]">
+                  Privacy
+                </a>
+              </li>
+              <li>
+                <a href="#disclaimers" className="hover:text-[#2D32FF]">
+                  Disclaimers
+                </a>
+              </li>
+              <li>
+                <a href="#limitation" className="hover:text-[#2D32FF]">
+                  Limitation of Liability
+                </a>
+              </li>
+              <li>
+                <a href="#indemnification" className="hover:text-[#2D32FF]">
+                  Indemnification
+                </a>
+              </li>
+              <li>
+                <a href="#termination" className="hover:text-[#2D32FF]">
+                  Termination &amp; Suspension
+                </a>
+              </li>
+              <li>
+                <a href="#modifications" className="hover:text-[#2D32FF]">
+                  Modifications to the Service &amp; Terms
+                </a>
+              </li>
+              <li>
+                <a href="#governing-law" className="hover:text-[#2D32FF]">
+                  Governing Law &amp; Dispute Resolution
+                </a>
+              </li>
+              <li>
+                <a href="#severability" className="hover:text-[#2D32FF]">
+                  Severability
+                </a>
+              </li>
+              <li>
+                <a href="#entire-agreement" className="hover:text-[#2D32FF]">
+                  Entire Agreement
+                </a>
+              </li>
+              <li>
+                <a href="#contact" className="hover:text-[#2D32FF]">
+                  Contact Us
+                </a>
+              </li>
             </ol>
           </nav>
 
@@ -117,12 +201,10 @@ export default function TermsOfServicePage() {
             </p>
             <p>
               These Terms constitute a legally binding agreement between you
-              (&ldquo;User&rdquo;, &ldquo;you&rdquo;, or &ldquo;your&rdquo;)
-              and <strong>KeepPlay Engine</strong> (&ldquo;Company&rdquo;,
-              &ldquo;we&rdquo;, &ldquo;us&rdquo;, or &ldquo;our&rdquo;), a
-              company registered in England &amp; Wales with its registered
-              office at 71–75 Shelton Street, Covent Garden, London, WC2H 9JQ,
-              United Kingdom.
+              (&ldquo;User&rdquo;, &ldquo;you&rdquo;, or &ldquo;your&rdquo;) and{" "}
+              <strong>KeepPlay Engine</strong> (&ldquo;we&rdquo;,
+              &ldquo;us&rdquo;, or &ldquo;our&rdquo;), the mobile games
+              development and publishing studio operating the relevant Services.
             </p>
           </Section>
 
@@ -205,20 +287,21 @@ export default function TermsOfServicePage() {
           {/* -------------------------------------------------------- */}
           <Section id="services" title="4. Description of Services">
             <p>
-              KeepPlay Engine is a play-to-earn loyalty ecosystem that allows
-              users to:
+              KeepPlay Engine develops and publishes mobile games and related
+              services. Depending on the title and features offered, users can:
             </p>
             <ul className="list-disc list-inside space-y-2">
               <li>
-                Discover and play games from our partner studios.
+                Discover and play mobile games developed or published by our
+                studio.
               </li>
               <li>
-                Earn virtual coins, points, and loyalty rewards through
-                gameplay, engagement, and completing in-app activities.
+                Progress through levels, earn achievements, and access virtual
+                items or optional loyalty rewards where available.
               </li>
               <li>
-                Redeem accumulated rewards for gift cards, digital goods, or
-                other payout methods as available.
+                Make optional in-app purchases or use reward and redemption
+                features only in products that expressly offer them.
               </li>
               <li>
                 Track progress, leaderboards, and reward history through their
@@ -236,7 +319,10 @@ export default function TermsOfServicePage() {
           {/* -------------------------------------------------------- */}
           {/* 5. LOYALTY REWARDS & VIRTUAL CURRENCY                    */}
           {/* -------------------------------------------------------- */}
-          <Section id="loyalty-rewards" title="5. Loyalty Rewards & Virtual Currency">
+          <Section
+            id="loyalty-rewards"
+            title="5. Loyalty Rewards & Virtual Currency"
+          >
             <SubSection title="5.1 Nature of Virtual Currency">
               <p>
                 Coins, points, and other virtual currencies earned through the
@@ -251,8 +337,8 @@ export default function TermsOfServicePage() {
               <p>
                 The rate, method, and conditions under which Virtual Currency is
                 earned are determined solely by us and may change at any time.
-                We reserve the right to adjust earning rates, introduce caps,
-                or modify reward structures without prior notice.
+                We reserve the right to adjust earning rates, introduce caps, or
+                modify reward structures without prior notice.
               </p>
             </SubSection>
             <SubSection title="5.3 Expiration & Forfeiture">
@@ -324,9 +410,9 @@ export default function TermsOfServicePage() {
             </p>
             <ul className="list-disc list-inside space-y-2">
               <li>
-                Use bots, scripts, automation tools, emulators, or any
-                non-human means to interact with the Services or artificially
-                inflate earnings.
+                Use bots, scripts, automation tools, emulators, or any non-human
+                means to interact with the Services or artificially inflate
+                earnings.
               </li>
               <li>
                 Create multiple accounts to exploit promotions, referral
@@ -349,8 +435,8 @@ export default function TermsOfServicePage() {
                 affiliation with any person or entity.
               </li>
               <li>
-                Engage in any activity that constitutes fraud, money
-                laundering, or any other financial crime.
+                Engage in any activity that constitutes fraud, money laundering,
+                or any other financial crime.
               </li>
               <li>
                 Use the Services to distribute malware, viruses, or other
@@ -425,8 +511,8 @@ export default function TermsOfServicePage() {
             </p>
             <p>
               You represent and warrant that you own or have the necessary
-              rights to submit User Content and that it does not infringe on
-              the rights of any third party or violate any applicable law.
+              rights to submit User Content and that it does not infringe on the
+              rights of any third party or violate any applicable law.
             </p>
             <p>
               We reserve the right, but have no obligation, to monitor, edit, or
@@ -486,7 +572,7 @@ export default function TermsOfServicePage() {
               of personal data is governed by our{" "}
               <a
                 href="/privacy-policy"
-                className="text-[#0BCC0E] hover:underline font-medium"
+                className="text-[#2D32FF] hover:underline font-medium"
               >
                 Privacy Policy
               </a>
@@ -524,9 +610,7 @@ export default function TermsOfServicePage() {
                 The results obtained from using the Services will be accurate or
                 reliable.
               </li>
-              <li>
-                Any defects or errors in the Services will be corrected.
-              </li>
+              <li>Any defects or errors in the Services will be corrected.</li>
               <li>
                 The Services will be free from viruses or other harmful
                 components.
@@ -550,12 +634,16 @@ export default function TermsOfServicePage() {
                 AGENTS, SUPPLIERS, OR AFFILIATES BE LIABLE FOR ANY INDIRECT,
                 INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES,
                 INCLUDING BUT NOT LIMITED TO LOSS OF PROFITS, DATA, USE,
-                GOODWILL, OR OTHER INTANGIBLE LOSSES, ARISING OUT OF OR
-                RELATED TO:
+                GOODWILL, OR OTHER INTANGIBLE LOSSES, ARISING OUT OF OR RELATED
+                TO:
               </p>
               <ul className="list-disc list-inside space-y-2 mt-3">
-                <li>Your access to, use of, or inability to use the Services.</li>
-                <li>Any conduct or content of any third party on the Services.</li>
+                <li>
+                  Your access to, use of, or inability to use the Services.
+                </li>
+                <li>
+                  Any conduct or content of any third party on the Services.
+                </li>
                 <li>Any content obtained from the Services.</li>
                 <li>Unauthorised access, use, or alteration of your data.</li>
               </ul>
@@ -607,7 +695,7 @@ export default function TermsOfServicePage() {
                 at{" "}
                 <a
                   href="mailto:support@keepplayengine.com"
-                  className="text-[#0BCC0E] hover:underline"
+                  className="text-[#2D32FF] hover:underline"
                 >
                   support@keepplayengine.com
                 </a>
@@ -626,7 +714,7 @@ export default function TermsOfServicePage() {
                 <li>Fraudulent or suspected fraudulent activity.</li>
                 <li>
                   Conduct that we determine is harmful to other users, the
-                  Company, or third parties.
+                  KeepPlay Engine, or third parties.
                 </li>
                 <li>At our sole discretion for any other reason.</li>
               </ul>
@@ -648,7 +736,10 @@ export default function TermsOfServicePage() {
           {/* -------------------------------------------------------- */}
           {/* 17. MODIFICATIONS                                        */}
           {/* -------------------------------------------------------- */}
-          <Section id="modifications" title="17. Modifications to the Service & Terms">
+          <Section
+            id="modifications"
+            title="17. Modifications to the Service & Terms"
+          >
             <SubSection title="17.1 Changes to the Services">
               <p>
                 We reserve the right to modify, update, or discontinue any part
@@ -677,7 +768,10 @@ export default function TermsOfServicePage() {
           {/* -------------------------------------------------------- */}
           {/* 18. GOVERNING LAW & DISPUTE RESOLUTION                   */}
           {/* -------------------------------------------------------- */}
-          <Section id="governing-law" title="18. Governing Law & Dispute Resolution">
+          <Section
+            id="governing-law"
+            title="18. Governing Law & Dispute Resolution"
+          >
             <SubSection title="18.1 Governing Law">
               <p>
                 These Terms and any dispute arising out of or in connection with
@@ -702,7 +796,7 @@ export default function TermsOfServicePage() {
                 to resolve the dispute informally by contacting us at{" "}
                 <a
                   href="mailto:legal@keepplayengine.com"
-                  className="text-[#0BCC0E] hover:underline"
+                  className="text-[#2D32FF] hover:underline"
                 >
                   legal@keepplayengine.com
                 </a>
@@ -729,9 +823,9 @@ export default function TermsOfServicePage() {
             <p>
               If any provision of these Terms is held to be invalid, illegal, or
               unenforceable by a court of competent jurisdiction, such provision
-              shall be modified to the minimum extent necessary to make it
-              valid while preserving its original intent. All remaining
-              provisions shall continue in full force and effect.
+              shall be modified to the minimum extent necessary to make it valid
+              while preserving its original intent. All remaining provisions
+              shall continue in full force and effect.
             </p>
           </Section>
 
@@ -743,13 +837,13 @@ export default function TermsOfServicePage() {
               These Terms, together with the{" "}
               <a
                 href="/privacy-policy"
-                className="text-[#0BCC0E] hover:underline font-medium"
+                className="text-[#2D32FF] hover:underline font-medium"
               >
                 Privacy Policy
               </a>{" "}
               and any other legal notices or policies published by us on the
-              Services, constitute the entire agreement between you and KeepPlay Engine
-              regarding the use of the Services and supersede all prior
+              Services, constitute the entire agreement between you and KeepPlay
+              Engine regarding the use of the Services and supersede all prior
               and contemporaneous understandings, agreements, representations,
               and warranties, both written and oral.
             </p>
@@ -772,17 +866,10 @@ export default function TermsOfServicePage() {
             <address className="not-italic bg-gray-50 border border-gray-200 rounded-lg p-4 text-sm">
               <strong>KeepPlay Engine</strong>
               <br />
-              71–75 Shelton Street, Covent Garden
-              <br />
-              London, WC2H 9JQ
-              <br />
-              United Kingdom
-              <br />
-              <br />
               General Enquiries:{" "}
               <a
                 href="mailto:support@keepplayengine.com"
-                className="text-[#0BCC0E] hover:underline"
+                className="text-[#2D32FF] hover:underline"
               >
                 support@keepplayengine.com
               </a>
@@ -790,7 +877,7 @@ export default function TermsOfServicePage() {
               Legal:{" "}
               <a
                 href="mailto:legal@keepplayengine.com"
-                className="text-[#0BCC0E] hover:underline"
+                className="text-[#2D32FF] hover:underline"
               >
                 legal@keepplayengine.com
               </a>
@@ -798,7 +885,7 @@ export default function TermsOfServicePage() {
               Privacy:{" "}
               <a
                 href="mailto:privacy@keepplayengine.com"
-                className="text-[#0BCC0E] hover:underline"
+                className="text-[#2D32FF] hover:underline"
               >
                 privacy@keepplayengine.com
               </a>
