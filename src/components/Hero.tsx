@@ -22,7 +22,7 @@ export default function Hero() {
             <br />a little more
             <br />
             <span>play.</span>
-            <Sparkles className="kpe-hero-spark" aria-hidden="true" />
+            {/* <Sparkles className="kpe-hero-spark" aria-hidden="true" /> */}
           </h1>
           <p className="kpe-hero-description">
             Big ideas. Small screens. We&rsquo;re KeepPlay Engine, a mobile
