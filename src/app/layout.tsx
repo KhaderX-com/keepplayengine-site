@@ -15,11 +15,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://keepplayengine.com"),
-  title: "KeepPlay Engine — Mobile Games Development & Publishing Studio",
+  title: "KeepPlay Engine | Mobile Games Development & Publishing Studio",
   description:
     "Big ideas. Small screens. KeepPlay Engine is a mobile games development and publishing studio creating playful experiences for iOS and Android.",
   openGraph: {
-    title: "KeepPlay Engine — Life needs a little more play.",
+    title: "KeepPlay Engine | Life needs a little more play.",
     description:
       "Mobile games development and publishing, with play at the heart of it all.",
     siteName: "KeepPlay Engine",
