@@ -30,7 +30,7 @@ const sections = [
   ["third-party-links", "External services"],
   ["changes", "Policy updates"],
   ["contact", "Contact us"],
-  ["purchases", "Purchases, subscriptions and rewards"],
+  ["purchases", "Purchases and subscriptions"],
   ["cookies", "Cookies and local storage"],
   ["notifications", "Notifications"],
   ["automated-decisions", "Fraud prevention and automated decisions"],
@@ -132,9 +132,7 @@ export default function PrivacyPolicyPage() {
             <p>
               This policy covers games and applications published by KeepPlay
               Engine that link to it, keepplayengine.com, support, playtests and
-              related services. Where offered, account, loyalty, reward and
-              payout features are also covered. Their inclusion does not mean
-              every game has those features.
+              related services. Features and data practices vary by game.
             </p>
             <p>
               Actual collection depends on the title, version, platform,
@@ -205,7 +203,7 @@ export default function PrivacyPolicyPage() {
                     <td>Ads and attribution</td>
                     <td>
                       Advertising ID where permitted, consent signals,
-                      impressions, clicks, rewarded-ad completion, campaign and
+                      impressions, clicks, ad completion, campaign and
                       install events.
                     </td>
                     <td>
@@ -214,15 +212,13 @@ export default function PrivacyPolicyPage() {
                     </td>
                   </tr>
                   <tr>
-                    <td>Transactions and rewards</td>
+                    <td>Purchases and subscriptions</td>
                     <td>
                       Receipts, purchase tokens, order IDs, subscription status,
-                      balances, redemption history, payout destination and
-                      status.
+                      and entitlement status.
                     </td>
                     <td>
-                      Purchase fulfilment, entitlements, fraud prevention and
-                      eligible rewards.
+                      Purchase fulfilment, entitlements and fraud prevention.
                     </td>
                   </tr>
                   <tr>
@@ -350,8 +346,7 @@ export default function PrivacyPolicyPage() {
                 account features.
               </li>
               <li>
-                Validate purchases, restore entitlements and process eligible
-                rewards or payouts.
+                Validate purchases and restore entitlements.
               </li>
               <li>
                 Respond to support, diagnose crashes, investigate bugs and
@@ -419,7 +414,7 @@ export default function PrivacyPolicyPage() {
           >
             <h3>Ads and mediation</h3>
             <p>
-              Some games include banner, interstitial or rewarded ads.
+              Some games include banner, interstitial or optional ads.
               Contextual ads use session circumstances or content; personalised
               ads may use identifiers and activity across services. Contextual
               advertising can still process an IP address, device information
@@ -469,9 +464,8 @@ export default function PrivacyPolicyPage() {
             </ul>
             <p>
               Withdrawal affects future processing, not automatic erasure of
-              past data. You can separately request deletion. Rewarded ads are
-              optional where offered; viewing one for a reward is not consent to
-              unrelated tracking.
+              past data. You can separately request deletion. Viewing an ad is
+              not consent to unrelated tracking.
             </p>
             <h3>Analytics and attribution</h3>
             <p>
@@ -544,7 +538,7 @@ export default function PrivacyPolicyPage() {
               </li>
               <li>
                 <strong>Platforms and payment providers:</strong> stores, login
-                services and payout processors needed for your chosen features.
+                services and payment processors needed for your chosen features.
               </li>
               <li>
                 <strong>Other players:</strong> information you choose to make
@@ -608,7 +602,7 @@ export default function PrivacyPolicyPage() {
                 independent providers may have separate periods.
               </li>
               <li>
-                <strong>Purchases, payouts and fraud records:</strong> for legal
+                <strong>Purchases and fraud records:</strong> for legal
                 recordkeeping or documented necessity, with restricted use.
               </li>
               <li>
@@ -802,20 +796,13 @@ export default function PrivacyPolicyPage() {
           </Section>
           <Section
             id="purchases"
-            title="20. Purchases, subscriptions and rewards"
+            title="20. Purchases and subscriptions"
           >
             <p>
               Store purchases and subscriptions are processed by the platform.
               We may receive tokens, order references, product, entitlement,
               status and time to deliver content, restore purchases, address
               refunds and detect fraud. We do not receive full card credentials.
-            </p>
-            <p>
-              Reward or payout features, where offered, can process eligibility,
-              reward activity, balances, redemption history, payout method and
-              destination details. Games without these features do not need this
-              information. Processors receive information necessary for their
-              role and obligations.
             </p>
             <p>
               Manage subscriptions through the store or provider where you
@@ -862,7 +849,7 @@ export default function PrivacyPolicyPage() {
               refusal.
             </p>
             <p>
-              If an automated restriction affects your account, rewards or
+              If an automated restriction affects your account or
               purchase, contact support for an explanation and review. Where law
               gives rights concerning solely automated decisions with legal or
               similarly significant effects, you may request human intervention
