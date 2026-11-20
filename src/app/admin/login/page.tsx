@@ -7,6 +7,9 @@ import { isWebAuthnSupported, isPlatformAuthenticatorAvailable } from "@/lib/web
 import { startRegistration, startAuthentication } from "@simplewebauthn/browser";
 import dynamic from "next/dynamic";
 
+// Set to true to restore the Vault PIN step after biometric verification.
+const VAULT_ACCESS_ENABLED = false;
+
 const Lottie = dynamic(() => import("lottie-react"), { ssr: false });
 
 const LOTTIE_URL =
@@ -298,16 +301,27 @@ export default function AdminLoginPage() {
         throw new Error(data.error || "Authentication failed");
       }
 
-      setBiometricLoading(false);
       setError("");
       setTransitionLoading(true);
-      setTimeout(() => {
-        setBiometricVerified(true);
-        setTransitionLoading(false);
-      }, 1800);
+      if (VAULT_ACCESS_ENABLED) {
+        setBiometricLoading(false);
+        setTimeout(() => {
+          setBiometricVerified(true);
+          setTransitionLoading(false);
+        }, 1800);
+      } else {
+        const result = await signIn("credentials", { email, password, redirect: false });
+        if (!result?.ok) throw new Error("Session creation failed");
+        setBiometricLoading(false);
+        setTimeout(() => {
+          router.push(returnUrl);
+          router.refresh();
+        }, 1800);
+      }
     } catch (err) {
       const error = err as Error;
       setError(error.message || "Biometric authentication failed");
+      setTransitionLoading(false);
       setBiometricLoading(false);
     }
   };

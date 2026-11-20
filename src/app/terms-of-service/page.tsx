@@ -32,7 +32,7 @@ export default function TermsOfServicePage() {
         <article className="kpe-legal">
           <p className="kpe-eyebrow mb-5">KEEPPLAY ENGINE / PLAYER TERMS</p>
           <h1>Terms of Service</h1>
-          <p className="kpe-legal-date">Last updated: 3 November 2026 · Version 3.0</p>
+          <p className="kpe-legal-date">Last updated: 20 November 2026 · Version 3.1</p>
           <div className="kpe-legal-summary"><strong>Terms at a glance.</strong><p>Our games are for personal entertainment. Some may offer advertising, optional purchases or subscriptions. Virtual items have no real-world monetary value. Your privacy choices and applicable consumer rights remain protected.</p></div>
           <nav className="kpe-legal-toc" aria-label="Terms of service contents"><h2>Find what you need</h2><ol>{sections.map(([id, title]) => <li key={id}><a href={`#${id}`}>{title}</a></li>)}</ol></nav>
           <Section id="introduction" title="1. Introduction">
@@ -48,6 +48,7 @@ export default function TermsOfServicePage() {
           <Section id="licence" title="4. Licence and acceptable use">
             <p>Subject to these Terms, we grant you a limited, personal, non-exclusive, non-transferable and revocable licence to use the Services for non-commercial entertainment. We retain all rights not expressly granted.</p>
             <p>Do not cheat, exploit bugs, use unauthorised software, interfere with the Services, bypass security, harass others, violate their rights, or copy, distribute, modify or reverse engineer the Services except where applicable law permits. Do not use the Services unlawfully or commercially without permission.</p>
+            <p>Do not generate fraudulent ad impressions or clicks, use bots or other automated methods to manipulate advertising activity, or tamper with advertising technology.</p>
           </Section>
           <Section id="purchases" title="5. In-app purchases and virtual items">
             <p>Some games may offer optional purchases of virtual currency, items or features through an authorised app store. Prices and applicable taxes are displayed before purchase. Virtual items are licensed for use within the relevant game, are not property or real money, and cannot be exchanged for real-world value. Availability and use may be subject to platform and game rules.</p>
@@ -60,7 +61,8 @@ export default function TermsOfServicePage() {
             <p>Request refunds through the app store or payment platform used for the purchase, subject to its procedures and applicable law. You may have cancellation, refund or other statutory rights, including rights relating to digital content; these Terms do not exclude or restrict them.</p>
           </Section>
           <Section id="advertising" title="8. Advertising and third-party services">
-            <p>Games may display advertisements provided by third-party partners. Some ads or linked services are operated independently and have their own terms and privacy practices. We do not control third-party content. Advertising choices, including consent and opt-out options where applicable, are described in our <Link href="/privacy-policy">Privacy Policy</Link> and available controls.</p>
+            <p>Our games use Yodo1 Managed Advertisement Services (MAS) mediation for in-app advertising. Yodo1 connects advertising opportunities with participating ad networks and other partners. Games may also use Google Analytics for Firebase for analytics and advertising purposes, as described in our <Link href="/privacy-policy">Privacy Policy</Link>.</p>
+            <p>Ads and linked services may be operated by independent third parties under their own terms and privacy practices. We do not control third-party ad content. Advertising choices, including consent and opt-out options where applicable, are described in our Privacy Policy and available controls. Report an inappropriate or unlawful ad to <a href="mailto:support@keepplayengine.com">support@keepplayengine.com</a>, including the game and details of the ad, so we can investigate and request its removal where appropriate.</p>
           </Section>
           <Section id="privacy" title="9. Privacy and cookies">
             <p>Our <Link href="/privacy-policy">Privacy Policy</Link> explains the information we process and your choices. The <Link href="/cookie-policy">Cookie Policy</Link> and <Link href="/cookie-settings">cookie settings</Link> describe website technologies and preferences. Any consent required for optional processing is requested separately.</p>

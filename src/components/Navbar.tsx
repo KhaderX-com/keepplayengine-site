@@ -6,10 +6,8 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowUpRight, Menu, X } from "lucide-react";
 
 const links = [
-  { href: "/#studio", label: "The studio" },
-  { href: "/#playground", label: "Our playground" },
-  { href: "/#publishing", label: "Publishing" },
-  { href: "/privacy-policy", label: "Privacy" },
+  { href: "/privacy-policy", label: "Privacy policy" },
+  { href: "/terms-of-service", label: "Terms of service" },
 ];
 
 export default function Navbar() {
@@ -53,7 +51,7 @@ export default function Navbar() {
           ))}
         </div>
         <Link href="/contact" className="kpe-nav-contact">
-          Let&rsquo;s talk <ArrowUpRight size={17} aria-hidden="true" />
+          Contact <ArrowUpRight size={17} aria-hidden="true" />
         </Link>
         <button
           ref={toggle}

@@ -68,7 +68,7 @@ export default function PrivacyPolicyPage() {
           <p className="kpe-eyebrow mb-5">KEEPPLAY ENGINE / PLAYER PRIVACY</p>
           <h1>Privacy Policy</h1>
           <p className="kpe-legal-date">
-            Last updated: 28 October 2026 · Version 2.0
+            Last updated: 20 November 2026 · Version 2.1
           </p>
           <div className="kpe-legal-summary">
             <strong>Your privacy, at a glance.</strong>
@@ -265,8 +265,11 @@ export default function PrivacyPolicyPage() {
               sign-in, cloud saves, notifications or payments.
             </p>
             <p>
-              Different game projects use different monetisation systems,
-              including CAS.ai and Yodo1. This does not mean every provider or
+              We use Yodo1 Managed Advertisement Services (MAS) mediation for
+              in-app advertising in our games and Google Analytics for Firebase
+              (Firebase Analytics) for analytics and advertising purposes.
+              Different game projects may also use other monetisation systems,
+              including CAS.ai. This does not mean every provider or
               supported network is active in every release. Each title's notices
               must identify its actual integrations and material data practices.
               Provider information is available here:
@@ -284,13 +287,13 @@ export default function PrivacyPolicyPage() {
               </li>
               <li>
                 <a
-                  href="https://www.yodo1.com/privacy"
+                  href="https://yodo1.com/en/privacy"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
                   Yodo1 privacy information
                 </a>{" "}
-                — monetisation services where integrated.
+                — Yodo1 MAS ad mediation and participating ad partners.
               </li>
               <li>
                 <a
@@ -310,7 +313,7 @@ export default function PrivacyPolicyPage() {
                 >
                   Firebase privacy information
                 </a>{" "}
-                — Firebase features where enabled.
+                — including Google Analytics for Firebase.
               </li>
               <li>
                 <a
@@ -427,6 +430,18 @@ export default function PrivacyPolicyPage() {
               advertising ID where permitted. Integrated networks and their
               roles must be reflected in that game's disclosures.
             </p>
+            <p>
+              Yodo1 MAS mediates in-app ads in our games, connecting ad requests
+              with advertising networks and other demand partners. Yodo1 and
+              participating partners may receive device and app information,
+              IP address and approximate location, advertising or app-instance
+              identifiers where permitted, consent and age signals, and ad
+              impression, click, completion and attribution events. They use
+              this information to deliver and measure ads, prevent fraud,
+              report revenue and, where permitted, personalise advertising.
+              Partners and their practices can vary by game, platform and region.
+              Their own privacy policies also apply to their processing.
+            </p>
             <h3>Consent and platform choices</h3>
             <p>
               Optional processing must wait for valid consent where required.
@@ -474,6 +489,20 @@ export default function PrivacyPolicyPage() {
               These help us improve games, with the notice and consent required
               for the specific collection. An aggregated report does not mean
               its underlying events were anonymous.
+            </p>
+            <p>
+              We use Google Analytics for Firebase to understand how players
+              use our games and improve them, and for advertising measurement,
+              attribution and, where enabled and permitted, advertising
+              audiences and personalisation. Google may collect app and device
+              information, app-instance or Firebase installation identifiers,
+              advertising identifiers where permitted, approximate location,
+              and events such as sessions, gameplay interactions, purchases and
+              ad interactions. Collection and advertising uses depend on the
+              game, configuration, platform and your choices. Google may
+              process information under its own terms; see the {" "}
+              <a href="https://policies.google.com/technologies/partner-sites">Google partner sites notice</a>
+              {" "}and the Firebase and Google privacy links above.
             </p>
           </Section>
           <Section id="permissions" title="8. Device permissions">
